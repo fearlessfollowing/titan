@@ -1,0 +1,402 @@
+
+
+https://shimo.im/s/de8a7f3c-5101-376f-41fb-0b1af35342b7s
+
+takePicture:
+
+//不拼接
+{"name": "camera._takePicture","parameters":{"stabilization":true,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":true,"storage_loc":0}}}
+
+//光流拼接
+{"name": "camera._takePicture","parameters":{"stabilization":true,"origin":{"mime":"raw+jpeg","width":4000,"height":3000, "saveOrigin":true},"stiching":{"mode":"pano","map":"flat", "mime":"jpeg","width":3840,"height":1920, "algorithm":"opticalFlow"}}}
+
+{"name": "camera._takePicture","parameters":{"stabilization":true,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true", "storage_loc":2},"stiching":{"mode":"3d","mime":"jpeg","width":3840,"height":3840, "algorithm":"opticalFlow"}}}
+
+//模板拼接
+{"name": "camera._takePicture","parameters":{"stabilization":true,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":true,"storage_loc":1},"stiching":{"mode":"pano","mime":"jpeg","width":3840,"height":1920, "algorithm":"normal"}}}
+
+{"name": "camera._takePicture","parameters":{"stabilization":true,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true", "storage_loc":2},"stiching":{"mode":"3d","mime":"jpeg","width":3840,"height":3840, "algorithm":"normal"}}}
+
+
+{"name": "camera._takePicture","parameters":{"stabilization":false, "origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{"map":"cube","mode":"pano","mime":"jpeg","width":2880,"height":1920, "algorithm":"opticalFlow"}}}
+
+{"name": "camera._takePicture","parameters":{"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{"mode":"3d","mime":"jpeg","width":7680,"height":7680, "algorithm":"opticalFlow"}}}
+
+{"name": "camera._takePicture","parameters":{"thumbnail":false,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{ "map":"cube", "mode":"3d_top_right","mime":"jpeg","width":5760,"height":7680, "algorithm":"opticalFlow"}}}
+
+{"name": "camera._takePicture","parameters":{"burst":{"enable":true,"count":10},"origin":{"mime":"raw+jpeg","width":4000,"height":3000, "saveOrigin":"true", "storage_loc":0}}}
+
+{"name": "camera._takePicture","parameters":{"hdr":{"enable":true,"count":9,"min_ev":-30,"max_ev":30},"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true","storage_loc":0}}}
+
+{"name": "camera._takePicture","parameters":{"bracket":{"enable":true,"count":9,"min_ev":-30,"max_ev":30},"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true","storage_loc":0},"stiching":{"mode":"3d","map":"flat", "mime":"jpeg","width":7680,"height":7680, "algorithm":"opticalFlow"}}}
+ 
+
+{"name": "camera._takePicture","parameters":{"bracket":{"enable":true,"count":9,"min_ev":-20,"max_ev":20},"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true","storage_loc":0}}}
+
+{"name": "camera._takePicture","parameters":{"origin":{"mime":"raw","width":4000,"height":3000,"saveOrigin":true,"storage_loc":0}}}
+{"name": "camera._takePicture","parameters":{"origin":{"mime":"raw+jpeg","width":4000,"height":3000,"saveOrigin":true,"storage_loc":0}}}
+
+{"name": "camera._takePicture","parameters":{"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"}}}
+
+{"name": "camera._takePicture","parameters":{"stabilization":false,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{"map":"cube", "mode":"3d","mime":"jpeg","width":5760,"height":7680}}}
+
+{"name": "camera._takePicture","parameters":{"stabilization":false,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{"map":"flat", "mode":"3d","mime":"jpeg","width":7680,"height":7680}}}
+
+{"name": "camera._takePicture","parameters":{"stabilization":false, "origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{"map":"cube","mode":"pano","mime":"jpeg","width":2880,"height":1920}}}
+
+{"name": "camera._takePicture","parameters":{"stabilization":false,"origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"},"stiching":{"map":"flat","mode":"pano","mime":"jpeg","width":7680,"height":3840}}}
+
+
+{"name": "camera._startPreview", "parameters": {"origin": {"mime": "h264", "width": 1920, "height": 1440, "saveOrigin": true, "framerate": 30, "bitrate": 15000}, "stiching": {"mime": "h264", "mode": "pano", "width": 1920, "height": 960, "framerate": 30, "bitrate": 1000}, "audio": {"mime": "aac", "sampleFormat": "s16", "samplerate": 48000, "bitrate": 128, "channelLayout": "stereo"}}} 
+
+
+ {"name": "camera._startLive", "parameters": {"origin": {"mime": "h264", "framerate": 30, "bitrate": 20000, "saveOrigin": false, "width": 1920, "height": 1440, "storage_loc": 0}, "stiching": {"mode": "3d_top_left", "height": 3840, "width": 3840, "liveOnHdmi": true, "fileSave": false, "framerate": 30, "bitrate": 30000, "mime": "h264"}, "audio": {"mime": "aac", "sampleFormat": "s16", "samplerate": 48000, "bitrate": 128, "channelLayout": "stereo"}, "autoConnect": {"enable": true, "interval": 1000, "count": -1}}}
+
+ {"name": "camera._startLive","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"pano","mime":"h264","width":1920,"height":960, "framerate":30, "liveOnHdmi":true}}}
+
+
+preview:
+
+{"name": "camera._stopPreview"}
+
+{"name": "camera._restartPreview"}
+
+{"name": "camera._restartPreview","parameters":{"stabilization":true, "audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000, "logMode":1},"stiching":{"mode":"pano","map":"pano","mime":"h264","width":1920,"height":960,"framerate":30,"bitrate":5000}}}
+
+
+{"name": "camera._startPreview","parameters":{"stabilization":true, "audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000, "logMode":1},"stiching":{"mode":"pano","map":"pano","mime":"h264","width":1920,"height":960,"framerate":30,"bitrate":5000}}}
+
+{"name": "camera._startPreview","parameters":{"stabilization":true,"origin":{"mime":"h264", "bitDepth":8, "width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"pano","map":"flat","mime":"h264","width":1920,"height":960,"framerate":30,"bitrate":5000}}}
+
+
+{"name": "camera._startPreview","parameters":{"stabilization":true, "origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"pano","map":"flat","mime":"h264","width":1920,"height":960,"framerate":15,"bitrate":5000, "format":"jpeg"}}}
+
+{"name": "camera._startPreview","parameters":{"index":0,"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000}}}
+
+{"name": "camera._startPreview","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"3d","mime":"h264","width":960,"height":960,"framerate":30,"bitrate":5000}}}
+
+{"name": "camera._startPreview","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"pano","mime":"h264","width":1920,"height":960,"framerate":30,"bitrate":20000}}}
+
+{"name": "camera._startPreview","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24,"bitrate":20000},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":24,"bitrate":10000}}}
+
+record:
+
+{"name": "camera._stopRecording"}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":3840,"height":2160,"framerate":30,"bitrate":50000,"saveOrigin":true, "storage_loc":1, "logMode":1}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":3840,"height":2880,"framerate":30,"bitrate":30000,"saveOrigin":true, "storage_loc":1, "hdr":true}}}
+ 
+
+{"name": "camera._startRecording","parameters":{"stabilization":true,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000,"saveOrigin":false,"storage_loc":1},"stiching":{"mode":"3d", "mime":"h264","width":3840,"height":3840,"framerate":30,"bitrate":80000}}}
+
+{"name": "camera._startRecording","parameters":{"stabilization":true,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000,"saveOrigin":false,"storage_loc":1},"stiching":{"mode":"3d", "mime":"h264","width":3840,"height":3840,"framerate":30,"bitrate":60000}}}
+
+{"name": "camera._startRecording","parameters":{"stabilization":true,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000,"saveOrigin":false,"storage_loc":1},"stiching":{"mode":"pano", "mime":"h264","width":2160,"height":1088,"framerate":30,"bitrate":10000}}}
+
+//8k@5fps stitching
+{"name": "camera._startRecording","parameters":{"stabilization":false,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":3840,"height":2160,"framerate":5,"bitrate":8000,"saveOrigin":true},"stiching":{"mode":"pano", "mime":"h264","width":7680,"height":3840,"framerate":5,"bitrate":15000}}}
+
+//8k@5fps no stitching
+{"name": "camera._startRecording","parameters":{"stabilization":true,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":3840,"height":2160,"framerate":5,"bitrate":8000,"saveOrigin":true}}}
+
+
+{"name": "camera._startLive","parameters":{"stabilization":true,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":3840,"height":2160,"framerate":5,"bitrate":10000,"saveOrigin":false},"stiching":{"mode":"3d", "mime":"h264","width":7680,"height":7680,"framerate":5,"bitrate":15000}}}
+
+{"name": "camera._startLive","parameters":{"stabilization":true,"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"mono","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":2560,"height":1440,"framerate":25,"bitrate":20000,"saveOrigin":false},"stiching":{"mode":"pano", "mime":"h264","width":7680,"height":3840,"framerate":25,"bitrate":50000}}}
+
+ {"name": "camera._startRecording","parameters":{"timelapse":{"enable":true,"interval":3000},"origin":{"mime":"raw+jpeg","width":4000,"height":3000, "saveOrigin":true}}}
+
+{"name": "camera._startRecording","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24, "bitrate":25000, "saveOrigin":true},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":24,"bitrate":100000}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24,"bitrate":25000,"saveOrigin":false},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":24,"bitrate":100000}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24,"bitrate":25000,"saveOrigin":true},"stiching":{"mode":"3d","map":"cube", "mime":"h264","width":2880,"height":3840,"framerate":24,"bitrate":80000}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64},"origin":{ "mime":"h264","width":2560,"height":1440,"framerate":30,"bitrate":20000,"saveOrigin":true},"stiching":{"mode":"pano","mime":"h264","width":3840,"height":1920,"framerate":30,"bitrate":3000}}}
+
+{"name": "camera._startRecording","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"pano","mime":"h264","width":3840,"height":1920,"framerate":30,"bitrate":50000}}}
+
+{"name": "camera._startRecording","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24,"bitrate":25000, "saveOrigin":true},"stiching":{"mode":"3d_top_right","mime":"h264","width":3840,"height":3840,"framerate":24,"bitrate":100000}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24,"bitrate":25000, "saveOrigin":true},"stiching":{"mode":"3d_top_right","mime":"h264","width":3840,"height":3840,"framerate":24,"bitrate":80000}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":2560,"height":1440,"framerate":30,"bitrate":20000, "saveOrigin":true}}}
+{"name": "camera._startRecording","parameters":{"origin":{"mime":"h264","width":3840,"height":2160,"framerate":30,"bitrate":40000, "saveOrigin":true}}}
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1080,"framerate":120,"bitrate":40000, "saveOrigin":true}}}
+
+{"name": "camera._startRecording","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":3200,"height":2400,"framerate":30,"bitrate":40000, "saveOrigin":true}}}
+
+live:
+
+{"name": "camera._stopLive"}
+
+{"name": "camera._startLive","parameters":{"autoConnect":{"enable":true,"interval":10000,"count":0},"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64}, "origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":40000},"stiching":{"mode":"pano","mime":"h264","width":1920,"height":960,"framerate":30,"bitrate":2000, "fileSave":false, "_liveUrl":"rtmp://kalpnik-streamer-dev.southindia.cloudapp.azure.com/liveHttpOrigin/instaTest"}}}
+
+127.0.0.1/live/live
+
+192.168.2.84/live/live
+
+{"name": "camera._startLive","parameters":{"autoConnect":{"enable":true,"interval":10000,"count":0},"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64}, "origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":40000,"hdr":false, "saveOrigin":false, "storage_loc":1},"stiching":{"mode":"pano","mime":"h264","width":3840,"height":1920,"framerate":30,"bitrate":50000,"_liveUrl":"rtmp://127.0.0.1/live/live"}}}
+
+{"name": "camera._startLive","parameters":{"autoConnect":{"enable":true,"interval":10000,"count":0},"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64}, "origin":{"mime":"h264","width":1920,"height":1080,"framerate":30,"bitrate":40000},"stiching":{"mode":"3d","mime":"h264","width":3200,"height":3200,"framerate":30,"bitrate":60000,"_liveUrl":"rtmp://127.0.0.1/live/live"}}}
+
+{"name": "camera._startLive","parameters":{"autoConnect":{"enable":true,"interval":10000,"count":0},"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64}, "origin":{"mime":"h264","width":2560,"height":1440,"framerate":60,"bitrate":30000},"stiching":{"mode":"pano","mime":"h264","width":3840,"height":1920,"framerate":60,"bitrate":60000,"_liveUrl":"rtmp://127.0.0.1/live/live"}}}
+
+{"name": "camera._startLive","parameters":{"autoConnect":{"enable":true,"interval":10000,"count":0},"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64}, "origin":{"mime":"h264","width":1920,"height":1080,"framerate":60,"bitrate":30000},"stiching":{"mode":"pano","mime":"h264","width":3840,"height":1920,"framerate":60,"bitrate":60000,"_liveUrl":"rtmp://127.0.0.1/live/live"}}}
+
+
+{"name": "camera._startLive","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":25000},"stiching":{"mode":"pano","mime":"h264","width":3840,"height":1920,"framerate":30,"bitrate":500 0}}}
+
+{"name": "camera._startLive","parameters":{"origin":{"mime":"h264","width":2560,"height":1440,"framerate":30,"bitrate":30000},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":30,"bitrate":60000}}}
+
+{"name": "camera._startLive","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"pano","mime":"h264","width":1920,"height":960,"framerate":30,"bitrate":1000,"fileSave":true}}}
+
+{"name": "camera._startLive","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":24,"bitrate":25000,"saveOrigin":true},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":24,"bitrate":50000, "fileSave":true}}}
+
+
+{"name": "camera._startLive","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64},"origin":{"mime":"h264","width":2560,"height":1440,"framerate":30,"bitrate":20000},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840, "framerate":30, "liveOnHdmi":true}}}
+
+{"name": "camera._startLive","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":64},"origin":{"mime":"h264","width":2560,"height":1440,"framerate":30,"bitrate":20000, "saveOrigin":true, "storage_loc":1},"stiching":{"mode":"pano","mime":"h264","width":1920,"height":960, "framerate":30, "liveOnHdmi":true}}}
+
+原始流直播：
+{"name": "camera._startLive","parameters":{"audio":{"mime":"aac","sampleFormat":"s16","channelLayout":"stereo","samplerate":48000,"bitrate":128},"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":30000, "liveUrl":"rtmp://127.0.0.1/live"}}}
+
+{"name": "camera._startLive","parameters":{"origin":{"mime":"h264","width":1920,"height":1080,"framerate":30,"bitrate":20000, "liveUrl":"rtmp://127.0.0.1/live"}}}
+
+{'name': 'camera._startLive', 'parameters': {'origin': {'mime': 'h264', 'width': 3840, 'height': 1920, 'framerate': 30.0, 'bitrate': 10000000.0, 'saveOrigin': True, 'logMode': 0, 'liveUrl': 'rtmp://127.0.0.1/live'}, 'stabilization': False}}
+
+老化1小时：
+{"name": "camera._startRecording","parameters":{"duration":3600,"saveFile":false,"origin":{"mime":"h264","width":2560,"height":1920,"framerate":30, "bitrate":30000, "saveOrigin":true, "storage_loc":0},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":30,"bitrate":60000}}}
+
+永久老化：
+{"name": "camera._startRecording","parameters":{"saveFile":false,"origin":{"mime":"h264","width":2560,"height":1920,"framerate":30, "bitrate":30000, "saveOrigin":true, "storage_loc":0},"stiching":{"mode":"3d","mime":"h264","width":3840,"height":3840,"framerate":30,"bitrate":60000}}}
+
+单镜头录像
+{"name": "camera._startRecording","parameters":{"duration":25, "index":2, "storagePath":"/tmp/55", "origin":{"mime":"h264","width":1920,"height":1080,"framerate":30, "bitrate":20000, "saveOrigin":true}}}
+
+单镜头合焦HDMI预览
+{"name": "camera._startPreview","parameters":{"index":3,"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":30000}}}
+
+单镜头拍照：全部拍单只存一个
+{"name": "camera._takePicture","parameters":{"index":4, "storagePath":"/tmp/55", "origin":{"mime":"jpeg","width":4000,"height":3000, "saveOrigin":"true"}}}
+
+stop 命令：
+{"name": "camera._stopRecording"}
+{"name": "camera._stopLive"}
+{"name": "camera._stopPreview"}
+
+{"name": "camera._startRecording","parameters":{"origin":{"mime":"h264","width":1920,"height":1440,"framerate":30,"bitrate":20000,"saveOrigin":true, "storage_loc":1}}}
+
+{"name": "camera._storage_test", "parameters":{"file_cnt":6,"block_size":32768,"total_size":4}}
+{"name": "camera._test_module_communication"}
+{"name": "camera._test_module_spi"}
+{"name": "camera._powerOff"} 
+{"name": "camera._lowBatAct"} 
+{"name": "camera._gyroCalibration"}
+{"name": "camera._storageSpeedTest"}
+{"name": "camera._calibration", "parameters":{"mode":"3d"}}
+{"name": "camera._getOffset"}
+{"name": "camera._getHdmi"}
+{"name": "camera._setHdmi", "parameters":{"hdmi":"off"}}
+{"name": "camera._setOptions", "parameters":{"property":"stabilization","value":0}}
+{"name": "camera._setOptions", "parameters":{"property":"flicker","value":1}}
+{"name": "camera._setOptions", "parameters":{"property":"video_fragment","value":0}}
+
+{"name": "camera._getOptions", "parameters":{"property":"supportedFunctions"}}
+
+{"name": "camera._getOptions", "parameters":{"property":"stabilization_cf"}}
+{"name": "camera._getOptions", "parameters":{"property":"stabilization_type"}}
+{"name":"camera._setOptions","parameters":{"property":"stabilization_cfg", "value":1}}
+{"name":"camera._setOptions","parameters":{"property":"stabilization_type", "value":1}}
+
+
+{"name": "camera._getOptions", "parameters":{"property":"audio_gain"}}
+{"name": "camera._getOptions", "parameters":{"property":"flicker"}}
+{"name": "camera._getOptions", "parameters":{"property":"blc_state"}}
+{"name": "camera._getOptions", "parameters":{"property":"imgParam"}}
+{"name": "camera._getOptions", "parameters":{"property":"version"}}
+{"name": "camera._getOptions", "parameters":{"property":"stabilization"}}
+{"name": "camera._getOptions", "parameters":{"property":"moduleVersion"}}
+{"name": "camera._getOptions", "parameters":{"property":"storagePath"}}
+{"name": "camera._getOptions", "parameters":{"property":"video_fragment"}}
+{"name": "camera._getOptions", "parameters":{"property":"depthMap"}}
+
+{"name": "camera._getOptions", "parameters":{"property":"IQType"}}
+{"name":"camera._setOptions","parameters":{"property":"IQType", "value":"log_2"}}
+
+{"name": "camera._setOptions", "parameters":{"property":"logMode","value":{"mode":0,"effect":1}}}
+
+{"name": "camera._getImageParam"}
+{"name":"camera._setOptions","parameters":{"property":"aaa_mode", "value":0}}
+{"name":"camera._setOptions","parameters":{"property":"brightness", "value":2}}
+{"name":"camera._setOptions","parameters":{"property":"audio_gain", "value":0}}
+{"name":"camera._setOptions","parameters":[{"property":"fanless", "value":1},{"property":"audio_gain", "value":0}]}
+{"name":"camera._setOptions","parameters":{"property":"panoAudio", "value":2}} 
+{"name":"camera._setOptions","parameters":{"property":"audiotoStitch", "value":1}}
+
+{"name":"camera._setOptions","parameters":{"property":"video_fragment", "val ue":1}} 
+{"name":"camera._setOptions","parameters":{"property":"logo", "value":1}}
+{"name":"camera._setOptions","parameters":{"property":"audio_gain", "value":112}} 
+{"name":"camera._setOptions","parameters":{"property":"depthMap", "value":"test"}} 
+
+
+{"name": "camera._setOffset", "parameters":{"offset_pano_4_3":"55555", "offset_pano_16_9":"66666", "factory_setting":true}}
+{"name": "camera._setOffset", "parameters":{"offset_16_9":""}}
+{"name": "camera._setOffset", "parameters":{"using_factory_offset":true}}
+
+{"name": "camera._queryState"}
+{"name": "camera._queryStorage"}
+{"name": "camera._reset"}
+{"name": "camera._change_module_usb_mode", "parameters":{"mode":1}}
+{"name": "camera._calibrationAwb"}
+{"name": "camera._calibrationLp"}
+{"name": "camera._magmeterCalibration"}
+{"name": "camera._setGyroCalibrationResult", "parameters":{"imu_rotation":[1.5, 2.5, 3.5, 4.5]}}
+{"name": "camera._getGyroCalibrationResult"}
+
+{"name": "camera._getStoragePath"}
+{"name": "camera._getFWVersion","parameters":"-1"}
+{"name": "camera._getVersion"}
+{"name": "camera._changeStoragePath", "parameters":{"path":"/home/nvidia"}}
+{"name": "camera._startQRCodeScan"}
+{"name": "camera._stopQRCodeScan"}
+{"name": "camera._setPowerMode", "parameters":{"mode":"on"}}
+{"name": "camera._calibrationBlc", "parameters":{"reset":"true"}}
+{"name": "camera._update_gamma_curve", "parameters":{"data":string}}
+{"name": "camera._update_gamma_curve"}
+
+{"name": "camera._upgradeFw", "parameters":{"path":"/home/nvidia/sys_dsp_rom.devfw", "version":"2.3.1222.180411E1"}}
+{"name": "camera._upgradeFw", "parameters":{"path":string}}
+{"name": "camera._formatCameraMoudle", "parameters":{"index": -1}}
+{"name": "camera._setNtscPal", "parameters":{"mode":"ntsc"}}
+{"name": "camera._getNtscPal"}
+
+{"name": "camera._deleteFile", "parameters":{"dir":["adadfadfaedssdf", "adadfadfaedssdf", "adadfadfaedssdf"]}}
+
+{"name": "camera._modulePowerOn"}
+{"name": "camera._modulePowerOff"}
+{"name": "camera._startMagmeterCalibration"}
+{"name": "camera._stopMagmeterCalibration"}
+
+{"name":"camera._change_udisk_mode", "parameters":{"mode": 0}}
+
+{"name": "camera._queryBatteryTemp"}
+{"name": "camera._queryGpsStatus"}
+{"fix_type":int, sv_status:{"sv_num":int,"status":[{"prn":int, "snr":float,"elevation":float, "azimuth":float}] }}
+
+
+{"name": "camera._systemTimeChange"}
+{"name": "camera._startCaptureAudio"}
+{"name": "camera._stopCaptureAudio"}
+
+
+//晚上测试
+{"name":"stitcher.update_task","parameters":[{"uuid":"1", "input":{"path":"/mnt/media_rw/2E41-8E85/vid_fragment"},"blend":{"mode":"pano","calibration":{"captureTime":10}}, "gyro":{"enable":1},"output":{"file":"/mnt/media_rw/2E41-8E85/vid_fragment/1.mp4","video":{"width":7680,"height":3840, "bitrate":200000,"preset":"medium"},"audio":{"type":"pano"}}}]}
+
+{"name":"stitcher.update_task","parameters":[{"uuid":"2", "input":{"path":"/mnt/media_rw/2E41-8E85/vid_moving_3d"},"blend":{"mode":"3d","calibration":{"captureTime":10}}, "gyro":{"enable":0},"output":{"file":"/mnt/media_rw/2E41-8E85/vid_moving_3d/out.mp4","video":{"width":5600,"height":5600, "bitrate":250000,"preset":"fast"},"audio":{"type":"pano"}}}]}
+
+{"name":"stitcher.update_task","parameters":[{"uuid":"3", "input":{"path":"/mnt/media_rw/2E41-8E85/vid_moving"},"blend":{"mode":"pano","calibration":{"captureTime":10}}, "gyro":{"enable":1},"output":{"file":"/mnt/media_rw/2E41-8E85/vid_moving/out.mp4","video":{"width":7680,"height":3840, "bitrate":200000,"preset":"fast"},"audio":{"type":"pano"}}}]}
+
+{"name":"stitcher.add_task","parameters":[{"uuid":"4", "input":{"path":"/mnt/media_rw/2E41-8E85/vid_fragment"},"blend":{"mode":"pano","calibration":{"captureTime":10}}, "gyro":{"enable":0},"output":{"file":"/mnt/media_rw/2E41-8E85/vid_fragment/2.mp4","video":{"width":5760,"height":2880, "bitrate":150000,"preset":"fast"},"audio":{"type":"pano"}}}]}
+
+{"name":"stitcher.start_task", "parameters":["1", "2", "3", "4"]}
+
+
+//example video
+{"name":"stitcher.add_task","parameters":[{"uuid":"11", "input":{"path":"//media/nvidia/0886-6F3D/VID_2013_01_01_08_04_15"},"blend":{"mode":"pano","calibration":{"captureTime":0}}, "gyro":{"enable":1},"output":{"file":"/media/nvidia/0886-6F3D/VID_2013_01_01_08_04_15/out.mp4","video":{"width":1920,"height":960, "bitrate":10000,"preset":"fast"},"audio":{"type":"pano"}}}]}
+
+
+//example photo
+{"name":"stitcher.add_task","parameters":[{"uuid":"p18", "input":{"path":"/sdcard"},"blend":{"mode":"pano"}, "gyro":{"enable":1},"output":{"file":"/sdcard/out.jpg","image":{"width":3840,"height":1920}}}]}
+
+
+{"name":"stitcher.add_task","parameters":[{"uuid":"p12", "input":{"path":"/mnt/media_rw/943C-F9C9/PIC_2018_02_06_16_16_26"},"blend":{"mode":"pano", "offset":"6_1946.876_2008.464_1538.879_-0.003_-0.313_1.211_4000_3000_12_1946.915_1981.670_1519.195_58.273_3.417_-0.954_4000_3000_12_1947.429_2018.328_1479.634_62.478_177.655_-178.489_4000_3000_12_1927.875_2017.341_1524.676_1.287_179.423_179.134_4000_3000_12_1910.688_1978.842_1482.727_-57.409_-177.426_179.640_4000_3000_12_1961.801_2037.178_1455.552_-63.176_-3.896_-2.665_4000_3000_12_7"}, "gyro":{"enable":1},"output":{"file":"/sdcard/out.jpg","image":{"width":7680,"height":3840}}}]}
+
+{"name":"stitcher.add_task","parameters":[{"uuid":"v21", "input":{"path":"/mnt/media_rw/A01D-C610/VID_2017_08_02_21_11_18"},"blend":{"mode":"pano","calibration":{"captureTime":1}}, "gyro":{"enable":1},"output":{"file":"/mnt/media_rw/A01D-C610/VID_2017_08_02_21_11_18/1.mp4","video":{"width":3840,"height":1920, "bitrate":50000},"audio":{"type":"normal"}}}]}
+
+{"name":"stitcher.update_task","parameters":[{"uuid":"raw", "input":{"path":"/mnt/media_rw/34BF-28D9/PIC_2017_12_18_16_05_58"},"blend":{"mode":"pano"}, "gyro":{"enable":1},"output":{"file":"/sdcard/out.dng","image":{"width":3840,"height":1920}}}]}
+
+
+//burst
+{"name":"stitcher.add_task","parameters":[{"uuid":"21", "input":{"path":"/mnt/media_rw/2E41-8E85/PIC_2017_12_12_16_59_29"},"blend":{"mode":"pano"}, "gyro":{"enable":1},"output":{"file":"/sdcard/%d.jpg","image":{"width":3840,"height":1920}}}]}
+
+//timelapse
+{"name":"stitcher.add_task","parameters":[{"uuid":"11", "input":{"path":"/mnt/media_rw/2E41-8E85/VID_2017_11_07_09_59_24"},"blend":{"mode":"pano"}, "gyro":{"enable":1},"output":{"file":"/sdcard/timelapse/%d.jpg","image":{"width":7680,"height":3840}}}]}
+
+//hdr
+{"name":"stitcher.add_task","parameters":[{"uuid":"0", "input":{"path":"/mnt/media_rw/2E41-8E85/PIC_2017_11_07_09_58_06"},"blend":{"mode":"pano"}, "gyro":{"enable":1},"output":{"file":"/sdcard/timelapse","image":{"width":7680,"height":3840}}}]}
+
+{"name":"stitcher.update_task"}
+
+{"name":"stitcher.add_task","parameters":[{"uuid":"0", "input":{"path":"/mnt/media_rw/94F5-7D61/VID_2017_11_27_15_54_15"},"blend":{"mode":"pano","calibration":{"captureTime":8.926}}, "gyro":{"enable":1},"output":{"file":"/mnt/media_rw/94F5-7D61/VID_2017_11_27_15_54_15/out.mp4","video":{"width":7680,"height":3840, "bitrate":120000},"audio":{"type":"pano"}}}]}
+
+
+//delete
+{"name":"stitcher.delete_task","parameters":["1", "2", "3", "4", "5", "6", "7","8","9"]}
+{"name":"stitcher.delete_task","parameters":["10"]}
+
+//stop 
+{"name":"stitcher.stop_task", "parameters":["1", "2", "3", "4", "5", "6", "7","8","16"]}
+{"name":"stitcher.stop_task", "parameters":["4", "2", "1", "3"]}
+{"name":"stitcher.stop_task", "parameters":["1"]}
+
+//start
+{"name":"stitcher.start_task", "parameters":["0", "1", "2", "3"]}
+{"name":"stitcher.start_task", "parameters":["11"]}
+
+ffplay rtmp://192.168.2.64/vod/#mnt#media_rw#2E41-8E85#vid_fragment#origin_0.mp4
+
+{"name":"stitcher.query_task","parameters":["2"]} 
+
+{"name":"stitcher.query_task_list"}
+
+{"name":"stitcher.start_stitching_box"}
+{"name":"stitcher.start_task_list"}
+{"name":"stitcher.query_task_list"}
+
+{"name":"stitcher.stop_stitching_box"}
+{"name":"stitcher.stop_task_list"}
+
+{"name": "camera._queryState"}
+
+
+
+其他：
+
+insmod /system/lib/modules/exfat.ko
+mount  -t exfat  /dev/block/sda1  /mnt/media_rw/usbdrive/
+
+fio -directory=/mnt/media_rw/7442-9ADF -iodepth 1 -thread -rw=write -ioengine=psync -bs=32k -size=5G -numjobs=7 -name=mytest6
+
+sed 's/\x0\x21\x1a\x14\xe5\x35\x8e\x8a\x62\xa1\x5c/\x0\x2\x3c\xa4\x21\x1a\x14\xe5\x35\x8e\x8a\x62\xa1\x5c/g' 6.mp4 > 7.mp4
+
+sed 's/\x0\x8\x66\x72\x65\x65\x3f\xb3\xfa\xee\x6d\x64\x61\x74/\x0\x8\x66\x72\x65\x65\x3f\xb3\xfa\xf1\x6d\x64\x61\x74/g' 7.mp4 > 8.mp4
+
+sed 's/\x0\x21\x1a\x14\xe5\x35\x8e\x8a\x62\xa1/\x0\x2\x3c\xa0\x21\x1a\x14\xe5\x35\x8e\x8a\x62\xa1/g' 6.mp4 > 7.mp4
+
+02-08 16:35:19.167 13558 15253 W GLConsumer: [SurfaceTexture] bindTextureImage: clearing GL error: 0x502
+
+
+-DCMAKE_INSTALL_PREFIX=/home/nvidia/work/inspro/external
+
+https://github.com/ossrs/srs.git
+
+
+kalibr_video_calibrate_cameras --models pinhole-equi --target april_6x4.yaml --root /media/nvidia/1C3B-ADA6/VID_20160211162829 --topics /origin_5.mp4
+
+kalibr_calibrate_video_imu_camera --root VID_20180725023022/ --cam /camchain-VID_20180725023022.yaml --imu   imu_adis16448.yaml --timestamp-from-to 2 18 --firsttimestamp 1532485824.869495 --target april_6x4.yaml --time-calibration --max-iter 100 --timeoffset-padding 0.1 --imu-models calibrated --exposure_file_list exposure_1.dat
+
+不用测速：
+setprop sys.skip_speed_test true
+
+停止camerad服务：
+setprop ctl.start camerad
+setprop ctl.start camerad
+
+4号模组断电
+i2cset -f -y 0 0x77 0x3 0x7b
+ 
+
+			
+

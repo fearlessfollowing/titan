@@ -1,0 +1,63 @@
+CPP  = g++
+TARGET = module_tool
+SRC_PATH = ../..
+OBJ_PATH = ./obj
+EXE = ../../../exe
+
+CPP_FILE := \
+			$(SRC_PATH)/module/usb_device.cpp \
+			$(SRC_PATH)/util/inslog.cpp \
+			$(SRC_PATH)/util/inserr.cpp \
+			$(SRC_PATH)/common/json_obj.cpp \
+			$(SRC_PATH)/tool/upgrade/usb_camera.cpp  \
+			$(SRC_PATH)/tool/upgrade/cam_manager.cpp \
+			$(SRC_PATH)/tool/upgrade/module_tool.cpp \
+
+# OBJ_FILE := $(CPP_FILE:.cpp=.o) 
+# DEPS = $(CPP_FILE:.cpp=.d) 
+
+OBJ_FILE_TMP = $(patsubst $(SRC_PATH)%.cpp,%.o,$(CPP_FILE)) 
+OBJ_FILE = $(addprefix $(OBJ_PATH),$(OBJ_FILE_TMP))
+DEPS := $(OBJ_FILE:.o=.d)
+
+CPPFLAGS := \
+	-std=c++11 \
+	-DUPGRADE_TOOL \
+	-I$(SRC_PATH)/tool/upgrade \
+	-I$(SRC_PATH)/util \
+	-I$(SRC_PATH)/common \
+	-I$(SRC_PATH)/module \
+	-I$(EXE)/include
+
+
+LDFLAGS :=  \
+	-lpthread \
+	-ljson-c \
+	-lusb-1.0 \
+	-L$(EXE)/lib \
+	-Wl,-rpath=/usr/local/lib \
+
+
+all: $(TARGET)
+
+-include $(DEPS)
+
+$(TARGET): $(OBJ_FILE)
+	$(CPP) -o $@ $^ $(LDFLAGS)
+
+# .cpp.o:
+# 	$(CPP) $(CPPFLAGS) -o $@ -c $< -MD -MF $*.d -MP
+
+$(OBJ_FILE): $(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp
+	@mkdir -p $(shell dirname $@)
+	$(CPP) $(CPPFLAGS) -c $< -o $@ -MD -MF $(OBJ_PATH)/$*.d -MP
+
+.PHONY:clean
+clean:
+	rm -r $(OBJ_FILE) $(DEPS)
+
+.PHONY:install
+install:
+	@echo
+	cp $(TARGET) /usr/local/bin
+	cp $(TARGET) $(EXE)/bin

@@ -1,0 +1,531 @@
+#include "nv_video_dec.h"
+#include <unistd.h>
+#include <assert.h>
+#include "inslog.h"
+#include "common.h"
+#include "NvUtils.h"
+#include "nvbuf_utils.h"
+#include <linux/videodev2.h>
+
+#define NV_CODED_BUFF_SIZE 1536*1024
+
+#define NV_DEC_ABORT() \
+    LOGERR("%s abort", name_.c_str()); \
+    if (dec_) dec_->abort();  \
+    if (conv_) conv_->abort(); \
+    b_error_ = true; \
+
+static bool conv_outputplane_cb(struct v4l2_buffer *v4l2_buf, NvBuffer *buffer, NvBuffer *shared_buffer, void *arg)
+{
+    assert(arg != nullptr);
+
+    nv_video_dec* p = (nv_video_dec*)arg;
+
+    return p->conv_output_plane_done(v4l2_buf, buffer, shared_buffer);
+}
+
+// static bool conv_captureplane_cb(struct v4l2_buffer *v4l2_buf,NvBuffer * buffer, NvBuffer * shared_buffer, void *arg)
+// {
+//     assert(arg != nullptr);
+
+//     nv_video_dec* p = (nv_video_dec*)arg;
+
+//     return p->conv_capture_plane_done(v4l2_buf, buffer, shared_buffer);
+// }
+
+void nv_video_dec::close()
+{
+    if (th_.joinable()) th_.join();
+
+    if (conv_) 
+    {
+        if (conv_->output_plane.waitForDQThread(close_wait_time_ms_))
+        {
+            LOGINFO("---%s wait:%u timeout conv abort", name_.c_str(), close_wait_time_ms_);
+            conv_->abort();
+            LOGINFO("---%s conv stop dq thread", name_.c_str());
+            conv_->output_plane.stopDQThread();
+            LOGINFO("---%s conv stop success", name_.c_str());
+        }
+
+        delete conv_;
+        conv_ = nullptr;
+    }
+
+    if (dec_) 
+    {
+        delete dec_;
+        dec_ = nullptr;
+    }
+
+    LOGINFO("%s close", name_.c_str());
+}
+
+int32_t nv_video_dec::open(std::string name, std::string mime)
+{
+    int32_t ret = 0;
+    name_ = name;
+    mime_ = mime;
+    
+    uint32_t fmt;
+    if (mime == INS_H264_MIME)
+    {
+        fmt = V4L2_PIX_FMT_H264;
+    } 
+    else if (mime == INS_H265_MIME)
+    {
+        fmt = V4L2_PIX_FMT_H265;
+    }
+    else
+    {
+        LOGERR("unsupport mime:%s", mime.c_str());
+        return INS_ERR;
+    }
+
+    dec_ = NvVideoDecoder::createVideoDecoder(name.c_str());
+    RETURN_IF_TRUE(dec_ == nullptr, "createVideoDecoder error", INS_ERR);
+
+    ret = dec_->subscribeEvent(V4L2_EVENT_RESOLUTION_CHANGE, 0, 0);
+    RETURN_IF_TRUE(ret < 0, "subscribeEvent error", INS_ERR);
+
+    ret = dec_->disableCompleteFrameInputBuffer();
+    RETURN_IF_TRUE(ret < 0, "disableCompleteFrameInputBuffer error", INS_ERR);
+
+    ret = dec_->setOutputPlaneFormat(fmt, NV_CODED_BUFF_SIZE);
+    RETURN_IF_TRUE(ret < 0, "setOutputPlaneFormat error", INS_ERR);
+
+    ret = dec_->disableDPB();
+    RETURN_IF_TRUE(ret < 0, "disableDPB error", INS_ERR);
+
+    ret = dec_->output_plane.setupPlane(V4L2_MEMORY_MMAP, 9, true, false);
+    RETURN_IF_TRUE(ret < 0, "output_plane setupPlane error", INS_ERR);
+
+    conv_ = NvVideoConverter::createVideoConverter("conv");
+    RETURN_IF_TRUE(conv_ == nullptr, "createVideoConverter error", INS_ERR);
+
+    ret = dec_->output_plane.setStreamStatus(true);
+    RETURN_IF_TRUE(ret < 0, "setStreamStatus error", INS_ERR);
+
+    b_error_ = false;
+    
+    th_ = std::thread(&nv_video_dec::capture_plane_loop, this);
+
+    LOGINFO("%s open mime:%s", name_.c_str(), mime.c_str());
+
+    return INS_OK;
+}
+
+int32_t nv_video_dec::setup_capture_plane()
+{
+    int ret = 0;
+    struct v4l2_format format;
+    struct v4l2_crop crop;
+
+    ret = dec_->capture_plane.getFormat(format);
+    RETURN_IF_TRUE(ret < 0, "getFormat error", INS_ERR);
+
+    ret = dec_->capture_plane.getCrop(crop);
+    RETURN_IF_TRUE(ret < 0, "getCrop error", INS_ERR);
+    LOGINFO("%s fmt change width:%d height:%d", name_.c_str(), crop.c.width, crop.c.height);
+
+    ret = dec_->setCapturePlaneFormat(format.fmt.pix_mp.pixelformat,format.fmt.pix_mp.width,format.fmt.pix_mp.height);
+    RETURN_IF_TRUE(ret < 0, "setCapturePlaneFormat error", INS_ERR);
+
+    int min_buff = 0;
+    ret = dec_->getMinimumCapturePlaneBuffers(min_buff);
+    RETURN_IF_TRUE(ret < 0, "setCapturePlaneFormat error", INS_ERR);
+
+    ret = dec_->capture_plane.setupPlane(V4L2_MEMORY_MMAP,min_buff, false, false);
+    RETURN_IF_TRUE(ret < 0, "capure plain setupPlane error", INS_ERR);
+
+    ret = conv_->setOutputPlaneFormat(format.fmt.pix_mp.pixelformat,format.fmt.pix_mp.width,format.fmt.pix_mp.height,V4L2_NV_BUFFER_LAYOUT_BLOCKLINEAR);
+    RETURN_IF_TRUE(ret < 0, "conv setOutputPlaneFormat error", INS_ERR);
+
+    //nv编码器现在只支持V4L2_PIX_FMT_YUV420M,所以解码后的也固定为这个格式
+    ret = conv_->setCapturePlaneFormat(V4L2_PIX_FMT_NV12M,crop.c.width,crop.c.height,V4L2_NV_BUFFER_LAYOUT_PITCH);
+    RETURN_IF_TRUE(ret < 0, "conv setCapturePlaneFormat error", INS_ERR);
+
+    ret = conv_->setCropRect(0, 0, crop.c.width, crop.c.height);
+    RETURN_IF_TRUE(ret < 0, "conv setCropRect error", INS_ERR);
+
+    // ret = conv_->setYUVRescale(V4L2_YUV_RESCALE_EXT_TO_STD);
+    // RETURN_IF_TRUE(ret < 0, "conv setYUVRescale error", INS_ERR);
+
+    ret = conv_->output_plane.setupPlane(V4L2_MEMORY_DMABUF, dec_->capture_plane.getNumBuffers(), false, false);
+    RETURN_IF_TRUE(ret < 0, "conv output plane setupPlane error", INS_ERR);
+
+    ret = conv_->capture_plane.setupPlane(V4L2_MEMORY_MMAP, dec_->capture_plane.getNumBuffers(), true, false);
+    RETURN_IF_TRUE(ret < 0, "conv capture plane setupPlane error", INS_ERR);
+
+    ret = conv_->output_plane.setStreamStatus(true);
+    RETURN_IF_TRUE(ret < 0, "conv output plane setStreamStatus error", INS_ERR);
+
+    ret = conv_->capture_plane.setStreamStatus(true);
+    RETURN_IF_TRUE(ret < 0, "conv capture plane setStreamStatus error", INS_ERR);
+
+    for (uint32_t i = 0; i < conv_->output_plane.getNumBuffers(); i++)
+    {
+        conv_outp_queue_.push(conv_->output_plane.getNthBuffer(i));
+    }
+
+    for (uint32_t i = 0; i < conv_->capture_plane.getNumBuffers(); i++)
+    {
+        struct v4l2_buffer v4l2_buf;
+        struct v4l2_plane planes[MAX_PLANES];
+        memset(&v4l2_buf, 0, sizeof(v4l2_buf));
+        memset(planes, 0, sizeof(planes));
+        v4l2_buf.index = i;
+        v4l2_buf.m.planes = planes;
+        ret = conv_->capture_plane.qBuffer(v4l2_buf, nullptr);
+        RETURN_IF_TRUE(ret < 0, "conv capture plane qBuffer error", INS_ERR);
+    }
+
+    //convert bl to pl for writing raw video to file
+    conv_->output_plane.setDQThreadCallback(conv_outputplane_cb);
+    //conv_->capture_plane.setDQThreadCallback(conv_captureplane_cb);
+    conv_->output_plane.startDQThread(this);
+    //conv_->capture_plane.startDQThread(this);
+
+    ret = dec_->capture_plane.setStreamStatus(true);
+    RETURN_IF_TRUE(ret < 0, "dec capture plane setStreamStatus error", INS_ERR);
+
+    for (uint32_t i = 0; i < dec_->capture_plane.getNumBuffers(); i++)
+    {
+        struct v4l2_buffer v4l2_buf;
+        struct v4l2_plane planes[MAX_PLANES];
+        memset(&v4l2_buf, 0, sizeof(v4l2_buf));
+        memset(planes, 0, sizeof(planes));
+        v4l2_buf.index = i;
+        v4l2_buf.m.planes = planes;
+        ret = dec_->capture_plane.qBuffer(v4l2_buf, nullptr);
+        RETURN_IF_TRUE(ret < 0, "dec capture plane qBuffer error", INS_ERR);
+    }
+
+    LOGINFO("%s capture plane setup", name_.c_str());
+
+    return INS_OK;
+}
+
+void nv_video_dec::capture_plane_loop()
+{
+    int ret = 0;
+    struct v4l2_event event;
+    event.type = 0;
+    
+    //LOGINFO("%s capure loop start", name_.c_str());
+
+    while (event.type != V4L2_EVENT_RESOLUTION_CHANGE && !b_eos_ && !b_error_)
+    {
+        ret = dec_->dqEvent(event, 5000);
+        if (ret < 0)
+        {
+            NV_DEC_ABORT();
+            break;
+        }
+    }
+
+    if (!b_eos_ && !b_error_)
+    {
+        if (setup_capture_plane() != INS_OK) 
+        {
+            b_eos_ = true;
+            b_error_ = true;
+        }
+    }
+
+    while (!(b_error_ || dec_->isInError() || b_eos_))
+    {
+        struct v4l2_buffer v4l2_buf;
+        struct v4l2_plane planes[MAX_PLANES];
+        memset(&v4l2_buf, 0, sizeof(v4l2_buf));
+        memset(planes, 0, sizeof(planes));
+        v4l2_buf.m.planes = planes;
+        v4l2_buf.length = 3;
+
+        NvBuffer *dec_buffer;
+        ret = dec_->capture_plane.dqBuffer(v4l2_buf, &dec_buffer, nullptr, 0);
+        if (ret < 0)
+        {
+            if (errno == EAGAIN)
+            {
+                usleep(5000);
+                //LOGINFO("dec capture plane dqbuffer eagain");
+                continue;
+            }
+            else
+            {
+                NV_DEC_ABORT();
+                break;
+            }
+        }
+
+        auto timestamp = v4l2_buf.timestamp;
+        memset(&v4l2_buf, 0, sizeof(v4l2_buf));
+        memset(planes, 0, sizeof(planes));
+        v4l2_buf.m.planes = planes;
+        v4l2_buf.timestamp = timestamp;
+        NvBuffer *conv_buffer = nullptr;
+        while (!(b_error_ || conv_->isInError() || b_eos_))
+        {
+            if (!conv_outp_queue_.pop(conv_buffer))
+            {
+                usleep(10*1000);
+                continue;
+            }
+            else
+            {
+                v4l2_buf.index = conv_buffer->index;
+                break;
+            }
+        }
+
+        ret = conv_->output_plane.qBuffer(v4l2_buf, dec_buffer);
+        if (ret < 0)
+        {
+            NV_DEC_ABORT();
+            break;
+        }
+    }
+
+    conv_send_eos();
+
+    LOGINFO("%s capture loop exit", name_.c_str());
+}
+
+void nv_video_dec::conv_send_eos()
+{
+    if (conv_ == nullptr) return;
+
+    if (!conv_->output_plane.getStreamStatus()) return;
+
+    NvBuffer *buff = nullptr;
+    struct v4l2_buffer v4l2_buf;
+    struct v4l2_plane planes[MAX_PLANES];
+    memset(&v4l2_buf, 0, sizeof(v4l2_buf));
+    memset(&planes, 0, sizeof(planes));
+    v4l2_buf.m.planes = planes;
+
+    int32_t retry = 15;
+    while (--retry)
+    {
+        if (!conv_outp_queue_.pop(buff))
+        {
+            usleep(20*1000);
+            continue;
+        }
+        else
+        {
+            v4l2_buf.index = buff->index;
+            break;
+        }
+    }
+
+    if (retry)
+    {
+        // Queue EOS buffer on converter output plane：byteuse = 0即为 eos
+        conv_->output_plane.qBuffer(v4l2_buf, nullptr);
+        LOGINFO("%s conv send eos", name_.c_str());
+    }
+    else
+    {
+        LOGERR("%s conv cann't send eos", name_.c_str());
+    }
+}
+
+bool nv_video_dec::conv_output_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer * buffer, NvBuffer * shared_buffer)
+{   
+    if (v4l2_buf == nullptr)
+    {
+        NV_DEC_ABORT();
+        return false;
+    }
+
+    if (v4l2_buf->m.planes[0].bytesused == 0) 
+    {
+        LOGINFO("%s conv output plane eos", name_.c_str());
+        return false;//代表结束
+    }
+
+    struct v4l2_buffer dec_capture_buffer;
+    struct v4l2_plane planes[MAX_PLANES];
+    memset(&dec_capture_buffer, 0, sizeof(dec_capture_buffer));
+    memset(planes, 0, sizeof(planes));
+    dec_capture_buffer.index = shared_buffer->index;
+    dec_capture_buffer.m.planes = planes;
+    
+    int ret = dec_->capture_plane.qBuffer(dec_capture_buffer, nullptr); 
+    if (ret < 0)
+    {
+        NV_DEC_ABORT();
+        return false;
+    }
+
+    conv_outp_queue_.push(buffer);
+
+    return true;
+}
+
+int32_t nv_video_dec::dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms)
+{
+    if (b_eos_ || b_error_) return INS_ERR;
+
+    if (dec_->isInError())
+    {
+        LOGERR("%s in error", name_.c_str());
+        b_error_ = true;
+        return INS_ERR;
+    }
+
+    memset(&v4l2_buf_, 0, sizeof(v4l2_buf_));
+    memset(planes_, 0, sizeof(planes_));
+    v4l2_buf_.m.planes = planes_;
+
+    if (out_plane_index_ < dec_->output_plane.getNumBuffers())
+    {
+        v4l2_buf_.index = out_plane_index_;
+        buff = dec_->output_plane.getNthBuffer(out_plane_index_);
+        out_plane_index_++;
+        return INS_OK;
+    }
+    else
+    {
+        auto ret = dec_->output_plane.dqBuffer(v4l2_buf_, &buff, nullptr, timeout_ms);
+        if (ret < 0)
+        {
+            if (errno == EAGAIN) return INS_ERR_TIME_OUT;
+            NV_DEC_ABORT();
+            return INS_ERR;
+        }
+        else
+        {
+            return INS_OK;
+        }
+    }
+}
+
+void nv_video_dec::queue_input_buff(NvBuffer* buff, int64_t pts)
+{
+    if (b_eos_ || b_error_) return;
+
+    if (buff == nullptr)  
+    {
+        v4l2_buf_.m.planes[0].bytesused = 0;
+    }
+    else
+    {
+        v4l2_buf_.timestamp.tv_sec = pts/1000000;
+        v4l2_buf_.timestamp.tv_usec = pts%1000000;
+        v4l2_buf_.flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+        v4l2_buf_.m.planes[0].bytesused = buff->planes[0].bytesused;
+    }
+
+    auto ret = dec_->output_plane.qBuffer(v4l2_buf_, nullptr);
+    if (ret < 0)
+    {
+        NV_DEC_ABORT();
+        return;
+    }
+
+    if (v4l2_buf_.m.planes[0].bytesused == 0)
+    {
+        //dequeue all output buffer when eos
+        struct v4l2_buffer v4l2_buf;
+        struct v4l2_plane planes[MAX_PLANES];
+        while (dec_->output_plane.getNumQueuedBuffers() > 0 && !dec_->isInError())
+        {
+            memset(&v4l2_buf, 0, sizeof(v4l2_buf));
+            memset(planes, 0, sizeof(planes));
+            v4l2_buf.m.planes = planes;
+
+            ret = dec_->output_plane.dqBuffer(v4l2_buf, nullptr, nullptr, -1);
+            if (ret < 0)
+            {
+                NV_DEC_ABORT();
+                break;
+            }
+        }
+
+        b_eos_ = true;
+        LOGINFO("%s output plane send eos", name_.c_str());
+    }
+}
+
+// void nv_video_dec::input_send_eos()
+// {
+//     NvBuffer* buff = nullptr;
+//     if (INS_OK == dequeue_input_buff(buff, -1))
+//     {
+//         queue_input_buff(nullptr);
+//     }
+// }
+
+int32_t nv_video_dec::dequeue_output_buff(NvBuffer* &buff, int64_t& pts, uint32_t timeout_ms)
+{
+    if (b_error_ || b_conv_eos_) return INS_ERR;
+
+    if (conv_->isInError())
+    {
+        LOGERR("%s in error", name_.c_str());
+        b_error_ = true;
+        return INS_ERR;
+    }
+
+    memset(&v4l2_buf_conv_cap_, 0, sizeof(v4l2_buf_conv_cap_));
+    memset(planes_conv_cap_, 0, sizeof(planes_conv_cap_));
+    v4l2_buf_conv_cap_.m.planes = planes_conv_cap_;
+    v4l2_buf_conv_cap_.length = 3;
+
+    auto ret = conv_->capture_plane.dqBuffer(v4l2_buf_conv_cap_, &buff, nullptr, timeout_ms);
+    if (ret < 0)
+    {
+        NV_DEC_ABORT();
+        return INS_ERR;
+    }
+    else
+    {
+        if (v4l2_buf_conv_cap_.m.planes[0].bytesused == 0)
+        {
+            b_conv_eos_ = true;
+            LOGINFO("%s conv capture plane eos", name_.c_str());
+        }
+        pts = v4l2_buf_conv_cap_.timestamp.tv_sec*1000000 + v4l2_buf_conv_cap_.timestamp.tv_usec;
+        return INS_OK;
+    }
+}
+
+void nv_video_dec::queue_output_buff(NvBuffer* buff)
+{
+    if (b_error_ || b_conv_eos_) return;
+
+    auto ret = conv_->capture_plane.qBuffer(v4l2_buf_conv_cap_, nullptr);
+    if (ret < 0)
+    {
+        NV_DEC_ABORT();
+    }
+}
+
+
+
+// bool nv_video_dec::conv_capture_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer *buffer, NvBuffer *shared_buffer)
+// {
+//     if (v4l2_buf == nullptr)
+//     {
+//         NV_DEC_ABORT();
+//         return false;
+//     }
+
+//     if (v4l2_buf->m.planes[0].bytesused == 0) return false;
+
+//     //do something
+
+//     int ret = conv_->capture_plane.qBuffer(*v4l2_buf, nullptr);
+//     if (ret < 0)
+//     {
+//         NV_DEC_ABORT();
+//         return false;
+//     }
+
+//     return true;
+// }
+
+

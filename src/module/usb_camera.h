@@ -21,16 +21,21 @@ struct amba_frame_info;
 
 #define RECV_PIC_TIMEOUT 20000
 
-class usb_camera
-{
+/*
+ * usb_camera - USB模组
+ */
+class usb_camera {
+
 public:
-	usb_camera(uint32_t pid, uint32_t index) : pid_(pid) , index_(index) 
-	{ 
-		pool_ = std::make_shared<obj_pool<ins_frame>>(-1, "usb frame");
-		th_cmd_read_ = std::thread(&usb_camera::read_cmd_task, this);
-	};
-	~usb_camera() { close(); };
-	void close();
+
+			usb_camera(uint32_t pid, uint32_t index) : pid_(pid) , index_(index) { 
+				pool_ = std::make_shared<obj_pool<ins_frame>>(-1, "usb frame");
+				th_cmd_read_ = std::thread(&usb_camera::read_cmd_task, this);
+			};
+
+			~usb_camera() { close(); };
+
+	void 	close();
 	int32_t exception() { return exception_; };
 	int32_t set_camera_time();
 	int32_t get_camera_time(int32_t& delta_time);
@@ -79,11 +84,12 @@ public:
 	static std::atomic_llong base_ref_pts_;
 
 private:
-	void clear_rec_context();
-	void read_cmd_task();
-	int32_t read_cmd_rsp(int32_t timeout, int32_t cmd = -1);
-	int32_t read_cmd(int32_t timeout);
-	int32_t send_cmd(uint32_t cmd, std::string content = "");
+	void 		clear_rec_context();
+	void 		read_cmd_task();
+	int32_t 	read_cmd_rsp(int32_t timeout, int32_t cmd = -1);
+	int32_t 	read_cmd(int32_t timeout);
+	int32_t 	send_cmd(uint32_t cmd, std::string content = "");
+
 	void queue_video(const std::shared_ptr<page_buffer>& buff, uint8_t frametype, int64_t timestamp, uint32_t sequence, uint32_t extra_size);
 	void enque_pic(const std::shared_ptr<page_buffer>& buff, int64_t timestamp, uint32_t sequence, uint32_t extra_size);
 	void queue_pic_raw(const std::shared_ptr<insbuff>& buff, int32_t sequece, bool b_end, int64_t timestamp);
@@ -103,10 +109,10 @@ private:
 	void send_rec_over_msg(int32_t errcode) const;
 	void send_pic_origin_over() const;
 	void send_timelapse_pic_take(uint32_t sequence) const;
-	void send_storage_state(std::string state) const;
+	void 		send_storage_state(std::string state) const;
 	void send_first_frame_ts(int32_t rec_seq, int64_t ts) const;
-	void send_video_fragment_msg(int32_t frament_index) const;
-	void send_vig_min_value_change_msg() const;
+	void 		send_video_fragment_msg(int32_t frament_index) const;
+	void 		send_vig_min_value_change_msg() const;
 	int32_t set_image_property(std::string property,int32_t value);
 	int32_t set_param(std::string property, int32_t value);
 	int32_t req_retransmit(bool read_pre_data);
@@ -114,32 +120,35 @@ private:
 	void print_fps_info();
 	bool is_exception_cmd(int32_t cmd);
 
-	std::mutex mtx_send_; //发送数据锁
-	std::mutex mtx_pic_;
-	//std::thread th_data_read_;
-	std::future<int32_t> f_data_read_;
-	std::future<int32_t> f_magmeter_cal_;
-	std::thread th_cmd_read_;
-	std::deque<std::shared_ptr<ins_frame>> pic_queue_;
-	std::shared_ptr<insbuff> ppsItem;
-	std::shared_ptr<insbuff> spsItem;
-	std::deque<std::shared_ptr<insbuff>> raw_buff_;
-	std::shared_ptr<insbuff> buff_; //using for somthing else, temp
-	uint32_t pid_ = -1;
-	uint32_t index_ = -1;
-	bool is_recording_ = false;
-	bool is_data_thread_quit_ = true;
-	bool quit_ = false;
-	bool mag_cal_quit_ = false;
-	uint32_t last_seq_ = 0;
-	bool wait_idr_ = false;
-	int64_t delta_pts_ = INS_PTS_NO_VALUE; //delta time between six module
-	std::shared_ptr<cam_video_buff_i> video_buff_;
-	std::shared_ptr<cam_img_repo> img_repo_;
-	int32_t send_cmd_ = -1;
-	std::unordered_map<uint32_t, int32_t> cmd_rsp_map_;
-	std::mutex mtx_cmd_rsp_;
-	std::string cmd_result_; //json, data content
+	std::mutex 								mtx_send_; //发送数据锁
+	std::mutex 								mtx_pic_;
+	// std::thread 							th_data_read_;
+	std::future<int32_t> 					f_data_read_;
+	std::future<int32_t> 					f_magmeter_cal_;
+	std::thread 							th_cmd_read_;
+	std::deque<std::shared_ptr<ins_frame>> 	pic_queue_;
+	std::shared_ptr<insbuff> 				ppsItem;
+	std::shared_ptr<insbuff> 				spsItem;
+	std::deque<std::shared_ptr<insbuff>> 	raw_buff_;
+	std::shared_ptr<insbuff> 				buff_; //using for somthing else, temp
+	uint32_t 								pid_ = -1;
+	uint32_t 								index_ = -1;
+	bool 									is_recording_ = false;
+	bool 									is_data_thread_quit_ = true;
+	bool 									quit_ = false;
+	bool 									mag_cal_quit_ = false;
+	uint32_t 								last_seq_ = 0;
+	bool 									wait_idr_ = false;
+	int64_t 								delta_pts_ = INS_PTS_NO_VALUE; //delta time between six module
+	std::shared_ptr<cam_video_buff_i> 		video_buff_;
+	std::shared_ptr<cam_img_repo> 			img_repo_;
+
+	int32_t 								send_cmd_ = -1;	/* 当前正在发送的命令 */
+	
+	std::unordered_map<uint32_t, int32_t> 	cmd_rsp_map_;
+	std::mutex 								mtx_cmd_rsp_;
+	std::string 							cmd_result_; // json, data content
+	
 	double fps_ = 30;
 	int32_t delta_time_cur_ = 0; //delta time between tx1 and a12
 	int32_t delta_time_new_ = 0; //delta time between tx1 and a12
@@ -157,15 +166,15 @@ private:
 	int64_t start_pts_ = INS_PTS_NO_VALUE;
 	std::shared_ptr<obj_pool<ins_frame>> pool_;
 	std::shared_ptr<insbuff> gyro_buff_;
-	struct timeval tm_module_end_;
-	int32_t exception_ = INS_OK; //作为异常的标记表示退出
-	bool b_record_ = false;
-	int32_t rec_seq_ = -1;
-	uint64_t temp_cnt_ = 0;
+	struct timeval 		tm_module_end_;
+	int32_t 			exception_ = INS_OK; //作为异常的标记表示退出
+	bool 				b_record_ = false;
+	int32_t 			rec_seq_ = -1;
+	uint64_t 			temp_cnt_ = 0;
 
-	int32_t cnt = -1;
-	struct timeval start_time;
-	struct timeval end_time;
+	int32_t 			cnt = -1;
+	struct timeval 		start_time;
+	struct timeval 		end_time;
 };
 
 #endif

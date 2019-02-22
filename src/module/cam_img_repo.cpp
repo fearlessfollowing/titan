@@ -7,23 +7,21 @@
 #include "pic_seq_sink.h"
 #include "stream_sink.h"
 
+
 void cam_img_repo::queue_frame(uint32_t index, const std::shared_ptr<ins_frame>& frame)
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    if (frame->metadata.raw) //raw/jpeg队列分开
-    {
+    if (frame->metadata.raw) {   // raw/jpeg队列分开
         do_queue_frame(index, frame, single_queue_raw_);
-    }
-    else
-    {
+    } else {
         do_queue_frame(index, frame, single_queue_);
     }
 }
 
 void cam_img_repo::do_queue_frame(uint32_t index, 
-    const std::shared_ptr<ins_frame>& frame, 
-    std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>>& queue)
+                                    const std::shared_ptr<ins_frame>& frame, 
+                                    std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>>& queue)
 {
     auto it = queue.find(index);
     if (it == queue.end())
@@ -80,25 +78,20 @@ void cam_img_repo::out_sync_queue(std::map<uint32_t, std::shared_ptr<ins_frame>>
 std::map<uint32_t, std::shared_ptr<ins_frame>> cam_img_repo::dequeue_frame()
 {
     std::lock_guard<std::mutex> lock(mtx_);
-
     std::map<uint32_t, std::shared_ptr<ins_frame>> group;
 
-    if (!queue_.empty()) 
-    {
+    if (!queue_.empty()) {
         group = queue_.front();
         queue_.pop_front();
     }
-
     return group;
 }
 
 void cam_img_repo::output(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame)
 {
-    for (auto it = sink_.begin(); it != sink_.end(); it++)
-    {
+    for (auto it = sink_.begin(); it != sink_.end(); it++) {
         auto f_it = m_frame.find(it->first);
-        if (f_it != m_frame.end())
-        {
+        if (f_it != m_frame.end()) {
             it->second->queue_frame(f_it->second);
         }
     }
@@ -107,10 +100,8 @@ void cam_img_repo::output(const std::map<uint32_t, std::shared_ptr<ins_frame>>& 
 void cam_img_repo::acquire_gps_info(std::map<uint32_t, std::shared_ptr<ins_frame>>& group)
 {   
     auto gps = gps_mgr::get()->get_gps(group.begin()->second->pts);
-    if (gps)
-    {
-        for (auto& it : group)
-        {
+    if (gps) {
+        for (auto& it : group) {
             it.second->metadata.b_gps = true;
             it.second->metadata.gps = *(gps.get());
         }

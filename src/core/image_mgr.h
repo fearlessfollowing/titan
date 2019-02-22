@@ -15,8 +15,7 @@ class cam_img_repo;
 class usb_sink;
 class stabilization;
 
-class image_mgr
-{
+class image_mgr {
 public:
                             ~image_mgr();
     int32_t                 start(cam_manager* camera, const ins_picture_option& option, bool b_calibration = false);

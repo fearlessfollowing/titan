@@ -19,8 +19,7 @@ std::mutex cam_manager::mtx_;
 
 int32_t cam_manager::exception()
 {
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto ret = it.second->exception();
 		RETURN_IF_NOT_OK(ret);	
 	}
@@ -47,10 +46,9 @@ int cam_manager::power_off_all()
 
 	property_set("module.power", "off");
 
-	while (usb_device::get() && !usb_device::get()->is_all_close())
-	{
+	while (usb_device::get() && !usb_device::get()->is_all_close()) {
 		usleep(50*1000);
-		system("power_manager power_off");//调用一次power_off,usb可能掉不了电,会卡死在这,故每次循环都调用一次
+		system("power_manager power_off");	// 调用一次power_off,usb可能掉不了电,会卡死在这,故每次循环都调用一次
 	}
 
 	usb_device::destroy();
@@ -90,16 +88,13 @@ cam_manager::cam_manager()
 	// {
 	// 	LOGINFO("pid config invalid, use dafault");
 		pid_.clear();
-		for (unsigned int i = 0; i < cam_num_; i++)
-		{
-			pid_.push_back(cam_num_-i);
+		for (unsigned int i = 0; i < cam_num_; i++) {
+			pid_.push_back(cam_num_ - i);
 		}
 	//}
 
-	for (unsigned int i = 0; i < pid_.size(); i++)
-	{
-		if (pid_[i] == MASTER_PID)
-		{
+	for (unsigned int i = 0; i < pid_.size(); i++) {
+		if (pid_[i] == MASTER_PID) {
 			master_index_ = i;
 			break;
 		}
@@ -107,6 +102,7 @@ cam_manager::cam_manager()
 
 	//LOGINFO("cam_manager pid:%x %x %x %x %x %x master index:%d", pid_[0], pid_[1],pid_[2],pid_[3],pid_[4],pid_[5], master_index_);
 }
+
 
 bool cam_manager::is_all_open()
 {
@@ -121,8 +117,7 @@ bool cam_manager::is_all_close()
 int cam_manager::open_all_cam()
 {
 	std::vector<unsigned int> index;
-	for (unsigned int i = 0; i < cam_num_; i++)
-	{
+	for (unsigned int i = 0; i < cam_num_; i++) {
 		index.push_back(i);
 	}
 
@@ -132,13 +127,10 @@ int cam_manager::open_all_cam()
 int cam_manager::open_cam(std::vector<unsigned int>& index)
 {
 	int ret = do_open_cam(index);
-	if (ret != INS_OK)
-	{
+	if (ret != INS_OK) {
 		close_all_cam();
 		return INS_ERR_CAMERA_OPEN;
-	}
-	else
-	{
+	} else {
 		return INS_OK;
 	}
 }
@@ -147,50 +139,44 @@ int cam_manager::do_open_cam(std::vector<unsigned int>& index)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 
-	if (!map_cam_.empty())
-	{
+	if (!map_cam_.empty()) {
 		LOGERR("camera have been open");
 		return INS_ERR;
 	}
 
-	for (unsigned int i = 0; i < index.size(); i++)
-	{
+	for (unsigned int i = 0; i < index.size(); i++) {
 		if (index[i] >= cam_num_) return INS_ERR;
 	}
 
-	//wait A12 power on
+	// wait A12 power on
 	bool b_all_open = true;
 	int loop_cnt = 400;
-	while (--loop_cnt > 0)
-	{
+
+	while (--loop_cnt > 0) {
 		b_all_open = true;
-		for (unsigned int i = 0; i < index.size(); i++)
-		{
-			if (!usb_device::get()->is_open(pid_[index[i]]))
-			{
+		for (unsigned int i = 0; i < index.size(); i++) {
+			if (!usb_device::get()->is_open(pid_[index[i]])) {
 				b_all_open = false; 
 				break;
 			}
 		}
 
-		if (b_all_open) break;
-		else usleep(50*1000);
+		if (b_all_open) 
+			break;
+		else 
+			usleep(50*1000);
 	}
 
-	if (!b_all_open)
-	{
+	if (!b_all_open) {
 		LOGERR("not all camera open");
 		return INS_ERR;
-	}
-	else
-	{
+	} else {
 		LOGINFO("all camera open");
 	}
 
-	usleep(1000*1000); //wait A12 init ...
+	usleep(1000*1000); // wait A12 init ...
 
-	for (unsigned int i = 0; i < index.size(); i++)
-	{
+	for (unsigned int i = 0; i < index.size(); i++) {
 		auto cam = std::make_shared<usb_camera>(pid_[index[i]], index[i]);
 		map_cam_.insert(std::make_pair(index[i], cam));
 	}
@@ -203,7 +189,8 @@ int cam_manager::do_open_cam(std::vector<unsigned int>& index)
 
 	//设置N/P制,模组起来默认是P制, 0=PAL 1=NTSC
 	auto flicker = camera_info::get_flicker();
-	if (!flicker) set_all_options("flicker", flicker);
+	if (!flicker) 
+		set_all_options("flicker", flicker);
 
 	return INS_OK;
 }
@@ -212,8 +199,7 @@ void cam_manager::close_all_cam()
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		it.second->close();
 	}
 
@@ -577,21 +563,18 @@ int32_t cam_manager::set_all_capture_mode(uint32_t mode)
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto r = it->second->set_capture_mode(mode);
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto f = it->second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
@@ -629,72 +612,68 @@ std::future<int32_t> cam_manager::start_all_still_capture(const cam_photo_param&
 	return std::async(std::launch::async, &cam_manager::still_capture_task, this, param, img_repo);
 }
 
+
 int32_t cam_manager::still_capture_task(const cam_photo_param& param, std::shared_ptr<cam_img_repo> img_repo)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
-	//由于A12系统时间不准，每次录像前对一次时
-	for (auto& it : map_cam_)
-	{
+	/* 1.设置模组的系统时间(由于A12系统时间不准，每次录像前对一次时) */
+	for (auto& it : map_cam_) {	/* 设置模组时间失败,直接返回 */
 		ret = it.second->set_camera_time();
 		RETURN_IF_NOT_OK(ret);
 	}
 
-	for (auto& it : map_cam_)
-	{
+	/* 2.设置拍照参数 */
+	for (auto& it : map_cam_) {
 		auto r = it.second->set_photo_param(param);
 		if (r != INS_OK) ret = r;
 	}	
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
 
 	RETURN_IF_NOT_OK(ret);
 
-	for (auto& it : map_cam_)
-	{
+	/* 3.发送拍照命令 */
+	for (auto& it : map_cam_) {
 		auto r = it.second->start_still_capture(param, img_repo);
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
 	}
 	
 	std::map<uint32_t, std::future<int32_t>> map_f;
 	std::string s_unspeed_pid;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		map_f.insert(std::make_pair(it.first, std::move(f)));
 	}
 
-	for (auto& it : map_f)
-	{
+	for (auto& it : map_f) {
 		auto r = it.second.get();
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
-		if (r == INS_ERR_M_UNSPEED_STORAGE) 
-		{
-			if (s_unspeed_pid != "") s_unspeed_pid += "_";
+		if (r == INS_ERR_M_UNSPEED_STORAGE) {
+			if (s_unspeed_pid != "") 
+				s_unspeed_pid += "_";
 			s_unspeed_pid += std::to_string(pid_[it.first]);
 		}
 	}
 
-	if (s_unspeed_pid != "")
-	{
+	if (s_unspeed_pid != "") {
 		property_set("module.unspeed", s_unspeed_pid);
 		LOGINFO("set module.unspeed = %s", s_unspeed_pid.c_str());
 	}
 
 	return ret;
 }
+
 
 int cam_manager::set_options(int index, std::string property, int value, int value2)
 {

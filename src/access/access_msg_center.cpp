@@ -2526,9 +2526,13 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
 
 	/* 如果APP没有设置过时间,那么设置时间为GPS的时间 */
 	if (source == "gps" && timestamp && state_ == CAM_STATE_IDLE && !camera_info::is_sync_time()) {
+		
 		time_t t_time = timestamp;
         struct tm *tm_time = localtime(&timestamp);
 		std::stringstream ss;
+		std::string back_tz = property_get("sys.timezone");
+
+		
 		ss << "date -s \"" 
 		    << tm_time->tm_year + 1900 << "-"
 			<< tm_time->tm_mon + 1 << "-"
@@ -2550,10 +2554,9 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
 		camera_info::sync_time();
 	}
 	
-	if (source == "") //表示是APP设置时间 
-	{
-		camera_info::sync_time(); //APP设置时间,要标记
-		sender_->send_rsp_msg(sequence, INS_OK, cmd); //自己设置时间不用回复消息
+	if (source == "") {		// 表示是APP设置时间 
+		camera_info::sync_time(); 						// APP设置时间,要标记
+		sender_->send_rsp_msg(sequence, INS_OK, cmd); 	// 自己设置时间不用回复消息
 	}
 }
 
@@ -2567,12 +2570,9 @@ int access_msg_center::open_camera(int index)
 
 	camera_ = std::make_shared<cam_manager>();
 	int ret = INS_OK;
-	if (index == INS_CAM_ALL_INDEX)
-	{
+	if (index == INS_CAM_ALL_INDEX) {
 		ret = camera_->open_all_cam();
-	}
-	else if (index == INS_CAM_MASTER_INDEX)
-	{
+	} else if (index == INS_CAM_MASTER_INDEX) {
 		std::vector<unsigned int> v_index;
 		v_index.push_back(camera_->master_index());
 		ret = camera_->open_cam(v_index);

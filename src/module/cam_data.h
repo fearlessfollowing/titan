@@ -26,30 +26,32 @@ struct cam_video_param
 	std::string file_url;
 };
 
-struct cam_photo_param
-{
-	std::string type = "photo";
-	std::string mime = "jpeg";
-	int32_t width = 0;
-	int32_t height = 0;
-	bool b_usb_raw = false; 
-	bool b_usb_jpeg = false; 
-	bool b_file_raw = false;
-	bool b_file_jpeg = false;
-	//bool b_file_stream = false;
-	std::string file_url;
 
-	int32_t sequence = 0; //used in timelapse
-	int32_t interval = 0; //ms timelapse
-	int32_t count = 1; //burst/hdr
-	int32_t min_ev = 32; // used in hdr
-	int32_t max_ev = 32; // used in hdr
+/*
+ * cam_photo_param - 拍照参数
+ */
+struct cam_photo_param {
+	std::string 	type = "photo";
+	std::string 	mime = "jpeg";
+	int32_t 		width = 0;
+	int32_t 		height = 0;
+	bool 			b_usb_raw = false; 
+	bool 			b_usb_jpeg = false; 
+	bool 			b_file_raw = false;
+	bool 			b_file_jpeg = false;
+	//bool b_file_stream = false;
+	std::string 	file_url;
+
+	int32_t 		sequence = 0; //used in timelapse
+	int32_t 		interval = 0; //ms timelapse
+	int32_t 		count = 1; //burst/hdr
+	int32_t 		min_ev = 32; // used in hdr
+	int32_t 		max_ev = 32; // used in hdr
 };
 
 #define AMBA_INVALID_PROPERTY 0x0fffffff
 
-struct cam_image_property
-{
+struct cam_image_property {
 	std::string property;
 	int32_t value;
 };

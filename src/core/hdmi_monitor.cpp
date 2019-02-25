@@ -11,6 +11,7 @@
 
 std::atomic_bool hdmi_monitor::audio_init_(false);
 
+
 hdmi_monitor::~hdmi_monitor()
 {
     quit_ = true;
@@ -57,55 +58,45 @@ int32_t hdmi_monitor::start()
 //     LOGINFO("hdmi dev monitor exit");
 // }
 
+
 void hdmi_monitor::task()
 {
     auto fb = open("/dev/fb0", O_RDONLY);
-    if (fb < 0)
-    {
+    if (fb < 0) {
         LOGINFO("fb open fail"); 
         return;
     }
 
     int32_t w = 0, h = 0;
-    while (!quit_)
-    {
+    
+    while (!quit_) {
+
         struct fb_var_screeninfo fb_var;
-        if (ioctl(fb, FBIOGET_VSCREENINFO, &fb_var) < 0)
-        {
+        if (ioctl(fb, FBIOGET_VSCREENINFO, &fb_var) < 0) {
             LOGERR("ioctl FBIOGET_VSCREENINFO fail:%d %s", errno, strerror(errno));
-        }
-        else
-        {
-            if (w && h && (fb_var.xres != w || fb_var.yres != h))
-            {
+        } else {
+            if (w && h && (fb_var.xres != w || fb_var.yres != h)) {
                 LOGINFO("hdmi change w:%d h:%d", fb_var.xres, fb_var.yres);
                 audio_init_ = true;
-                if (video_composer::in_hdmi_)
-                {
+                if (video_composer::in_hdmi_) {
                     video_composer::hdmi_change_ = true;
-                }
-                else
-                {
+                } else {
                     insx11::release_x();
                     insx11::setup_x(); 
                 }
             }
 
-            if (!audio_init_)
-            {
-                if (fb_var.xres != 640 || fb_var.yres != 480)
-                {
+            if (!audio_init_) {
+                if (fb_var.xres != 640 || fb_var.yres != 480) {
                     audio_init_ = true;
-                }
-                else 
-                {
+                } else  {
                     std::string cmd = "cat /sys/devices/virtual/switch/hdmi/state";
                     std::string state = ins_util::system_call_output(cmd);
-                    if (state == "1") audio_init_ = true;
+                    if (state == "1") 
+                        audio_init_ = true;
                 }
                 
-                if (audio_init_)
-                {
+                if (audio_init_) {
                     LOGINFO("-----hdmi audio init");
                 }
             }

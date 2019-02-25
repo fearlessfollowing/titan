@@ -24,8 +24,7 @@ int32_t audio_record::start()
 {
     LOGINFO("start capture audio");
 
-    if (access(INS_NOISE_SAMPLE_PATH, 0))
-	{
+    if (access(INS_NOISE_SAMPLE_PATH, 0)) {
 		mkdir(INS_NOISE_SAMPLE_PATH, 0755);
 	}
 
@@ -37,12 +36,13 @@ int32_t audio_record::start()
     return INS_OK;
 }
 
+
 void audio_record::task()
 {
-    //录制有风扇时候的声音
+    /* 录制有风扇时候的声音 */
     hw_util::switch_fan(true);
 
-    sleep_seconds(3);//风扇开启到完全转动起来需要时间
+    sleep_seconds(3);   //风扇开启到完全转动起来需要时间
 
     //arecord -Dhw:1,1 -f dat -d ${RECORD_DURATION} ${IN1P_RECORD_FILE}
     
@@ -61,10 +61,10 @@ void audio_record::task()
 
     if (quit_) return;
 
-    //录制无风扇时候的声音
+    /* 录制无风扇时候的声音 */
     hw_util::switch_fan(false);
 
-    sleep_seconds(4); //风扇停止转动需要时间
+    sleep_seconds(4);   /* 风扇停止转动需要时间 */
 
     if (quit_) return;
 

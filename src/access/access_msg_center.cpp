@@ -213,27 +213,30 @@ int access_msg_center::setup()
 	};
 	t_monitor_ = std::make_shared<temp_monitor>(temp_cb);
 
+	/*
+	 * 创建并启动音频设备监听线程
+	 */
 	snd_monitor_ = std::make_shared<audio_dev_monitor>();
 	snd_monitor_->start();
 	
+	/*
+	 * HDMI监控线程
+	 */
 	hdmi_monitor_ = std::make_shared<hdmi_monitor>();
 	hdmi_monitor_->start();
 
 	return INS_OK;
 }
  
+
 void access_msg_center::handle_msg(const std::shared_ptr<access_msg_buff> msg)
 {
 	std::string cmd = msg_parser_.parse_cmd_name(msg->content);
-	if (handler_.count(cmd) <= 0)
-	{
+	if (handler_.count(cmd) <= 0) {
 		LOGINFO("unsupport cmd:%s", cmd.c_str());
 		sender_->send_rsp_msg(msg->sequence, INS_ERR_INVALID_MSG_FMT, cmd);
-	}
-	else
-	{
-		if (cmd != ACCESS_CMD_S_QUERY_TASK_LIST) //轮询消息不打印
-		{
+	} else {
+		if (cmd != ACCESS_CMD_S_QUERY_TASK_LIST) {	// 轮询消息不打印
 			LOGINFO("[----MESSAGE----] seq:%d %s", msg->sequence, msg->content);
 		}
 		handler_[cmd](msg->content, cmd, msg->sequence);
@@ -253,12 +256,9 @@ void access_msg_center::internal_stop_rec_finish(const char* msg, std::string cm
 	auto root_obj = std::make_shared<json_obj>(msg);
 	root_obj->get_int("code", ret);
 
-	if (state_ & CAM_STATE_STOP_RECORD)
-	{
+	if (state_ & CAM_STATE_STOP_RECORD) {
 		sender_->send_ind_msg(ACCESS_CMD_RECORD_FINISH_, ret);
-	}
-	else
-	{
+	} else {
 		LOGERR("revc internal_stop_rec_finish but not in stop rec state");
 	}
 
@@ -273,26 +273,18 @@ void access_msg_center::internal_stop_live_finish(const char* msg, std::string c
 	auto root_obj = std::make_shared<json_obj>(msg);
 	root_obj->get_int("code", ret);
 
-	if (state_ & CAM_STATE_STOP_LIVE)
-	{
+	if (state_ & CAM_STATE_STOP_LIVE) {
 		sender_->send_ind_msg(ACCESS_CMD_LIVE_FINISH_, ret);
 		state_ &= ~CAM_STATE_STOP_LIVE;
 		b_need_stop_live_ = false;
-	}
-	else if (state_ & CAM_STATE_LIVE)
-	{
+	} else if (state_ & CAM_STATE_LIVE) {
 		b_stop_live_rec_ = false;
-		if (b_need_stop_live_)
-		{
+		if (b_need_stop_live_) {
 			do_stop_live(ret, false);
-		}
-		else
-		{
+		} else {
 			sender_->send_ind_msg(ACCESS_CMD_LIVE_REC_FINISH_, ret);
 		}
-	}
-	else
-	{
+	} else {
 		LOGERR("revc internal_stop_live_finish but not in stop live state");
 	}
 }
@@ -305,30 +297,20 @@ void access_msg_center::internal_sink_finish(const char* msg, std::string cmd, i
 	root_obj->get_int("code", ret);
 	root_obj->get_boolean("preview", b_preview);
 
-	if (b_preview)
-	{
-		if (state_ & CAM_STATE_PREVIEW)
-		{
+	if (b_preview) {
+		if (state_ & CAM_STATE_PREVIEW) {
 			do_stop_preview(); //暂时同步处理,后续修改为异步处理
 			sender_->send_ind_msg(ACCESS_CMD_PREVIEW_FINISH_, ret);
 		}
-	}
-	else
-	{
-		if (state_ & CAM_STATE_RECORD)
-		{
+	} else {
+		if (state_ & CAM_STATE_RECORD) {
 			do_stop_record(ret);
-		}
-		else if (state_ & CAM_STATE_LIVE)
-		{
+		} else if (state_ & CAM_STATE_LIVE) {
 			bool b_stop_rec = false;
 			if (ret == INS_ERR_NO_STORAGE_SPACE || ret == INS_ERR_UNSPEED_STORAGE) b_stop_rec = true;
 			do_stop_live(ret, b_stop_rec);
-		}
-		else if (state_ == CAM_STATE_PREVIEW) 
-		{
-			if (ret == INS_ERR_MICPHONE_EXCEPTION) 
-			{
+		} else if (state_ == CAM_STATE_PREVIEW) {
+			if (ret == INS_ERR_MICPHONE_EXCEPTION) {
 				bool dev_gone = false;
 				root_obj->get_boolean("dev_gone", dev_gone);
 				if (dev_gone) return; //如果是设备不见了，那么会收到设备更改消息，在那里处理这里不用处理
@@ -340,6 +322,7 @@ void access_msg_center::internal_sink_finish(const char* msg, std::string cmd, i
 	}
 }
 
+
 void access_msg_center::internal_reset(const char* msg, std::string cmd, int sequence)
 {
 	//if (video_mgr_) video_mgr_->close_all_sink();
@@ -349,13 +332,26 @@ void access_msg_center::internal_reset(const char* msg, std::string cmd, int seq
 	auto param_obj = root_obj->get_obj(ACCESS_MSG_PARAM);
 	if (param_obj) param_obj->get_int("code", ret);
 
-	if (state_ & CAM_STATE_PREVIEW) sender_->send_ind_msg(ACCESS_CMD_PREVIEW_FINISH_, ret);
-	if (state_ & CAM_STATE_RECORD || state_ & CAM_STATE_STOP_RECORD) sender_->send_ind_msg(ACCESS_CMD_RECORD_FINISH_, ret);
-	if (state_ & CAM_STATE_LIVE || state_ & CAM_STATE_STOP_LIVE) sender_->send_ind_msg(ACCESS_CMD_LIVE_FINISH_, ret);
-	if (state_ & CAM_STATE_PIC_SHOOT || state_ & CAM_STATE_PIC_PROCESS) sender_->send_ind_msg(ACCESS_CMD_PIC_FINISH_, ret);
-	if (state_ & CAM_STATE_QRCODE_SCAN) sender_->send_ind_msg(ACCESS_CMD_QR_SCAN_FINISH_, ret);
-	if (state_ & CAM_STATE_GYRO_CALIBRATION) sender_->send_ind_msg(ACCESS_CMD_GYRO_CAL_FINISH_, ret);
-	if (state_ & CAM_STATE_CALIBRATION) sender_->send_ind_msg(ACCESS_CMD_CALIBRATION, ret);
+	if (state_ & CAM_STATE_PREVIEW) 
+		sender_->send_ind_msg(ACCESS_CMD_PREVIEW_FINISH_, ret);
+	
+	if (state_ & CAM_STATE_RECORD || state_ & CAM_STATE_STOP_RECORD) 
+		sender_->send_ind_msg(ACCESS_CMD_RECORD_FINISH_, ret);
+	
+	if (state_ & CAM_STATE_LIVE || state_ & CAM_STATE_STOP_LIVE) 
+		sender_->send_ind_msg(ACCESS_CMD_LIVE_FINISH_, ret);
+	
+	if (state_ & CAM_STATE_PIC_SHOOT || state_ & CAM_STATE_PIC_PROCESS) 
+		sender_->send_ind_msg(ACCESS_CMD_PIC_FINISH_, ret);
+	
+	if (state_ & CAM_STATE_QRCODE_SCAN) 
+		sender_->send_ind_msg(ACCESS_CMD_QR_SCAN_FINISH_, ret);
+	
+	if (state_ & CAM_STATE_GYRO_CALIBRATION) 
+		sender_->send_ind_msg(ACCESS_CMD_GYRO_CAL_FINISH_, ret);
+	
+	if (state_ & CAM_STATE_CALIBRATION) 
+		sender_->send_ind_msg(ACCESS_CMD_CALIBRATION, ret);
 
 	usleep(100*1000);
 	
@@ -376,19 +372,18 @@ void access_msg_center::internal_snd_dev_change(const char* msg, std::string cmd
 	json_obj root_obj(msg);
 	root_obj.get_int("dev", dev);
 
-	if (dev_cur != INS_SND_TYPE_NONE && dev != dev_cur)
-	{
+	if (dev_cur != INS_SND_TYPE_NONE && dev != dev_cur) {
 		do_camera_operation_stop(true);   
-	}   
-	else
-	{
+	} else {
 		LOGINFO("no need change snd device");
 	}
 }
 
 void access_msg_center::internal_first_frame_ts(const char* msg, std::string cmd, int sequence)
 {
-	if (video_mgr_ == nullptr) return;
+	if (video_mgr_ == nullptr) 
+		return;
+	
 	int64_t ts = 0;
 	int32_t rec_seq = -1;
 	json_obj root_obj(msg);
@@ -399,7 +394,9 @@ void access_msg_center::internal_first_frame_ts(const char* msg, std::string cmd
 
 void access_msg_center::internal_video_fragment(const char* msg, std::string cmd, int sequence)
 {
-	if (video_mgr_ == nullptr) return;
+	if (video_mgr_ == nullptr) 
+		return;
+	
 	int32_t seq = 0;
 	json_obj root_obj(msg);
 	root_obj.get_int("sequence", seq);
@@ -408,21 +405,19 @@ void access_msg_center::internal_video_fragment(const char* msg, std::string cmd
 
 void access_msg_center::internal_vig_min_change(const char* msg, std::string cmd, int sequence)
 {
-	if (camera_ == nullptr) return;
+	if (camera_ == nullptr) 
+		return;
 
 	camera_->vig_min_change();
 }
 
 void access_msg_center::internal_pic_origin_finish(const char* msg, std::string cmd, int sequence)
 {
-	if (state_ & CAM_STATE_PIC_SHOOT)
-	{
+	if (state_ & CAM_STATE_PIC_SHOOT) {
 		sender_->send_ind_msg(ACCESS_CMD_PIC_ORIGIN_FINISH_, INS_OK);
 		state_ &= ~CAM_STATE_PIC_SHOOT;
 		state_ |= CAM_STATE_PIC_PROCESS;
-	}
-	else if (state_ & CAM_STATE_CALIBRATION)
-	{
+	} else if (state_ & CAM_STATE_CALIBRATION) {
 		sender_->send_ind_msg(ACCESS_CMD_CALIBRATION_ORIGIN_FINISH_, INS_OK);
 	}
 }
@@ -431,8 +426,7 @@ void access_msg_center::internal_pic_finish(const char* msg, std::string cmd, in
 {
 	if (!(state_ & CAM_STATE_PIC_SHOOT 
 		|| state_ & CAM_STATE_PIC_PROCESS 
-		|| state_ & CAM_STATE_CALIBRATION))
-	{
+		|| state_ & CAM_STATE_CALIBRATION)) {
 		LOGERR("recv pic finish msg, but not in pic state");
 		return;
 	}
@@ -451,17 +445,13 @@ void access_msg_center::internal_pic_finish(const char* msg, std::string cmd, in
 
 	do_camera_operation_stop(true);
 
-	//等所有操作完成后再回响应，避免客户端快速进行其他操作容易造成模组异常
-	if (b_calibration)
-	{
+	// 等所有操作完成后再回响应，避免客户端快速进行其他操作容易造成模组异常
+	if (b_calibration) {
 		sender_->send_ind_msg(ACCESS_CMD_CALIBRATION_FINISH_, ret);
-	}
-	else
-	{
+	} else {
 		usleep(1000*1000);
 		json_obj res_obj;
-		if (ret == INS_OK)
-		{
+		if (ret == INS_OK) {
 			res_obj.set_string(ACCESS_MSG_OPT_PIC_URL, path);
 		}
 		sender_->send_ind_msg(ACCESS_CMD_PIC_FINISH_, ret, &res_obj);
@@ -476,12 +466,9 @@ void access_msg_center::get_option(const char* msg, std::string cmd, int sequenc
 	ret = msg_parser_.option_get_option(msg, property);
 	BREAK_IF_NOT_OK(ret);
 
-	if (property == ACCESS_MSG_OPT_MODULE_VERSION)
-	{	
+	if (property == ACCESS_MSG_OPT_MODULE_VERSION) {	
 		res_obj.set_string("value", camera_info::get_m_ver());
-	}
-	else if (property == ACCESS_MSG_OPT_IMGPARAM)
-	{
+	} else if (property == ACCESS_MSG_OPT_IMGPARAM) {
 		BREAK_IF_CAM_NOT_OPEN(INS_ERR_NOT_ALLOW_OP_IN_STATE);
 
 		std::string value;
@@ -489,69 +476,44 @@ void access_msg_center::get_option(const char* msg, std::string cmd, int sequenc
 		BREAK_IF_NOT_OK(ret);
 
 		res_obj.set_string("value", value);
-	}
-	else if (property == ACCESS_MSG_OPT_FLICKER)
-	{
+	} else if (property == ACCESS_MSG_OPT_FLICKER) {
 		res_obj.set_int("value", camera_info::get_flicker());
-	}
-	else if (property == ACCESS_MSG_OPT_VERSION)
-	{
+	} else if (property == ACCESS_MSG_OPT_VERSION) {
 		res_obj.set_string("value", camera_info::get_ver());
-	}
-	else if (property == ACCESS_MSG_OPT_STORAGE_PATH)
-	{
+	} else if (property == ACCESS_MSG_OPT_STORAGE_PATH) {
 		res_obj.set_string("value", msg_parser_.storage_path_);
-	}
-	else if (property == ACCESS_MSG_OPT_STABILIZATION)
-	{
+	} else if (property == ACCESS_MSG_OPT_STABILIZATION) {
 		bool value = false;
 		if (video_mgr_) value = video_mgr_->get_stablz_status();
 		res_obj.set_bool("value", value);
-	}
-	else if (property == ACCESS_MSG_OPT_FANLESS)
-	{
+	} else if (property == ACCESS_MSG_OPT_FANLESS) {
 		res_obj.set_bool("value", msg_parser_.b_fanless_);
-	}
-	else if (property == ACCESS_MSG_OPT_PANO_AUDIO)
-	{
+	} else if (property == ACCESS_MSG_OPT_PANO_AUDIO) {
 		int value = 0;
 		if (msg_parser_.b_pano_audio_) value++;
 		if (msg_parser_.b_audio_to_stitch_) value++;
 		res_obj.set_int("value", value);
-	}
-	else if (property == ACCESS_MSG_OPT_STABLIZATION_CFG)
-	{
+	} else if (property == ACCESS_MSG_OPT_STABLIZATION_CFG) {
 		res_obj.set_bool("value", msg_parser_.b_stab_rt_);
-	}
-	else if (property == ACCESS_MSG_OPT_STABLIZATION_TYPE)
-	{
+	} else if (property == ACCESS_MSG_OPT_STABLIZATION_TYPE) {
 		res_obj.set_int("value", camera_info::get_stablz_type());
-	}
-	else if (property == ACCESS_MSG_OPT_LOGO)
-	{
+	} else if (property == ACCESS_MSG_OPT_LOGO) {
 		res_obj.set_bool("value", msg_parser_.b_logo_on_);
-	}
-	else if (property == ACCESS_MSG_OPT_VIDEO_FRAGMENT)
-	{
+	} else if (property == ACCESS_MSG_OPT_VIDEO_FRAGMENT) {
 		int value = 1;
 		xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_VIDEO_FRAGMENT, value);
 		res_obj.set_int("value", value);
-	}
-	else if (property == ACCESS_MSG_OPT_BLC_STATE)
-	{
+	} else if (property == ACCESS_MSG_OPT_BLC_STATE) {
 		BREAK_IF_CAM_NOT_OPEN(INS_ERR_NOT_ALLOW_OP_IN_STATE);
 
 		std::string value;
 		ret  = camera_->get_options(camera_->master_index(), property, value);
 		BREAK_IF_NOT_OK(ret);
 		res_obj.set_string("value", value);
-	}
-	else if (property == ACCESS_MSG_OPT_DEPTH_MAP)
-	{	
+	} else if (property == ACCESS_MSG_OPT_DEPTH_MAP) {	
 		std::string depth_map_content;
 		std::ifstream fs(INS_DEPTH_MAP_FILE, std::ios::ate);
-		if (fs.is_open())
-		{
+		if (fs.is_open()) {
 			int32_t size = fs.tellg();
 			fs.seekg(0, std::ios::beg);
 			std::unique_ptr<char[]> buff(new char[size]());
@@ -559,16 +521,12 @@ void access_msg_center::get_option(const char* msg, std::string cmd, int sequenc
 			fs.close();
 			buff.get()[size-1] = 0; //最后一个换行符去掉
 			depth_map_content = buff.get();
-		}
-		else
-		{
+		} else {
 			LOGERR("file:%s open fail", INS_DEPTH_MAP_FILE);
 		}
 
 		res_obj.set_string("value", depth_map_content);
-	}
-	else if (property == ACCESS_MSG_OPT_SUPPORT_FUNCTION)
-	{
+	} else if (property == ACCESS_MSG_OPT_SUPPORT_FUNCTION) {
 		json_obj val_obj;
 
 		auto livefmt_array = json_obj::new_array();
@@ -589,18 +547,16 @@ void access_msg_center::get_option(const char* msg, std::string cmd, int sequenc
 		val_obj.set_bool("blc", true);
 		val_obj.set_bool("depthMap", true);
 		res_obj.set_obj("value", &val_obj);
-	}
-	else if (property == ACCESS_MSG_OPT_AUDIO_GAIN)
-	{
+	} else if (property == ACCESS_MSG_OPT_AUDIO_GAIN) {
 		res_obj.set_int("value", camera_info::get_volume());
 	}
+
 	// else if (property == ACCESS_MSG_OPT_IQTYPE)
 	// {
 	// 	std::string value = camera_info::get_iq_type() + "_" +  camera_info::get_iq_index();
 	// 	res_obj.set_string("value", value);
 	// }
-	else 
-	{
+	else {
 		LOGERR("get unsupport option:%s", property.c_str());
 		ret = INS_ERR_INVALID_MSG_PARAM;
 	}
@@ -613,75 +569,56 @@ void access_msg_center::get_option(const char* msg, std::string cmd, int sequenc
 int access_msg_center::set_one_option(std::string property, int value, const std::string& value2)
 {
 	int ret = INS_OK;
-	if (property == ACCESS_MSG_OPT_STABILIZATION)
-	{
+
+	if (property == ACCESS_MSG_OPT_STABILIZATION) {
 		if (video_mgr_) video_mgr_->switch_stablz(value);
 		state_mgr_.preview_opt_.b_stabilization = value;
-	}
-	else if (property == ACCESS_MSG_OPT_AUDIO_GAIN)
-	{
+	} else if (property == ACCESS_MSG_OPT_AUDIO_GAIN) {
 		ret = camera_info::set_volume(value); 
-	}
-	else if (property == "aaa_mode" 
-		|| property == "wb" 
-		|| property == "iso_value" 
-		|| property == "shutter_value" 
-		|| property == "brightness"
-		|| property == "contrast" 
-		|| property == "saturation" 
-		|| property == "hue" 
-		|| property == "sharpness" 
-		|| property == "ev_bias" 
-		|| property == "ae_meter"
-		|| property == "iso_cap"
-		|| property == "long_shutter")
-	{
-		if (camera_ == nullptr)
-		{
+	} else if (property == "aaa_mode" 
+				|| property == "wb" 
+				|| property == "iso_value" 
+				|| property == "shutter_value" 
+				|| property == "brightness"
+				|| property == "contrast" 
+				|| property == "saturation" 
+				|| property == "hue" 
+				|| property == "sharpness" 
+				|| property == "ev_bias" 
+				|| property == "ae_meter"
+				|| property == "iso_cap"
+				|| property == "long_shutter") {
+		if (camera_ == nullptr) {
 			LOGERR("camera not open");
 			return INS_ERR_NOT_ALLOW_OP_IN_STATE;
 		}
 		ret = camera_->set_options(INS_CAM_ALL_INDEX, property, value);
-	}
-	else if (property == ACCESS_MSG_OPT_FLICKER)
-	{
-		if (camera_info::get_flicker() == value) 
-		{
+	} else if (property == ACCESS_MSG_OPT_FLICKER) {
+		if (camera_info::get_flicker() == value) {
 			return INS_OK;
-		}
-		else
-		{
+		} else {
 			camera_info::set_flicker(value);
 		}
-		if (camera_) camera_->set_options(INS_CAM_ALL_INDEX, property, value);
-	}
-	else if (property == ACCESS_MSG_OPT_FANLESS)
-	{
-		msg_parser_.b_fanless_ = (value == 0)?false:true;
+		if (camera_) 
+			camera_->set_options(INS_CAM_ALL_INDEX, property, value);
+	} else if (property == ACCESS_MSG_OPT_FANLESS) {
+		msg_parser_.b_fanless_ = (value == 0) ? false : true;
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_FANLESS, value);
 		LOGINFO("set fanless:%d", msg_parser_.b_fanless_);
-	}
-	else if (property == ACCESS_MSG_OPT_PANO_AUDIO)
-	{
-		if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-		{
+	} else if (property == ACCESS_MSG_OPT_PANO_AUDIO) {
+		if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 			LOGERR("not allow set audio type in state:0x%x", state_);
 			return INS_ERR_NOT_ALLOW_OP_IN_STATE;
 		}
 
 		bool b_audio_to_stitch;
-		if (value == 0)
-		{
+		if (value == 0) {
 			msg_parser_.b_pano_audio_ = false;
 			b_audio_to_stitch = false;
-		}
-		else if (value == 1)
-		{
+		} else if (value == 1) {
 			msg_parser_.b_pano_audio_ = false;
 			b_audio_to_stitch = true;
-		}
-		else
-		{
+		} else {
 			msg_parser_.b_pano_audio_ = true;
 			b_audio_to_stitch = true;
 		}
@@ -690,42 +627,30 @@ int access_msg_center::set_one_option(std::string property, int value, const std
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_AUDIO_TO_STITCH, b_audio_to_stitch);
 		LOGINFO("set pano audio:%d audio to stitch:%d", msg_parser_.b_pano_audio_, b_audio_to_stitch);
 
-		if (msg_parser_.b_audio_to_stitch_ != b_audio_to_stitch)
-		{
+		if (msg_parser_.b_audio_to_stitch_ != b_audio_to_stitch) {
 			msg_parser_.b_audio_to_stitch_ = b_audio_to_stitch;
-			if (state_ == CAM_STATE_PREVIEW)
-			{
+			if (state_ == CAM_STATE_PREVIEW) {
 				state_mgr_.preview_opt_.b_audio = b_audio_to_stitch;
 				do_camera_operation_stop(false); //关预览
 				do_camera_operation_stop(true);  //启预览
 			}
 		}
-	}
-	else if (property == ACCESS_MSG_OPT_STABLIZATION_CFG)
-	{
+	} else if (property == ACCESS_MSG_OPT_STABLIZATION_CFG) {
 		msg_parser_.b_stab_rt_ = (value == 0)?false:true;
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_RT_STAB, value);
 		LOGINFO("set rt stablization cfg:%d", msg_parser_.b_stab_rt_);
-	}
-	else if (property == ACCESS_MSG_OPT_STABLIZATION_TYPE)
-	{
+	} else if (property == ACCESS_MSG_OPT_STABLIZATION_TYPE) {
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_STABLZ_TYPE, value);
 		camera_info::set_stablz_type(value); 
 		LOGINFO("set stablization type:%d", value);
-	}
-	else if (property == ACCESS_MSG_OPT_LOGO)
-	{
+	} else if (property == ACCESS_MSG_OPT_LOGO) {
 		msg_parser_.b_logo_on_ = (value == 0)?false:true;
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_LOGO, value);
 		LOGINFO("set logo:%d", msg_parser_.b_logo_on_);
-	}
-	else if (property == ACCESS_MSG_OPT_VIDEO_FRAGMENT)
-	{
+	} else if (property == ACCESS_MSG_OPT_VIDEO_FRAGMENT) {
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_VIDEO_FRAGMENT, value);
 		LOGINFO("set video fragment:%d", value);
-	}
-	else if (property == ACCESS_MSG_OPT_DEPTH_MAP)
-	{
+	} else if (property == ACCESS_MSG_OPT_DEPTH_MAP) {
 		ret = set_depth_map(value2);
 	}
 	// else if (property == ACCESS_MSG_OPT_IQTYPE)
@@ -745,8 +670,7 @@ int access_msg_center::set_one_option(std::string property, int value, const std
 	// 		}
 	// 	}
 	// }
-	else
-	{
+	else {
 		LOGERR("unsupport property:%s", property.c_str());
 		ret = INS_ERR_INVALID_MSG_PARAM;
 	}
@@ -815,22 +739,18 @@ void access_msg_center::set_option(const char* msg, std::string cmd, int sequenc
 
 int access_msg_center::set_depth_map(const std::string& depth_map)
 {
-	if (depth_map.length() <= 0) 
-	{
+	if (depth_map.length() <= 0) {
 		LOGERR("set depth map, but depth map is null");
 		return INS_ERR_INVALID_MSG_PARAM;
 	} 
 
 	std::ofstream fs(INS_DEPTH_MAP_FILE, std::ios::trunc);
-	if (fs.is_open())
-	{
+	if (fs.is_open()) {
 		fs.write(depth_map.data(), depth_map.size());
 		fs.close();
 		LOGINFO("set depth map");
 		return INS_OK;
-	}
-	else
-	{
+	} else {
 		LOGERR("file:%s open fail", INS_DEPTH_MAP_FILE);
 		return INS_ERR_FILE_OPEN;
 	}
@@ -840,8 +760,7 @@ void access_msg_center::restart_preview(const char* msg, std::string cmd, int se
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
-	if (state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_PREVIEW) {
 		ret = INS_ERR_NOT_ALLOW_OP_IN_STATE; break;
 	}
 
@@ -870,32 +789,24 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 	ret = msg_parser_.preview_option(msg, opt);
 	BREAK_IF_NOT_OK(ret);
 
-	if (opt.index != -1) //单镜头合焦HDMI预览
-	{
+	if (opt.index != -1) {	// 单镜头合焦HDMI预览
 		BREAK_NOT_IN_IDLE();
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 		singlen_mgr_ = std::make_shared<singlen_mgr>();
 		ret = singlen_mgr_->start_focus(camera_.get(), opt);
-		if (ret != INS_OK) 
-		{
+		if (ret != INS_OK) {
 			do_camera_operation_stop(false); break;
 		}
-	}
-	else
-	{
+	} else {
 		BREAK_EXCPET_STATE_2(CAM_STATE_LIVE, CAM_STATE_RECORD);
-		if (video_mgr_)
-		{
+		if (video_mgr_) {
 			ret = video_mgr_->start_preview(opt);
 			BREAK_IF_NOT_OK(ret);
-		}
-		else
-		{
+		} else {
 			OPEN_CAMERA_IF_ERR_BREAK(-1);
 			video_mgr_ = std::make_shared<video_mgr>();
 			ret = video_mgr_->start(camera_.get(), opt);
-			if (ret != INS_OK) 
-			{
+			if (ret != INS_OK) {
 				do_camera_operation_stop(false); break;
 			}
 		}
@@ -922,35 +833,28 @@ int access_msg_center::do_stop_preview()
 	RETURN_NOT_IN_STATE(CAM_STATE_PREVIEW);
 
 	int ret = INS_OK;
-	if (state_ & CAM_STATE_RECORD || state_ & CAM_STATE_LIVE)
-	{
+	if (state_ & CAM_STATE_RECORD || state_ & CAM_STATE_LIVE) {
 		state_ &= ~CAM_STATE_PREVIEW;
 		if (video_mgr_) video_mgr_->stop_preview();
-	}
-	else if (state_ & CAM_STATE_PIC_SHOOT 
+	} else if (state_ & CAM_STATE_PIC_SHOOT 
 		|| state_ & CAM_STATE_PIC_PROCESS
 		|| state_ & CAM_STATE_GYRO_CALIBRATION
 		|| state_ & CAM_STATE_QRCODE_SCAN
 		|| state_ & CAM_STATE_BLC_CAL 
 		|| state_ & CAM_STATE_CALIBRATION 
 		|| state_ & CAM_STATE_STOP_RECORD
-		|| state_ & CAM_STATE_STOP_LIVE)
-	{
+		|| state_ & CAM_STATE_STOP_LIVE) {
 		//这里和do_camera_operation_stop可能会并发，要加锁
 		camera_operation_stop_mtx_.lock();
 		state_ &= ~CAM_STATE_PREVIEW;
 		video_mgr_ = nullptr; //合成的预览
 		singlen_mgr_ = nullptr; //单镜头预览
 		camera_operation_stop_mtx_.unlock();
-	}
-	else if (state_ & CAM_STATE_STORAGE_ST
+	} else if (state_ & CAM_STATE_STORAGE_ST
 		|| state_ & CAM_STATE_GYRO_CALIBRATION
-		|| state_ & CAM_STATE_MAGMETER_CAL)
-	{
+		|| state_ & CAM_STATE_MAGMETER_CAL) {
 		state_ &= ~CAM_STATE_PREVIEW; //只标记状态
-	}
-	else
-	{
+	} else {
 		state_ &= ~CAM_STATE_PREVIEW;
 		do_camera_operation_stop(true); //这个函数失败也返回ok,因为预览已经停了
 	}
@@ -968,33 +872,25 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 
 	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);
 
-	if (state_ & CAM_STATE_PREVIEW)
-	{
+	if (state_ & CAM_STATE_PREVIEW) {
 		ret = do_camera_operation_stop(false);
 		BREAK_IF_NOT_OK(ret);
-	}
-	else
-	{
+	} else {
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 	
-	if (opt.timelapse.enable)
-	{
+	if (opt.timelapse.enable) {
 		timelapse_mgr_ = std::make_shared<timelapse_mgr>();
 		ret = timelapse_mgr_->start(camera_.get(), opt);
-		if (ret != INS_OK)
-		{
+		if (ret != INS_OK) {
 			do_camera_operation_stop(true); break;
 		}
-	}
-	else
-	{
+	} else {
 		hw_util::switch_fan(!opt.audio.fanless);
 
 		video_mgr_ = std::make_shared<video_mgr>();
 		ret = video_mgr_->start(camera_.get(), opt);
-		if (ret != INS_OK)
-		{
+		if (ret != INS_OK) {
 			do_camera_operation_stop(true); break;
 		}
 
@@ -1006,8 +902,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 		// 	t_monitor_ = std::make_shared<temp_monitor>(stop_temp);
 		// }
 
-		if (state_ & CAM_STATE_PREVIEW) 
-		{
+		if (state_ & CAM_STATE_PREVIEW) {
 			video_mgr_->start_preview(state_mgr_.preview_opt_);
 		}
 	}
@@ -1015,8 +910,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 	state_mgr_.option_ = opt;
 	state_ |= CAM_STATE_RECORD;
 
-	if (opt.duration > 0)
-	{
+	if (opt.duration > 0) {
 		LOGINFO("record duration:%d", opt.duration);
 		std::function<void()> func = [this]() 
 		{
@@ -1030,14 +924,11 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 	}
 
 	state_mgr_.set_time();
-	if (opt.index != -1)
-	{
+	if (opt.index != -1) {
 		std::stringstream ss;
 		ss << opt.path << "/origin_" << opt.index << ".mp4";
 		res_obj.set_string(ACCESS_MSG_OPT_RECORD_URL, ss.str());
-	}
-	else
-	{
+	} else {
 		res_obj.set_string(ACCESS_MSG_OPT_RECORD_URL, opt.path);
 	}
 	
@@ -1046,8 +937,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 	sender_->set_ind_msg_sequece(ACCESS_CMD_RECORD_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 
-	if (ret != INS_OK && opt.path != "") //由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
-	{
+	if (ret != INS_OK && opt.path != "") {	//由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
@@ -1058,14 +948,12 @@ void access_msg_center::stop_record(const char* msg, std::string cmd, int sequen
 	sender_->set_ind_msg_sequece(ACCESS_CMD_RECORD_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 
-	if (state_ & CAM_STATE_RECORD)
-	{
+	if (state_ & CAM_STATE_RECORD) {
 		long long elapse = state_mgr_.get_elapse_usec();
-		if (elapse < 2000000) usleep(2000000 - elapse);//开始录像后马上停止编码器会概率卡死，所以至少跑2s
+		if (elapse < 2000000) 
+			usleep(2000000 - elapse);//开始录像后马上停止编码器会概率卡死，所以至少跑2s
 		do_stop_record(INS_OK);
-	}
-	else if (!(state_ & CAM_STATE_STOP_RECORD))
-	{
+	} else if (!(state_ & CAM_STATE_STOP_RECORD)) {
 		sender_->send_ind_msg(ACCESS_CMD_RECORD_FINISH_, INS_OK);
 	}
 }
@@ -1078,8 +966,7 @@ int access_msg_center::do_stop_record(int ret)
 	state_ &= ~CAM_STATE_RECORD;
 	hw_util::switch_fan(true);
 
-	th_ = std::thread([this, ret]
-	{
+	th_ = std::thread([this, ret] {
 		LOGINFO("do stop record");
 		do_camera_operation_stop(true);
 		usleep(1000*1000); //等待文件存储完成
@@ -1102,25 +989,20 @@ void access_msg_center::start_live(const char* msg, std::string cmd, int sequenc
 
 	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);
 
-	if (state_ & CAM_STATE_PREVIEW)
-	{
+	if (state_ & CAM_STATE_PREVIEW) {
 		ret = do_camera_operation_stop(false);
 		BREAK_IF_NOT_OK(ret);
-	}
-	else
-	{
+	} else {
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 
 	video_mgr_ = std::make_shared<video_mgr>();
 	ret = video_mgr_->start(camera_.get(), opt);
-	if (ret != INS_OK)
-	{
+	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
 
-	if (state_ & CAM_STATE_PREVIEW) 
-	{
+	if (state_ & CAM_STATE_PREVIEW) {
 		video_mgr_->start_preview(state_mgr_.preview_opt_);
 	}
 
@@ -1130,13 +1012,10 @@ void access_msg_center::start_live(const char* msg, std::string cmd, int sequenc
 	b_need_stop_live_ = false;
 	b_stop_live_rec_ = false;
 
-	if (opt.path != "")
-	{
+	if (opt.path != "") {
 		res_obj.set_string(ACCESS_MSG_OPT_FILE_URL, opt.path);
 		state_mgr_.b_live_rec_ = true;
-	}
-	else
-	{
+	} else {
 		state_mgr_.b_live_rec_ = false;
 	}
 
@@ -1147,8 +1026,7 @@ void access_msg_center::start_live(const char* msg, std::string cmd, int sequenc
 	sender_->set_ind_msg_sequece(ACCESS_CMD_LIVE_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 
-	if (ret != INS_OK && opt.path != "") //由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
-	{
+	if (ret != INS_OK && opt.path != "") {	//由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
@@ -1159,40 +1037,28 @@ void access_msg_center::stop_live(const char* msg, std::string cmd, int sequence
 	sender_->set_ind_msg_sequece(ACCESS_CMD_LIVE_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 
-	if (state_ & CAM_STATE_LIVE)
-	{
+	if (state_ & CAM_STATE_LIVE) {
 		long long elapse = state_mgr_.get_elapse_usec();
 		if (elapse < 2000000) usleep(2000000 - elapse); //开始录像后马上停止编码器会概率卡死，所以至少跑2s
 		do_stop_live(INS_OK, false);
-	}
-	else if (!(state_ & CAM_STATE_STOP_LIVE))
-	{
+	} else if (!(state_ & CAM_STATE_STOP_LIVE)) {
 		sender_->send_ind_msg(ACCESS_CMD_LIVE_FINISH_, INS_OK);
 	}
 }
 
 int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 {
-	if (b_stop_rec)
-	{
-		if (b_stop_live_rec_) 
-		{
+	if (b_stop_rec) {
+		if (b_stop_live_rec_)  {
 			return INS_OK;
-		}
-		else 
-		{
+		} else  {
 			b_stop_live_rec_ = true;
 		}
-	}
-	else
-	{
-		if (b_stop_live_rec_) 
-		{
+	} else {
+		if (b_stop_live_rec_) {
 			b_need_stop_live_ = true;
 			return INS_OK;
-		}
-		else
-		{
+		} else {
 			state_ &= ~CAM_STATE_LIVE;
 			state_ |= CAM_STATE_STOP_LIVE;
 		}
@@ -1202,12 +1068,9 @@ int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 	{
 		LOGINFO("do stop live, b_stop_rec:%d", b_stop_rec);
 
-		if (b_stop_rec)
-		{
+		if (b_stop_rec) {
 			if (video_mgr_) video_mgr_->stop_live_file();
-		}
-		else
-		{
+		} else {
 			do_camera_operation_stop(true);
 		}
 
@@ -1234,23 +1097,18 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 
 	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);
 
-	if (state_ & CAM_STATE_PREVIEW)
-	{
+	if (state_ & CAM_STATE_PREVIEW) {
 		ret = do_camera_operation_stop(false);
-		if (ret != INS_OK)
-		{
+		if (ret != INS_OK) {
 			do_camera_operation_stop(true); break;
 		}
-	}
-	else
-	{
+	} else {
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 
 	img_mgr_ = std::make_shared<image_mgr>();
 	ret = img_mgr_->start(camera_.get(), opt);
-	if (ret != INS_OK)
-	{
+	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
 
@@ -1262,8 +1120,7 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 	sender_->set_ind_msg_sequece(ACCESS_CMD_PIC_ORIGIN_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd);
 
-	if (ret != INS_OK && opt.path != "") //由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
-	{
+	if (ret != INS_OK && opt.path != "") {	// 由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
@@ -1291,20 +1148,16 @@ void access_msg_center::set_offset(const char* msg, std::string cmd, int sequenc
 {
 	ins_offset_option opt;
 	int ret = msg_parser_.offset_option(msg, opt);
-	if (ret != INS_OK)
-	{
+	if (ret != INS_OK) {
 		sender_->send_rsp_msg(sequence, ret, cmd);
 		return;
 	}
 
-	if (opt.using_factory_offset)
-	{
+	if (opt.using_factory_offset) {
 		auto offset = xml_config::get_factory_offset();
 		xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_4_3, offset);
 		LOGINFO("restore user offset to factory:%s", offset.c_str());
-	}
-	else
-	{
+	} else {
 		if (opt.factory_setting) //如果是工厂出厂设置 单独存一份
 		{
 			LOGINFO("set factory setting offset");
@@ -1336,8 +1189,7 @@ void access_msg_center::set_offset(const char* msg, std::string cmd, int sequenc
 		// }
 	}
 
-	if (state_ == CAM_STATE_PREVIEW) //预览的时候要重启预览立即生效
-	{
+	if (state_ == CAM_STATE_PREVIEW)  {	// 预览的时候要重启预览立即生效
 		do_camera_operation_stop(true);
 	}
 
@@ -1350,8 +1202,7 @@ void access_msg_center::set_gyro_calibration_res(const char* msg, std::string cm
 
 	json_obj obj(msg);
 	auto param_obj = obj.get_obj(ACCESS_MSG_PARAM);
-	if (!param_obj)
-	{
+	if (!param_obj) {
 		LOGERR("no key param");
 		return;
 	}
@@ -1366,17 +1217,13 @@ void access_msg_center::get_gyro_calibration_res(const char* msg, std::string cm
 	int ret = INS_OK;
 	std::vector<double> quat;
 	xml_config::get_gyro_rotation(quat);
-	if (quat.size() != 4)
-	{
+	if (quat.size() != 4) {
 		LOGERR("no gyro imu rotation");
 		sender_->send_rsp_msg(sequence, INS_ERR_NOT_EXIST, cmd);
-	}
-	else
-	{
+	} else {
 		json_obj obj;
 		auto array = json_obj::new_array();
-		for (uint32_t i = 0; i < quat.size(); i++)
-		{
+		for (uint32_t i = 0; i < quat.size(); i++) {
 			array->array_add(quat[i]);	
 		}
 		obj.set_obj("imu_rotation", array.get());
@@ -1391,14 +1238,11 @@ void access_msg_center::query_battery_temp(const char* msg, std::string cmd, int
 	//auto ret = battery.open();
 	auto ret = battery.read_temp(temp);
 
-	if (ret == INS_OK)
-	{
+	if (ret == INS_OK) {
 		json_obj obj;
 		obj.set_double("temp", temp);
 		sender_->send_rsp_msg(sequence, ret, cmd, &obj);
-	}
-	else
-	{
+	} else {
 		sender_->send_rsp_msg(sequence, ret, cmd);
 	}
 }
@@ -1416,8 +1260,7 @@ void access_msg_center::get_offset(const char* msg, std::string cmd, int sequenc
 	//xml_config::get_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_16_9, offset_pano_16_9);
 	// xml_config::get_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_3D_LEFT, offset_3d_left);
 	// xml_config::get_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_3D_RIGHT, offset_3d_right);
-	if (offset_pano_4_3 == "")
-	{	
+	if (offset_pano_4_3 == "") {	
 		LOGERR("no pano 4:3 offset");
 		ret = INS_ERR_CONFIG_FILE;
 	}
@@ -1472,8 +1315,7 @@ void access_msg_center::change_storage_path(const char* msg, std::string cmd, in
 
 	int fix = 0; 
 	xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_FIX_STORAGE, fix);
-	if (fix == 1)
-	{
+	if (fix == 1) {
 		LOGINFO("config to fix storage, so don't change");
 		break;
 	}
@@ -1494,8 +1336,7 @@ void access_msg_center::query_storage(const char* msg, std::string cmd, int sequ
 	bool b_need_close = false;
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
-	if (camera_ == nullptr)
-	{
+	if (camera_ == nullptr) {
 		b_need_close = true;
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
@@ -1506,8 +1347,7 @@ void access_msg_center::query_storage(const char* msg, std::string cmd, int sequ
 	res_obj.set_string("storagePath", msg_parser_.storage_path_);
 
 	auto array = json_obj::new_array();
-	for (auto it = v_value.begin(); it != v_value.end(); it++)
-	{
+	for (auto it = v_value.begin(); it != v_value.end(); it++) {
 		json_obj obj((*it).c_str());
 		array->array_add(&obj);	
 	}
@@ -1528,28 +1368,19 @@ void access_msg_center::calibration(const char* msg, std::string cmd, int sequen
 	sender_->set_ind_msg_sequece(ACCESS_CMD_CALIBRATION_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 	
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 		sender_->send_ind_msg(ACCESS_CMD_CALIBRATION_FINISH_, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		std::string mode;
 		int delay = 0;
 		int ret = msg_parser_.calibration_option(msg, mode, delay);
-		if (ret != 	INS_OK)
-		{
+		if (ret != 	INS_OK) {
 			sender_->send_ind_msg(ACCESS_CMD_CALIBRATION_FINISH_, ret);
-		}
-		else
-		{
+		} else {
 			ret = do_calibration(mode, delay);
-			if (ret != INS_OK)
-			{
+			if (ret != INS_OK) {
 				sender_->send_ind_msg(ACCESS_CMD_CALIBRATION_FINISH_, ret);
-			}
-			else
-			{
+			} else {
 				state_ |= CAM_STATE_CALIBRATION;
 			}
 		}
@@ -1560,13 +1391,10 @@ int32_t access_msg_center::do_calibration(std::string mode, int delay)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN	
 
-	if (state_ & CAM_STATE_PREVIEW)
-	{
+	if (state_ & CAM_STATE_PREVIEW) {
 		ret = do_camera_operation_stop(false);
 		BREAK_IF_NOT_OK(ret);
-	}
-	else
-	{
+	} else {
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 
@@ -1580,8 +1408,7 @@ int32_t access_msg_center::do_calibration(std::string mode, int delay)
  
 	img_mgr_ = std::make_shared<image_mgr>();
 	ret = img_mgr_->start(camera_.get(), opt, true);
-	if (ret != INS_OK)
-	{
+	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
 
@@ -1594,24 +1421,18 @@ void access_msg_center::start_qr_scan(const char* msg, std::string cmd, int sequ
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
-	if (state_ == CAM_STATE_IDLE)
-	{
+	if (state_ == CAM_STATE_IDLE) {
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
-	}
-	else if (state_ == CAM_STATE_PREVIEW)
-	{
+	} else if (state_ == CAM_STATE_PREVIEW) {
 		ret = do_camera_operation_stop(false);
 		BREAK_IF_NOT_OK(ret);
-	}
-	else
-	{
+	} else {
 		ret = INS_ERR_NOT_ALLOW_OP_IN_STATE; break;
 	}
 
 	qr_scanner_ = std::make_shared<qr_scanner>();
 	ret = qr_scanner_->open(camera_);
-	if (ret != INS_OK)
-	{
+	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
 
@@ -1641,19 +1462,15 @@ void access_msg_center::internal_qr_scan_finish(const char* msg, std::string cmd
 
 	char* pdst = new char[content.length()]();
 	const char* psrc = content.c_str();
-	for (unsigned int i = 0; i < content.length()/3; i++)
-	{
+	for (unsigned int i = 0; i < content.length()/3; i++) {
 		pdst[i] = strtol(psrc+i*3, nullptr, 16);
 	}
 
 	json_obj root(pdst);
 	json_obj res_obj;
-	if (root.is_obj())
-	{
+	if (root.is_obj()) {
 		res_obj.set_string("content", pdst);
-	}
-	else
-	{
+	} else {
 		LOGERR("not valid json string");
 		res_obj.set_string("content", content);
 	}
@@ -1703,8 +1520,7 @@ void access_msg_center::calibration_awb(const char* msg, std::string cmd, int se
 	std::string uuid;
 	std::string sensor_id;
 	ret = camera_->get_uuid(camera_->master_index(), uuid, sensor_id);
-	if (uuid == "")
-	{
+	if (uuid == "") {
 		uuid = ins_uuid_gen();
 		LOGINFO("gen uuid:%s", uuid.c_str());
 		ret = camera_->set_uuid(camera_->master_index(), uuid);
@@ -1717,21 +1533,17 @@ void access_msg_center::calibration_awb(const char* msg, std::string cmd, int se
 	BREAK_IF_NOT_OK(ret);
 
 	ret = camera_->get_uuid(camera_->master_index(), uuid, sensor_id);
-	if (uuid == "")
-	{
+	if (uuid == "") {
 		ret = INS_ERR; break;
 	}
 
 	system("mkdir -p /home/nvidia/data");
 	std::string file_name = "/home/nvidia/data/awb.dat";
 	std::ofstream fs(file_name, std::ios::binary|std::ios::trunc);
-	if (fs.is_open())
-	{
+	if (fs.is_open()) {
 		fs.write((char*)buff->data(), buff->size());
 		fs.close();
-	}
-	else
-	{
+	} else {
 		LOGERR("file:%s open fail", file_name.c_str());
 	}
 
@@ -1740,7 +1552,8 @@ void access_msg_center::calibration_awb(const char* msg, std::string cmd, int se
 
 	DO_WHILE_0_END
 
-	if (b_need_close_cam) close_camera();
+	if (b_need_close_cam) 
+		close_camera();
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
 
@@ -1749,12 +1562,9 @@ void access_msg_center::calibration_bpc(const char* msg, std::string cmd, int se
 	sender_->set_ind_msg_sequece(ACCESS_CMD_BPC_RESULT, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 		sender_->send_ind_msg(ACCESS_CMD_BPC_RESULT, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		state_ |= CAM_STATE_BPC_CAL; 
 		th_ = std::thread(&access_msg_center::do_bpc_calibration, this);
 	}
@@ -1763,20 +1573,15 @@ void access_msg_center::calibration_bpc(const char* msg, std::string cmd, int se
 void access_msg_center::do_bpc_calibration()
 {
 	int32_t ret = INS_OK;
-	if (state_ & CAM_STATE_PREVIEW)
-	{
+	if (state_ & CAM_STATE_PREVIEW) {
 		ret  = do_camera_operation_stop(false); //关预览
-		if (ret == INS_OK) 
-		{
+		if (ret == INS_OK) {
 			ret = camera_->calibration_bpc_all();
 			do_camera_operation_stop(true); //启预览
 		}
-	}
-	else
-	{
+	} else {
 		ret = open_camera(-1);
-		if (ret == INS_OK) 
-		{
+		if (ret == INS_OK) {
 			ret = camera_->calibration_bpc_all();
 			close_camera();
 		}
@@ -1810,12 +1615,9 @@ void access_msg_center::calibration_blc(const char* msg, std::string cmd, int se
 	bool b_reset = false;
 	msg_parser_.calibration_blc_option(msg, b_reset);
 
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 		sender_->send_ind_msg(ACCESS_CMD_BLC_RESULT, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		state_ |= CAM_STATE_BLC_CAL; 
 		th_ = std::thread(&access_msg_center::do_blc_calibration, this, b_reset);
 	}
@@ -1826,28 +1628,20 @@ void access_msg_center::do_blc_calibration(bool b_reset)
 	LOGINFO("blc calibration reset:%d", b_reset);
 
 	int ret = INS_OK;
-	if (state_ & CAM_STATE_PREVIEW)
-	{
-		if (!b_reset)
-		{
+	if (state_ & CAM_STATE_PREVIEW) {
+		if (!b_reset) {
 			ret  = do_camera_operation_stop(false); //关预览
-			if (ret == INS_OK) 
-			{
+			if (ret == INS_OK) {
 				ret = camera_->calibration_blc_all(b_reset);
 				do_camera_operation_stop(true); //启预览
 			}
-		}
-		else
-		{
+		} else {
 			//重置不需要关预览，顺便记录一下：重置时间很快
 			ret = camera_->calibration_blc_all(b_reset);
 		}
-	}
-	else
-	{
+	} else {
 		ret = open_camera(-1);
-		if (ret == INS_OK) 
-		{
+		if (ret == INS_OK) {
 			ret = camera_->calibration_blc_all(b_reset);
 			close_camera();
 		}
@@ -1881,12 +1675,9 @@ void access_msg_center::update_gamma_curve(const char* msg, std::string cmd, int
 
 	BREAK_IF_CAM_NOT_OPEN(INS_ERR_NOT_ALLOW_OP_IN_STATE);
 
-	if (s_data == "") //恢复gama
-	{
+	if (s_data == "")  {	// 恢复gama
 		ret = camera_->send_all_buff_data(nullptr, 0, AMBA_FRAME_GAMMA_CURVE, 5000);
-	}
-	else
-	{
+	} else {
 		auto buff = ins_base64::decode(s_data);
 		if (buff->offset() > 512) buff->set_offset(512);
 		ret = camera_->send_all_buff_data(buff->data(), buff->offset(), AMBA_FRAME_GAMMA_CURVE, 5000); 
@@ -1991,8 +1782,7 @@ void access_msg_center::storage_test_1(const char* msg, std::string cmd, int seq
 
 	json_obj root_obj(msg);
 	auto param_obj = root_obj.get_obj(ACCESS_MSG_PARAM);
-	if (param_obj == nullptr)
-	{
+	if (param_obj == nullptr) {
 		LOGERR("no param key");
 		return;
 	}
@@ -2014,28 +1804,19 @@ void access_msg_center::test_storage_speed(const char* msg, std::string cmd, int
 
 	std::string path;
 	msg_parser_.storage_speed_test_option(msg, path);
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 		sender_->send_ind_msg(ACCESS_CMD_STORAGE_ST_FINISH_, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		int32_t ret = INS_OK;
-		if (state_ & CAM_STATE_PREVIEW)
-		{
+		if (state_ & CAM_STATE_PREVIEW) {
 			ret = do_camera_operation_stop(false);
-		}
-		else
-		{
+		} else {
 			ret = open_camera(-1);
 		}
 
-		if (ret != INS_OK) 
-		{
+		if (ret != INS_OK)  {
 			sender_->send_ind_msg(ACCESS_CMD_STORAGE_ST_FINISH_, ret);
-		}
-		else
-		{
+		} else {
 			state_ |= CAM_STATE_STORAGE_ST; 
 			th_ = std::thread(&access_msg_center::do_test_storage_speed, this, path);
 		}
@@ -2064,10 +1845,8 @@ void access_msg_center::do_test_storage_speed(std::string path)
 
 	auto ret_local = f_local.get();
 	auto ret_module = f_module.get();
-	if (ret_module != INS_OK)
-	{
-		for (int32_t i = 0; i < INS_CAM_NUM; i++)
-		{
+	if (ret_module != INS_OK) {
+		for (int32_t i = 0; i < INS_CAM_NUM; i++) {
 			map_res.insert(std::make_pair(i, false));
 		}
 	}
@@ -2079,8 +1858,7 @@ void access_msg_center::do_test_storage_speed(std::string path)
 	json_obj param_obj;
 	param_obj.set_bool("local", (ret_local==INS_OK));
 	auto array = json_obj::new_array();
-	for (auto& it : map_res)
-	{
+	for (auto& it : map_res) {
 		json_obj t_obj;
 		t_obj.set_int("index", it.first);
 		t_obj.set_bool("result", it.second);
@@ -2105,32 +1883,23 @@ void access_msg_center::gyro_calibration(const char* msg, std::string cmd, int s
 	sender_->set_ind_msg_sequece(ACCESS_CMD_GYRO_CAL_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 		sender_->send_ind_msg(ACCESS_CMD_GYRO_CAL_FINISH_, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		hw_util::switch_fan(false);
 		usleep(1000*1000); //风扇停止需要时间
 
 		int32_t ret = INS_OK;
-		if (state_ & CAM_STATE_PREVIEW)
-		{
+		if (state_ & CAM_STATE_PREVIEW) {
 			ret = do_camera_operation_stop(false);
-		}
-		else
-		{
+		} else {
 			ret = open_camera(-1);
 		}
 
-		if (ret != INS_OK) 
-		{
+		if (ret != INS_OK)  {
 			hw_util::switch_fan(true);
 			sender_->send_ind_msg(ACCESS_CMD_GYRO_CAL_FINISH_, ret);
-		}
-		else
-		{
+		} else {
 			state_ |= CAM_STATE_GYRO_CALIBRATION; 
 			th_ = std::thread(&access_msg_center::do_gyro_calibration, this);
 		}
@@ -2167,32 +1936,23 @@ void access_msg_center::magmeter_calibration(const char* msg, std::string cmd, i
 	sender_->set_ind_msg_sequece(ACCESS_CMD_MAGMETER_CAL_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
 		sender_->send_ind_msg(ACCESS_CMD_MAGMETER_CAL_FINISH_, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		hw_util::switch_fan(false);
 		usleep(1000*1000); //风扇停止需要时间
 
 		int32_t ret = INS_OK;
-		if (state_ & CAM_STATE_PREVIEW)
-		{
+		if (state_ & CAM_STATE_PREVIEW) {
 			ret = do_camera_operation_stop(false);
-		}
-		else
-		{
+		} else {
 			ret = open_camera(-1);
 		}
 
-		if (ret != INS_OK) 
-		{
+		if (ret != INS_OK)  {
 			hw_util::switch_fan(true);
 			sender_->send_ind_msg(ACCESS_CMD_MAGMETER_CAL_FINISH_, ret);
-		}
-		else
-		{
+		} else {
 			state_ |= CAM_STATE_MAGMETER_CAL; 
 			th_ = std::thread(&access_msg_center::do_magmeter_calibration, this);
 		}
@@ -2230,8 +1990,7 @@ void access_msg_center::start_magmeter_calibration(const char* msg, std::string 
 
 	BREAK_EXCPET_STATE(CAM_STATE_MODULE_POWON);
 
-	if (camera_ == nullptr)
-	{
+	if (camera_ == nullptr) {
 		LOGERR("camera not open");
 		ret = INS_ERR_CAMERA_NOT_OPEN;
 		break;
@@ -2278,12 +2037,9 @@ void access_msg_center::delete_file(const char* msg, std::string cmd, int sequen
 	if (param_obj) param_obj->get_string("dir", dir);
 
 	int32_t ret = INS_OK;
-	if (camera_ == nullptr)
-	{
+	if (camera_ == nullptr) {
 		sender_->send_ind_msg(ACCESS_CMD_DEL_FILE_FINISH_, INS_ERR_NOT_ALLOW_OP_IN_STATE);
-	}
-	else
-	{
+	} else {
 		state_ |= CAM_STATE_DELETE_FILE;
 		th_ = std::thread(&access_msg_center::do_delete_file, this, dir);
 	}
@@ -2315,16 +2071,11 @@ void access_msg_center::module_power_on(const char* msg, std::string cmd, int se
 {
 	int32_t ret;
 	
-	if (state_ == CAM_STATE_MODULE_POWON)
-	{	
+	if (state_ == CAM_STATE_MODULE_POWON) {	
 		ret = INS_OK;
-	}
-	else if (state_ != CAM_STATE_IDLE)
-	{
+	} else if (state_ != CAM_STATE_IDLE) {
 		ret = INS_ERR_NOT_ALLOW_OP_IN_STATE;
-	}
-	else
-	{
+	} else {
 		ret = open_camera(-1);
 	}
 	sender_->send_rsp_msg(sequence, ret, cmd);
@@ -2335,12 +2086,9 @@ void access_msg_center::module_power_on(const char* msg, std::string cmd, int se
 void access_msg_center::module_power_off(const char* msg, std::string cmd, int sequence)
 {
 	int32_t ret = INS_OK;
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_MODULE_POWON)
-	{
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_MODULE_POWON) {
 		ret = INS_ERR_NOT_ALLOW_OP_IN_STATE;
-	}
-	else
-	{
+	} else {
 		state_ &= ~CAM_STATE_MODULE_POWON;
 		close_camera();
 	}
@@ -2351,8 +2099,7 @@ void access_msg_center::change_udisk_mode(const char* msg, std::string cmd, int 
 {
 	json_obj obj(msg);
 	auto param_obj = obj.get_obj(ACCESS_MSG_PARAM);
-	if (!param_obj)
-	{
+	if (!param_obj) {
 		sender_->send_rsp_msg(sequence, INS_ERR_INVALID_MSG_PARAM, cmd);
 		return;
 	}
@@ -2360,22 +2107,16 @@ void access_msg_center::change_udisk_mode(const char* msg, std::string cmd, int 
 	param_obj->get_int("mode", mode);
 	LOGINFO("change udisk mode:%d", mode);
 
-	if (mode)
-	{
-		if (state_ == CAM_STATE_MODULE_POWON)
-		{
+	if (mode) {
+		if (state_ == CAM_STATE_MODULE_POWON) {
 			state_ &= ~CAM_STATE_MODULE_POWON;
 			close_camera();
-		}
-		else if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_UDISK_MODE)
-		{
+		} else if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_UDISK_MODE) {
 			sender_->send_rsp_msg(sequence, INS_ERR_NOT_ALLOW_OP_IN_STATE, cmd);
 			return;
 		}
 		state_ |= CAM_STATE_UDISK_MODE;
-	}
-	else
-	{
+	} else {
 		state_ &= ~CAM_STATE_UDISK_MODE;
 	}
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
@@ -2424,8 +2165,7 @@ void access_msg_center::change_module_usb_mode(const char* msg, std::string cmd,
 	obj->get_int("mode", mode);
 	LOGINFO("change module usb mode:%d", mode);
 
-	if (mode) //storage mode
-	{
+	if (mode) {	//storage mode
 		BREAK_NOT_IN_IDLE();
 
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
@@ -2434,14 +2174,11 @@ void access_msg_center::change_module_usb_mode(const char* msg, std::string cmd,
 
 		close_camera();
 
-		if (ret == INS_OK) 
-		{
+		if (ret == INS_OK) {
 			cam_manager::power_on_all();
 			state_ = CAM_STATE_MODULE_STORAGE;
 		}
-	}
-	else //no storage mode
-	{
+	} else {	// no storage mode
 		if (!(state_ & CAM_STATE_MODULE_STORAGE)) break;
 		state_ &= ~CAM_STATE_MODULE_STORAGE;
 		cam_manager::power_off_all();
@@ -2457,22 +2194,18 @@ void access_msg_center::query_gps_status(const char* msg, std::string cmd, int s
 	auto data = gps_mgr::get()->get_gps();
 	json_obj obj;
 	obj.set_int("state", gps_mgr::get()->get_state());
-	if (data == nullptr)
-	{
+	if (data == nullptr) {
 		obj.set_int("fix_type", 0);
 		json_obj s_obj;
 		s_obj.set_int("sv_num", 0);
 		obj.set_obj("sv_status", &s_obj);
-	}
-	else
-	{
+	} else {
 		obj.set_int("fix_type", data->fix_type);
 		json_obj s_obj;
 		s_obj.set_int("sv_num", data->sv_status.sv_num);
 
 		auto array = json_obj::new_array();
-		for (int32_t i = 0; i < data->sv_status.sv_num; i++)
-		{
+		for (int32_t i = 0; i < data->sv_status.sv_num; i++) {
 			json_obj t_obj;
 			t_obj.set_int("prn", data->sv_status.sv_list[i].prn);
 			t_obj.set_double("snr", data->sv_status.sv_list[i].snr);
@@ -2549,6 +2282,10 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
         system("timedatectl set-timezone UTC");
 		system(ss.str().c_str());
 
+		if (back_tz != "") {
+			std::string set_tz = "timedatectl set-timezone " + back_tz;
+			system(set_tz.c_str());
+		}
 
 		LOGINFO("%s", ss.str().c_str());
 		camera_info::sync_time();
@@ -2578,14 +2315,11 @@ int access_msg_center::open_camera(int index)
 		ret = camera_->open_cam(v_index);
 	}
 
-	if (INS_OK != ret)
-	{
+	if (INS_OK != ret) {
 		cam_manager::power_off_all();
 		camera_ = nullptr;
 		return ret;
-	}
-	else
-	{
+	} else {
 		return INS_OK;
 	}
 }
@@ -2596,8 +2330,7 @@ void access_msg_center::close_camera()
 		|| state_ & CAM_STATE_LIVE 
 		|| state_ & CAM_STATE_PREVIEW
 		|| state_ & CAM_STATE_PIC_PROCESS
-		|| state_ & CAM_STATE_PIC_SHOOT)
-	{
+		|| state_ & CAM_STATE_PIC_SHOOT) {
 		return;
 	}
 
@@ -2607,6 +2340,7 @@ void access_msg_center::close_camera()
 	
 	camera_info::set_volume(INS_DEFAULT_AUDIO_GAIN); //恢复默认gain
 }
+
 
 int access_msg_center::do_camera_operation_stop(bool restart_preview)
 {
@@ -2619,11 +2353,11 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 	singlen_mgr_ = nullptr;
 
 	auto ret = INS_OK;
-	if (camera_) ret = camera_->exception();
-	if (ret != INS_OK) 
-	{
-		if (state_ & CAM_STATE_PREVIEW)
-		{
+	if (camera_) 
+		ret = camera_->exception();
+	
+	if (ret != INS_OK)  {
+		if (state_ & CAM_STATE_PREVIEW) {
 			state_ &= ~CAM_STATE_PREVIEW;
 			sender_->send_ind_msg(ACCESS_CMD_PREVIEW_FINISH_, ret);
 		}
@@ -2631,22 +2365,17 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 		return ret;
 	}
 	
-	if (restart_preview)
-	{
-		if (state_ & CAM_STATE_PREVIEW)
-		{
-			if (state_mgr_.preview_opt_.index == -1) 
-			{
+	if (restart_preview) {
+		if (state_ & CAM_STATE_PREVIEW) {
+			if (state_mgr_.preview_opt_.index == -1) {
 				video_mgr_ = std::make_shared<video_mgr>();
 				ret = video_mgr_->start(camera_.get(), state_mgr_.preview_opt_);
-			}
-			else //单镜头合焦预览
-			{
+			} else {	// 单镜头合焦预览
 				singlen_mgr_ = std::make_shared<singlen_mgr>();
 				ret = singlen_mgr_->start_focus(camera_.get(), state_mgr_.preview_opt_);
 			}
-			if (ret != INS_OK)
-			{
+
+			if (ret != INS_OK) {
 				state_ &= ~CAM_STATE_PREVIEW;
 				video_mgr_ = nullptr;
 				singlen_mgr_ = nullptr;
@@ -2654,9 +2383,7 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 				close_camera();
 				return ret;
 			}
-		}
-		else
-		{
+		} else {
 			close_camera();
 		}
 	}

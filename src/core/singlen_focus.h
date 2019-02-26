@@ -11,10 +11,9 @@ class NvBuffer;
 class singlen_focus
 {
 public:
-    ~singlen_focus();
+            ~singlen_focus();
     int32_t open(float x, float y);
-    void set_video_repo(std::shared_ptr<one_cam_video_buff> repo)
-    {
+    void    set_video_repo(std::shared_ptr<one_cam_video_buff> repo) {
         repo_ = repo;
     };
 

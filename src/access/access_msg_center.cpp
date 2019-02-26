@@ -207,11 +207,16 @@ int access_msg_center::setup()
 	auto gps_mgr = gps_mgr::create();
 	RETURN_IF_TRUE(!gps_mgr, "gps mgr create fail", INS_ERR);
 
+
+	/*
+	 * 启动温度监听
+	 */
 	std::function<bool()> temp_cb = [this]()->int
 	{
 		return (state_ & CAM_STATE_RECORD) || (state_ & CAM_STATE_LIVE);
 	};
 	t_monitor_ = std::make_shared<temp_monitor>(temp_cb);
+
 
 	/*
 	 * 创建并启动音频设备监听线程

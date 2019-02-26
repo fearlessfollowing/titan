@@ -105,14 +105,11 @@ int32_t audio_dev::get_param(uint32_t& samplerate, uint32_t& channel, snd_pcm_fo
     samplerate = val;
 
     ret = snd_pcm_hw_params_test_format(handle_, params_, SND_PCM_FORMAT_S24_3LE);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         ret = snd_pcm_hw_params_test_format(handle_, params_, SND_PCM_FORMAT_S16_LE);
         RETURN_IF_TRUE(ret < 0, "fmts16le not support", INS_ERR);
         fmt = SND_PCM_FORMAT_S16_LE;
-    }
-    else
-    {
+    } else {
         fmt = SND_PCM_FORMAT_S24_3LE;
     }
 
@@ -122,24 +119,17 @@ int32_t audio_dev::get_param(uint32_t& samplerate, uint32_t& channel, snd_pcm_fo
 int32_t audio_dev::read(std::shared_ptr<insbuff>& buff)
 {
     auto ret = snd_pcm_readi(handle_, buff->data(), INS_AUDIO_FRAME_SIZE);
-    if (ret == -EPIPE) 
-    {
+    if (ret == -EPIPE) {
         LOGINFO("%s EPIPE------", hw_name_.c_str());
         snd_pcm_prepare(handle_);
         return INS_ERR_RETRY;
-    } 
-    else if (ret < 0) 
-    {
+    } else if (ret < 0) {
         LOGINFO("%s read error:%d %s", hw_name_.c_str(), ret, snd_strerror(ret));
         return INS_ERR;
-    } 
-    else if (ret != INS_AUDIO_FRAME_SIZE)
-    {
+    } else if (ret != INS_AUDIO_FRAME_SIZE) {
         LOGINFO("%s read frame:%d < req:%d", hw_name_.c_str(), ret, INS_AUDIO_FRAME_SIZE);
         return INS_OK;
-    }
-    else
-    {
+    } else {
         return INS_OK;
     }
 }
@@ -150,8 +140,7 @@ bool audio_dev::is_spatial()
     char* name = nullptr;
     snd_card_get_name(card_, &name);
     std::string s_name = name;
-    if (s_name != INS_H2N_AUDIO_DEV_NAME && s_name != INS_H3VR_AUDIO_DEV_NAME) 
-    {
+    if (s_name != INS_H2N_AUDIO_DEV_NAME && s_name != INS_H3VR_AUDIO_DEV_NAME) {
         LOGINFO("-----name:%s not spatial audio dev", name);
         return false;
     }
@@ -159,8 +148,7 @@ bool audio_dev::is_spatial()
     //H2N全景声是4通道
     // uint32_t val;
     // snd_pcm_hw_params_get_channels_max(params_, &val);
-    // if (val != 4) 
-    // {
+    // if (val != 4) {
     //     LOGINFO("-----channle:%d not 4", val);
     //     return false;
     // }
@@ -196,13 +184,10 @@ bool audio_dev::is_spatial()
 
     set_param(samplerate , channel, fmt);
 
-    if (is_channel_3_silence())
-    {
+    if (is_channel_3_silence()) {
         //LOGINFO("%s is spatial audio", hw_name_.c_str());
         return true;
-    }
-    else
-    {
+    } else {
         //LOGINFO("%s is not spatial", hw_name_.c_str());
         return false;
     }
@@ -212,17 +197,14 @@ bool audio_dev::is_channel_3_silence()
 {
     auto buff = std::make_shared<insbuff>(frame_bytes_);
 
-	for (int i = 0; i < 2; i++)
-	{
+	for (int i = 0; i < 2; i++) {
 		auto ret = read(buff);
 		RETURN_IF_NOT_OK(ret);
 
 		//现在只判断H2n的全景声：如果第三个声道也就是z：全为0， 那就可以判断为全景声
 		uint8_t* p = buff->data();
-		for (unsigned j = 6; j < buff->size(); j += 12)
-		{
-			if (p[j] != 0 || p[j+1] != 0 || p[j+2] != 0) 
-            {
+		for (unsigned j = 6; j < buff->size(); j += 12) {
+			if (p[j] != 0 || p[j+1] != 0 || p[j+2] != 0) {
                 //LOGINFO("i:%d j:%d value:%x %x %x", i, j, p[j], p[j+1], p[j+2]);
                 return false;
             }

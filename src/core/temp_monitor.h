@@ -7,6 +7,9 @@
 
 class ins_battery;
 
+/*
+ * 温度监控
+ */
 class temp_monitor {
 public:
         temp_monitor(std::function<bool()>& cb);

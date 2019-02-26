@@ -5,7 +5,7 @@
 #include "access_msg_center.h"
 #include <sstream>
 #include <unistd.h>
-//#include "ins_battery.h"
+
 
 #define CPU_GPU_TEMP_THRESHOLD 85
 #define BATTERY_TEMP_THRESHOLD 73
@@ -13,10 +13,9 @@
 temp_monitor::temp_monitor(std::function<bool()>& cb)
 {
     need_report_temp_cb_ = cb;
-    //battery_ = std::make_shared<ins_battery>();
-    //if (battery_->open() != INS_OK) battery_ = nullptr;
     th_ = std::thread(&temp_monitor::task, this);
 }  
+
 
 temp_monitor::~temp_monitor()
 { 
@@ -24,6 +23,7 @@ temp_monitor::~temp_monitor()
     cv_.notify_all();
     INS_THREAD_JOIN(th_);
 }
+
 
 void temp_monitor::task()
 {
@@ -33,44 +33,33 @@ void temp_monitor::task()
 
     LOGINFO("temp monitor task run");
      
-    while (!quit_)
-    {
-        do
-        {
-            if (need_report_temp_cb_ && !need_report_temp_cb_()) break;
+    while (!quit_) {
+        do {
+            if (need_report_temp_cb_ && !need_report_temp_cb_()) 
+                break;
 
             cpu_temp = hw_util::get_temp(SYS_PROPERTY_CPU_TEMP);
-            if (cpu_temp >= CPU_GPU_TEMP_THRESHOLD)
-            {
-                hight_cnt++; break;
+            if (cpu_temp >= CPU_GPU_TEMP_THRESHOLD) {
+                hight_cnt++; 
+                break;
             }
 
             gpu_temp = hw_util::get_temp(SYS_PROPERTY_GPU_TEMP);
-            if (gpu_temp >= CPU_GPU_TEMP_THRESHOLD)
-            {
-                hight_cnt++; break;
+            if (gpu_temp >= CPU_GPU_TEMP_THRESHOLD) {
+                hight_cnt++; 
+                break;
             }
 
             battery_temp = hw_util::get_temp(SYS_PROPERTY_BATTERY_TEMP);
-            if (battery_temp >= BATTERY_TEMP_THRESHOLD)
-            {
-                hight_cnt++; break;
+            if (battery_temp >= BATTERY_TEMP_THRESHOLD) {
+                hight_cnt++; 
+                break;
             }
-
-            // if (battery_)
-            // {
-            //     auto ret = battery_->read_temp(battery_temp);
-            //     if (ret == INS_OK && battery_temp >= BATTERY_TEMP_THRESHOLD)
-            //     {
-            //         hight_cnt++; break;
-            //     }
-            // }
 
             hight_cnt = 0;
         } while (0);
 
-        if (hight_cnt >= 3)
-        {
+        if (hight_cnt >= 3) {
             LOGINFO("temperature high cpu:%d gpu:%d battery:%lf", cpu_temp, gpu_temp, battery_temp);
 
             hight_cnt = 0;
@@ -81,9 +70,7 @@ void temp_monitor::task()
             
             std::unique_lock<std::mutex> lock(mtx_);
             cv_.wait_for(lock, std::chrono::seconds(8)); //等待结束后再重新检测温度
-        }
-        else
-        {
+        } else {
             std::unique_lock<std::mutex> lock(mtx_);
             cv_.wait_for(lock, std::chrono::seconds(2));
         }

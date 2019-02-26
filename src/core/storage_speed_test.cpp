@@ -13,23 +13,18 @@ int storage_speed_test::test(const std::string& path)
 {
     LOGINFO("speed test path:%s", path.c_str());
 
-    if (ins_util::disk_available_size(path.c_str()) < INS_MIN_SPACE_MB*10)
-    {
+    if (ins_util::disk_available_size(path.c_str()) < INS_MIN_SPACE_MB*10) {
         LOGERR("storage space not enough for testing storage speed");
         return INS_ERR_NO_STORAGE_SPACE;
     }
 
-    for (int i = 0; i < num_; i++)
-    {
+    for (int i = 0; i < num_; i++) {
         std::stringstream ss;
         ss << path << "/" << i << ".dat";
         int fd = ::open(ss.str().c_str(), O_CREAT|O_WRONLY, 0666);
-        if (fd < 0)  
-        {
+        if (fd < 0) {
             LOGERR("file:%s open fail:%d", ss.str().c_str(), fd);
-        }
-        else
-        {
+        } else {
             LOGINFO("file:%s open success", ss.str().c_str());
         }
         
@@ -39,21 +34,18 @@ int storage_speed_test::test(const std::string& path)
         queue_.push_back(q);
     }
 
-    for (int i = 0; i < num_; i++)
-    {
+    for (int i = 0; i < num_; i++) {
         th_c_[i] = std::thread(&storage_speed_test::consume_task, this, i);
         th_p_[i] = std::thread(&storage_speed_test::produce_task, this, i);
     }
 
-    for (int i = 0; i < num_; i++)
-    {
+    for (int i = 0; i < num_; i++) {
         INS_THREAD_JOIN(th_p_[i]);
         INS_THREAD_JOIN(th_c_[i]);
         ::close(fd_[i]);
     }
 
-    for (int i = 0; i < num_; i++)
-    {
+    for (int i = 0; i < num_; i++) {
         std::stringstream ss;
         ss << path << "/" << i << ".dat";
         remove(ss.str().c_str());
@@ -136,12 +128,10 @@ int storage_speed_test::write_file(int index, const std::shared_ptr<page_buffer>
     unsigned int block_size = 32*1024;
     unsigned int offset = 0;
 
-    while (offset < buff->size())
-    {
+    while (offset < buff->size()) {
         unsigned int size = std::min(block_size, buff->size()-offset);
         int ret = ::write(fd_[index], buff->data()+offset, size);
-        if (ret < 0)
-        {
+        if (ret < 0) {
             LOGERR("index:%d write fail", index);
             return INS_ERR_FILE_IO;
         }
@@ -154,8 +144,7 @@ int storage_speed_test::write_file(int index, const std::shared_ptr<page_buffer>
 void storage_speed_test::queue_buff(int index, const std::shared_ptr<page_buffer>& buff)
 {
     std::lock_guard<std::mutex> lock(mtx_[index]);    
-    if (queue_[index].size() > _MAX_BUFF_SIZE_)
-    {
+    if (queue_[index].size() > _MAX_BUFF_SIZE_) {
         LOGERR("index:%d queue size:%d too big", index, queue_[index].size());
         quit_ = true;
         result_ = INS_ERR_UNSPEED_STORAGE;
@@ -167,7 +156,8 @@ void storage_speed_test::queue_buff(int index, const std::shared_ptr<page_buffer
 std::shared_ptr<page_buffer> storage_speed_test::dequeue_buff(int index)
 {
     std::lock_guard<std::mutex> lock(mtx_[index]);
-    if (queue_[index].empty()) return nullptr;
+    if (queue_[index].empty()) 
+        return nullptr;
 
     auto buff = queue_[index].front();
     queue_[index].pop_front();

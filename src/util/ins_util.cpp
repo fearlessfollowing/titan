@@ -194,6 +194,10 @@ Arational ins_util::to_real_fps(int framerate)
             fps.num = 120000;
             fps.den = 1001;
 			break;
+		case 240:
+            fps.num = 240000;
+            fps.den = 1001;
+			break;
 		default:
             fps.num = framerate;
             fps.den = 1;

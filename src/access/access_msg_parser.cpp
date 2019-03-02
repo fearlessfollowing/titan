@@ -14,11 +14,10 @@
 #include "ins_battery.h"
 #include <system_properties.h>
 
-#define CPU_GPU_START_TEMP_THRESHOLD 70
-#define BATTERY_START_TEMP_THRESHOLD 60
+#define CPU_GPU_START_TEMP_THRESHOLD 	70
+#define BATTERY_START_TEMP_THRESHOLD 	60
 
-struct ins_resolution
-{
+struct ins_resolution {
 	int w;
 	int h;
 	int fps;
@@ -38,30 +37,25 @@ if (param_obj == nullptr) \
 
 int access_msg_parser::check_disk_space(unsigned int size, std::string path)
 { 
-	if (path != "") 
-	{ 
+	if (path != "") { 
 		auto pos = path.find("/", 1);
-		if (pos != std::string::npos) 
-		{
+		if (pos != std::string::npos) {
 			path.erase(pos, path.length()-pos);
 			LOGINFO("------path:%s", path.c_str());
 		}
+
 		auto space = ins_util::disk_available_size(path.c_str());
-		if (space < (int)size) 
-		{ 
+		if (space < (int)size) { 
 			LOGINFO("storage space not enough:%d", space);
 			return INS_ERR_NO_STORAGE_SPACE; 
 		} 
-	} 
-	else 
-	{ 
-		if (storage_path_ == "") 
-		{ 
+	} else { 
+		if (storage_path_ == "") { 
 			return INS_ERR_NO_STORAGE_DEVICE; 
 		} 
+
 		auto space = ins_util::disk_available_size(storage_path_.c_str());
-		if (space < (int)size) 
-		{ 
+		if (space < (int)size) { 
 			LOGINFO("storage space not enough:%d", space);
 			return INS_ERR_NO_STORAGE_SPACE; 
 		} 
@@ -80,29 +74,24 @@ void access_msg_parser::setup()
 	//live_url_ = "rtmp://127.0.0.1/live/live";
 
 	int value = 0;
-	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_FANLESS, value)) 
-	{
-		b_fanless_ = (value == 0)?false:true;
+	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_FANLESS, value)) {
+		b_fanless_ = (value == 0) ? false : true;
 	}
 
-	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_PANO_AUDIO, value))
-	{
-		b_pano_audio_ = (value == 0)?false:true;
+	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_PANO_AUDIO, value)) {
+		b_pano_audio_ = (value == 0) ? false : true;
 	}
 
-	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_AUDIO_TO_STITCH, value))
-	{
-		b_audio_to_stitch_ = (value == 0)?false:true;
+	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_AUDIO_TO_STITCH, value)) {
+		b_audio_to_stitch_ = (value == 0) ? false : true;
 	}
 
-	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_RT_STAB, value))
-	{
-		b_stab_rt_ = (value == 0)?false:true;
+	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_RT_STAB, value)) {
+		b_stab_rt_ = (value == 0) ? false : true;
 	}
 
-	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_LOGO, value))
-	{
-		b_logo_on_ = (value == 0)?false:true;
+	if (!xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_LOGO, value)) {
+		b_logo_on_ = (value == 0) ? false : true;
 	}
 
 	LOGINFO("storage path:%s fanless:%d pano audio:%d audiotostitch:%d stab_rt:%d logo:%d", 
@@ -119,12 +108,9 @@ std::string access_msg_parser::parse_cmd_name(const char* msg)
 	auto root_obj = std::make_shared<json_obj>(msg);
 
 	std::string cmd;
-	if (!root_obj->get_string(ACCESS_MSG_NAME, cmd))
-	{
+	if (!root_obj->get_string(ACCESS_MSG_NAME, cmd)) {
 		return "null";
-	}
-	else
-	{
+	} else {
 		return cmd;
 	}
 }
@@ -135,7 +121,8 @@ int access_msg_parser::preview_option(const char* msg, ins_video_option& opt)
 
 	opt.type = INS_PREVIEW;
 	int ret = parse_video_option(param_obj, opt);
-	if (INS_OK != ret) return ret;
+	if (INS_OK != ret) 
+		return ret;
 
 	// opt.stiching.width = INS_PREVIEW_WIDTH;
 	// opt.stiching.height = INS_PREVIEW_HEIGHT;
@@ -144,36 +131,26 @@ int access_msg_parser::preview_option(const char* msg, ins_video_option& opt)
 	opt.origin.live_prefix = "";
 	opt.stiching.url_second = "";
 	opt.stiching.hdmi_display = true;//预览都是同时显示到hdmi
-	if (!b_audio_to_stitch_) 
-	{
+	if (!b_audio_to_stitch_) {
 		opt.b_audio = false;
-	}
-	else
-	{
+	} else {
 		opt.audio.type = INS_AUDIO_N_C;
 	}
 
-	if (opt.index != INS_CAM_ALL_INDEX) //单镜头合焦HDMI预览
-	{
+	if (opt.index != INS_CAM_ALL_INDEX) {	//单镜头合焦HDMI预览
 		opt.b_stiching = false;
-	}
-	else
-	{
-		if (!opt.b_stiching)
-		{
+	} else {
+		if (!opt.b_stiching) {
 			LOGERR("start preview but no stiching");
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
 		
-		if (opt.stiching.format == "hls")
-		{
+		if (opt.stiching.format == "hls") {
 			LOGINFO("preview in hls");
 			opt.stiching.url = HLS_PREVIEW_URL;
 			ret = hls_dir_prepare(HLS_PREVIEW_STREAM_DIR);
 			RETURN_IF_NOT_OK(ret);
-		}
-		else
-		{
+		} else {
 			opt.stiching.url = RTMP_PREVIEW_URL;
 		}
 	}
@@ -182,16 +159,11 @@ int access_msg_parser::preview_option(const char* msg, ins_video_option& opt)
 
 int32_t access_msg_parser::get_audio_type(bool stitch)
 {
-	if (!b_audio_to_stitch_)
-	{
+	if (!b_audio_to_stitch_) {
 		return INS_AUDIO_Y_N;
-	}
-	else if (!b_pano_audio_ || !stitch)
-	{
+	} else if (!b_pano_audio_ || !stitch) {
 		return INS_AUDIO_Y_C;
-	}
-	else
-	{
+	} else {
 		return INS_AUDIO_Y_S;
 	}
 }
@@ -212,8 +184,7 @@ int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 	opt.auto_connect.enable = false;
 	opt.stiching.url_second = "";
 
-	if (b_fanless_ && opt.b_audio && !opt.b_stiching)
-	{
+	if (b_fanless_ && opt.b_audio && !opt.b_stiching) {
 		auto cpu_temp = hw_util::get_temp(SYS_PROPERTY_CPU_TEMP);
 		auto gpu_temp = hw_util::get_temp(SYS_PROPERTY_GPU_TEMP);
 		auto battery_temp = hw_util::get_temp(SYS_PROPERTY_BATTERY_TEMP);
@@ -222,8 +193,7 @@ int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 		xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_START_TEMP, start_temp);
 		LOGINFO("config min temp:%d", start_temp);
 
-		if (cpu_temp > start_temp || gpu_temp > start_temp || battery_temp > BATTERY_START_TEMP_THRESHOLD)
-		{	
+		if (cpu_temp > start_temp || gpu_temp > start_temp || battery_temp > BATTERY_START_TEMP_THRESHOLD) {	
 			LOGERR("fanless mode temperature high cpu:%d gpu:%d battery:%lf", cpu_temp, gpu_temp, battery_temp);
 			return INS_ERR_TEMPERATURE_HIGH;
 		}
@@ -247,37 +217,33 @@ int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 	std::string file_prefix = gen_file_prefix(start_str);
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV 
 		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
-		|| opt.b_stiching)
-	{
+		|| opt.b_stiching) {
 		ret = check_disk_space(INS_MIN_SPACE_MB, opt.path);
 		RETURN_IF_NOT_OK(ret);
 		ret = create_file_dir(file_prefix, opt.path);
 		RETURN_IF_NOT_OK(ret);
 		opt.prj_path = opt.path;
 
-		if (opt.b_stiching) opt.stiching.url = opt.path + "/" + ins_util::create_name_by_mode(opt.stiching.mode) + ".mp4";
+		if (opt.b_stiching) 
+			opt.stiching.url = opt.path + "/" + ins_util::create_name_by_mode(opt.stiching.mode) + ".mp4";
 	}
 
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
-		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB)
-	{
+		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB) {
 		opt.origin.module_url = file_prefix;
-		if (opt.prj_path == "") opt.prj_path = INS_TMEP_PRJ_PATH;
+		if (opt.prj_path == "") 
+			opt.prj_path = INS_TMEP_PRJ_PATH;
 	}
 
-	if (opt.prj_path != "")
-	{
-		if (opt.timelapse.enable)
-		{
+	if (opt.prj_path != "") {
+		if (opt.timelapse.enable) {
 			ins_picture_option pic_opt;
 			pic_opt.origin = opt.origin;
 			pic_opt.b_stiching = opt.b_stiching;
 			pic_opt.stiching = opt.stiching;
 			pic_opt.timelapse = opt.timelapse;
 			ret = prj_file_mgr::create_pic_prj(pic_opt, opt.prj_path);
-		}
-		else
-		{
+		} else {
 			ret = prj_file_mgr::create_vid_prj(opt, opt.prj_path);
 		}
 		RETURN_IF_NOT_OK(ret);
@@ -296,25 +262,22 @@ int access_msg_parser::live_option(const char* msg, ins_video_option& opt)
 
 	auto cpu_temp = hw_util::get_temp(SYS_PROPERTY_CPU_TEMP);
 	auto gpu_temp = hw_util::get_temp(SYS_PROPERTY_GPU_TEMP);
-	if (cpu_temp > CPU_GPU_START_TEMP_THRESHOLD || gpu_temp > CPU_GPU_START_TEMP_THRESHOLD)
-	{	
+
+	if (cpu_temp > CPU_GPU_START_TEMP_THRESHOLD || gpu_temp > CPU_GPU_START_TEMP_THRESHOLD) {	
 		LOGERR("temperature high cpu:%d gpu:%d", cpu_temp, gpu_temp);
 		return INS_ERR_TEMPERATURE_HIGH;
 	}
 
 	opt.audio.type = get_audio_type(opt.b_stiching);
 
-	if (opt.b_stiching)
-	{
-		if (opt.stiching.url == "" && !opt.stiching.hdmi_display)
-		{
+	if (opt.b_stiching)	{
+		if (opt.stiching.url == "" && !opt.stiching.hdmi_display) {
 			opt.stiching.url = RTMP_LIVE_URL; //if no live url use default url
 			// LOGERR("no live url && not hdmi diaplay");
 			// return INS_ERR_INVALID_MSG_PARAM;
 		}
 
-		if (opt.stiching.format == "hls")
-		{
+		if (opt.stiching.format == "hls") {
 			LOGINFO("live in hls");
 			opt.stiching.url = HLS_LIVE_URL;
 			ret = hls_dir_prepare(HLS_LIVE_STREAM_DIR);
@@ -322,16 +285,11 @@ int access_msg_parser::live_option(const char* msg, ins_video_option& opt)
 		}
 
 		opt.origin.live_prefix = ""; //推原始流的时候不支持同时推拼接流
-	}
-	else
-	{
-		if (opt.origin.live_prefix == "")
-		{
+	} else {
+		if (opt.origin.live_prefix == "") {
 			LOGERR("start live but no stiching");
 			return INS_ERR_INVALID_MSG_PARAM;
-		}
-		else
-		{
+		} else {
 			opt.origin.storage_mode == INS_STORAGE_MODE_NONE;
 			opt.b_stabilization = false;//如果只推原始流的话，就不防抖了
 		}
@@ -340,8 +298,7 @@ int access_msg_parser::live_option(const char* msg, ins_video_option& opt)
 	std::string file_prefix = gen_file_prefix("VID");
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV 
 		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
-		|| opt.stiching.url_second != "")
-	{
+		|| opt.stiching.url_second != "") {
 		ret = check_disk_space(INS_MIN_SPACE_MB, opt.path);
 		RETURN_IF_NOT_OK(ret);
 		// if (ret != INS_OK) //live go on even though no disk space
@@ -357,14 +314,13 @@ int access_msg_parser::live_option(const char* msg, ins_video_option& opt)
 	}
 
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
-		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB)
-	{
+		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB) {
 		opt.origin.module_url = file_prefix;
-		if (opt.prj_path == "") opt.prj_path = INS_TMEP_PRJ_PATH;
+		if (opt.prj_path == "") 
+			opt.prj_path = INS_TMEP_PRJ_PATH;
 	}
 
-	if (opt.prj_path != "")
-	{
+	if (opt.prj_path != "") {
 		ret = prj_file_mgr::create_vid_prj(opt, opt.prj_path);
 		RETURN_IF_NOT_OK(ret);
 	}
@@ -374,16 +330,12 @@ int access_msg_parser::live_option(const char* msg, ins_video_option& opt)
 
 int access_msg_parser::hls_dir_prepare(std::string dir)
 {
-	if (access(dir.c_str(), 0))
-	{
-		if (mkdir(dir.c_str(), 0755))
-		{
+	if (access(dir.c_str(), 0)) {
+		if (mkdir(dir.c_str(), 0755)) {
 			LOGERR("mkdir:%s fail", dir.c_str());
 			return INS_ERR_FILE_OPEN;
 		}
-	}
-	else
-	{	
+	} else {	
 		std::string cmd = std::string("rm -rf ") + dir + "/*";
 		system(cmd.c_str());
 	}
@@ -402,8 +354,7 @@ int access_msg_parser::take_pic_option(const char* msg, ins_picture_option& opt)
 	std::string file_prefix = gen_file_prefix("PIC");
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV 
 		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
-		|| opt.b_stiching)
-	{
+		|| opt.b_stiching) {
 		ret = check_disk_space(INS_MIN_SPACE_MB, opt.path);
 		RETURN_IF_NOT_OK(ret);
 
@@ -415,20 +366,16 @@ int access_msg_parser::take_pic_option(const char* msg, ins_picture_option& opt)
 	}
 
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
-		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB)
-	{
+		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB) {
 		opt.origin.module_url = file_prefix;
 		if (opt.prj_path == "") opt.prj_path = INS_TMEP_PRJ_PATH;
 	}
 
-	if (opt.index != INS_CAM_ALL_INDEX) //单模组拍照
-	{
+	if (opt.index != INS_CAM_ALL_INDEX)  {	//单模组拍照
 		opt.b_stiching = false;
 		opt.b_stabilization = false;
 		opt.b_thumbnail = false;
-	}
-	else if (opt.prj_path != "")
-	{
+	} else if (opt.prj_path != "") {
 		prj_file_mgr::create_pic_prj(opt, opt.prj_path);
 		RETURN_IF_NOT_OK(ret);
 	}
@@ -469,12 +416,9 @@ int access_msg_parser::power_mode_option(const char* msg, std::string& mode)
 
 	param_obj->get_string("mode", mode);
 
-	if (mode != "on" && mode != "off")
-	{
+	if (mode != "on" && mode != "off") {
 		return INS_ERR_INVALID_MSG_PARAM;
-	}
-	else
-	{
+	} else {
 		return INS_OK;
 	}
 }
@@ -497,8 +441,7 @@ int access_msg_parser::option_get_option(const char* msg, std::string& property)
 {
 	PARSE_PARAM_OBJ(msg);
 	
-	if (!param_obj->get_string(ACCESS_MSG_OPT_PROPERTY, property))
-	{
+	if (!param_obj->get_string(ACCESS_MSG_OPT_PROPERTY, property)) {
 		LOGERR("key property not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -512,8 +455,7 @@ static int parser_option(std::shared_ptr<json_obj> obj, std::map<std::string, in
 	int value1 = 1;
 	std::string value2;
 
-	if (!obj->get_string(ACCESS_MSG_OPT_PROPERTY, property))
-	{
+	if (!obj->get_string(ACCESS_MSG_OPT_PROPERTY, property)) {
 		LOGERR("key%s not fond", ACCESS_MSG_OPT_PROPERTY);
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -1402,8 +1344,7 @@ int access_msg_parser::check_stich_option(const ins_stiching_option& option) con
 
 int access_msg_parser::check_origin_video_option(const ins_origin_option& option, bool b_stiching, bool b_timelapse) const
 {
-	static const ins_resolution origin_fmts[] = 
-	{
+	static const ins_resolution origin_fmts[] =  {
 		{960, 720, 25, true},
 		{960, 720, 30, true},
 		{1920, 1080, 25, true},
@@ -1447,8 +1388,7 @@ int access_msg_parser::check_origin_video_option(const ins_origin_option& option
 		{3840, 2880, 30, false},
 	};
 
-	if (b_timelapse)
-	{
+	if (b_timelapse) {
 		// if (option.width != 4000 || option.height != 3000)
 		// {
 		// 	LOGERR("origin w:%d h:%d not support for timelapse", option.width, option.height);
@@ -1461,13 +1401,11 @@ int access_msg_parser::check_origin_video_option(const ins_origin_option& option
 	}
 
 	bool b_resolution_support = false;
-	for (unsigned int i = 0; i < sizeof(origin_fmts)/sizeof(ins_resolution); i++)
-	{
+	for (unsigned int i = 0; i < sizeof(origin_fmts)/sizeof(ins_resolution); i++) {
 		if (option.width == origin_fmts[i].w 
 			&& option.height == origin_fmts[i].h 
 			&& option.framerate == origin_fmts[i].fps 
-			&& (!b_stiching || origin_fmts[i].rt))
-		{
+			&& (!b_stiching || origin_fmts[i].rt)) {
 			b_resolution_support = true;
 			break;
 		}
@@ -1505,20 +1443,17 @@ int access_msg_parser::check_picture_option(const ins_picture_option& option) co
 
 int access_msg_parser::check_audio_option(const ins_audio_option& option) const
 {
-	if (option.samplerate != 48000)
-	{
+	if (option.samplerate != 48000) {
 		LOGERR("samplerate:%d not support", option.samplerate);
 		return INS_ERR_INVALID_MSG_PARAM;
 	}
 
-	if (option.samplefmt != ACCESS_MSG_OPT_SAMPLEFMT_S16)
-	{
+	if (option.samplefmt != ACCESS_MSG_OPT_SAMPLEFMT_S16) {
 		LOGERR("samplefmt:%s not support", option.samplefmt.c_str());
 		return INS_ERR_INVALID_MSG_PARAM;
 	}
 
-	if (option.ch_layout != ACCESS_MSG_OPT_CHLAYOUT_MONO && option.ch_layout != ACCESS_MSG_OPT_CHLAYOUT_STEREO)
-	{
+	if (option.ch_layout != ACCESS_MSG_OPT_CHLAYOUT_MONO && option.ch_layout != ACCESS_MSG_OPT_CHLAYOUT_STEREO) {
 		LOGERR("channel layout:%s not support", option.ch_layout.c_str());
 		return INS_ERR_INVALID_MSG_PARAM;
 	}

@@ -1875,6 +1875,7 @@ void access_msg_center::do_test_storage_speed(std::string path)
 	sender_->send_ind_msg(ACCESS_CMD_STORAGE_ST_FINISH_, INS_OK, &param_obj);
 }
 
+
 void access_msg_center::internal_storage_st_finish(const char* msg, std::string cmd, int sequence)
 {
 	INS_THREAD_JOIN(th_);
@@ -2085,7 +2086,8 @@ void access_msg_center::module_power_on(const char* msg, std::string cmd, int se
 	}
 	sender_->send_rsp_msg(sequence, ret, cmd);
 	
-	if (ret == INS_OK) state_ = CAM_STATE_MODULE_POWON;
+	if (ret == INS_OK) 
+		state_ = CAM_STATE_MODULE_POWON;
 }
 
 void access_msg_center::module_power_off(const char* msg, std::string cmd, int sequence)
@@ -2099,6 +2101,7 @@ void access_msg_center::module_power_off(const char* msg, std::string cmd, int s
 	}
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
+
 
 void access_msg_center::change_udisk_mode(const char* msg, std::string cmd, int sequence)
 {
@@ -2284,6 +2287,7 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
          * - 设置本地时间
          * - 切换回系统原来的时区
          */
+		LOGINFO("--> Switch current timezone to UTC first, backup timezone[%s]", back_tz);
         system("timedatectl set-timezone UTC");
 		system(ss.str().c_str());
 

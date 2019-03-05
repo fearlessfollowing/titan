@@ -36,6 +36,8 @@
 #include "camera_info.h"
 #include "insx11.h"
 #include "hdmi_monitor.h"
+#include <system_properties.h>
+
 
 std::shared_ptr<access_msg_receiver> access_msg_center::receiver_ = nullptr;
 std::shared_ptr<access_msg_sender> access_msg_center::sender_ = nullptr; 
@@ -2289,6 +2291,8 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
          */
 		LOGINFO("--> Switch current timezone to UTC first, backup timezone[%s]", back_tz);
         system("timedatectl set-timezone UTC");
+		
+		LOGINFO("%s", ss.str().c_str());
 		system(ss.str().c_str());
 
 		if (back_tz != "") {
@@ -2296,7 +2300,6 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
 			system(set_tz.c_str());
 		}
 
-		LOGINFO("%s", ss.str().c_str());
 		camera_info::sync_time();
 	}
 	

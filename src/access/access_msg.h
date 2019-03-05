@@ -130,9 +130,9 @@ struct access_msg_head
 //#define INTERNAL_CMD_S_TASK_STATS_       "internal_s.task_stats_"
 #define ACCESS_CMD_S_TASK_STATS_         "stitcher.task_stats_"
 
-#define ACCESS_MSG_NAME    "name"
-#define ACCESS_MSG_PARAM   "parameters"
-#define ACCESS_MSG_OPTION  "options"
+#define ACCESS_MSG_NAME    				"name"
+#define ACCESS_MSG_PARAM   				"parameters"
+#define ACCESS_MSG_OPTION  				"options"
 
 #define ACCESS_MSG_STATE                          "state"
 #define ACCESS_MSG_STATE_DONE                     "done"

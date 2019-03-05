@@ -16,7 +16,7 @@
 
 #define SEND_DATA_TIMEOUT 	1000
 #define SEND_CMD_TIMEOUT 	5000
-#define RECV_CMD_TIMEOUT 	20000 	// 停止录像存卡需要时间
+#define RECV_CMD_TIMEOUT 	20000 	/* 停止录像存卡需要时间 */
 #define RECV_VID_TIMEOUT 	5000
 
 std::atomic_llong usb_camera::base_ref_pts_(INS_PTS_NO_VALUE);
@@ -882,7 +882,7 @@ int32_t usb_camera::calibration_blc_req()
 	ret = read_cmd_rsp(RECV_CMD_TIMEOUT);
 	RETURN_IF_NOT_OK(ret);
 
-	ret = read_cmd_rsp(4*60*1000, USB_CMD_CALIBRATION_BLC_IND);//4min
+	ret = read_cmd_rsp(4*60*1000, USB_CMD_CALIBRATION_BLC_IND);	// 4min
 	RETURN_IF_NOT_OK(ret);
 
 	return INS_OK;
@@ -1048,6 +1048,7 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 	int32_t rsp_cmd = 0;
 	int32_t rsp_result = 0;
 	json_obj root_obj(buff);
+	
 	root_obj.get_int("type", rsp_cmd);
 	root_obj.get_int("code", rsp_result);
 	
@@ -1062,12 +1063,12 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 	root_obj.get_string("data", cmd_result_);
 
 	if (rsp_result == INS_OK) {	/* 成功处理的某个命令后者模组发来通知指示 */
-		if (USB_CMD_STORAGE_STATE_IND == rsp_cmd) {				/* 模组上的存储设备状态变化指示 */
+		if (USB_CMD_STORAGE_STATE_IND == rsp_cmd) {	/* 模组上的存储设备状态变化指示 */
 			std::string data;
 			root_obj.get_string("data", data);
 			send_storage_state(data);
 			return INS_OK; 		// 不用设置cmd_rsp_map_，因为这个不是请求消息
-		} else if (USB_CMD_VIDEO_FRAGMENT == rsp_cmd) {			/* 启动新的视频段指示 */
+		} else if (USB_CMD_VIDEO_FRAGMENT == rsp_cmd) {	/* 启动新的视频段指示 */
 			if (pid_ != INS_CAM_NUM) 
 				return INS_OK; 	// 只处理master
 			auto obj_data = root_obj.get_obj("data");
@@ -1154,7 +1155,7 @@ int32_t usb_camera::send_cmd(uint32_t cmd, std::string content)
 	cmd_rsp_map_.erase(send_cmd_);	/* 擦除命令响应map中当前发送命令的项(如果存在) */
 	mtx_cmd_rsp_.unlock();
 
-	RETURN_IF_NOT_OK(exception_); // 等先初始化上面的值再返回
+	RETURN_IF_NOT_OK(exception_); 	/* 等先初始化上面的值再返回 */
 
 	int32_t ret = usb_device::get()->write_cmd(pid_, buff, strlen(buff)+1, SEND_CMD_TIMEOUT);
 	if (ret != LIBUSB_SUCCESS) {

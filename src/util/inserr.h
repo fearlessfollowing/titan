@@ -12,14 +12,14 @@
 #define INS_ERR_RETRY   -4
 
 //乱
-#define INS_ERR_INVALID_MSG_FMT -410
-#define INS_ERR_INVALID_MSG_PARAM -411
-#define INS_ERR_CONFIG_FILE -412
-#define INS_ERR_NOT_ALLOW_OP_IN_STATE -413 
-#define INS_ERR_MICPHONE_EXCEPTION -414
-#define INS_ERR_NO_GYRO_DATA -416
-#define INS_ERR_TEMPERATURE_HIGH -417
-#define INS_ERR_BUSY -418
+#define INS_ERR_INVALID_MSG_FMT 		-410		/* 错误的消息格式 */
+#define INS_ERR_INVALID_MSG_PARAM 		-411		/* 错误的消息参数 */
+#define INS_ERR_CONFIG_FILE 			-412		/* 配置文件错误 */
+#define INS_ERR_NOT_ALLOW_OP_IN_STATE 	-413 		/* 操作不允许 */
+#define INS_ERR_MICPHONE_EXCEPTION 		-414		/* 麦克风异常 */
+#define INS_ERR_NO_GYRO_DATA 			-416		/* 无陀螺仪数据 */
+#define INS_ERR_TEMPERATURE_HIGH 		-417		/* 温度过高 */
+#define INS_ERR_BUSY 					-418		/* 系统忙 */
 #define INS_ERR_USB_SND_UNSUPPORT_A_GAIN -419
 
 #define INS_ERR_NOT_IMPLEMENT -420

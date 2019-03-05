@@ -18,13 +18,13 @@
 #define BATTERY_START_TEMP_THRESHOLD 	60
 
 struct ins_resolution {
-	int w;
-	int h;
-	int fps;
-	bool rt;
+	int w;		/* 宽 */
+	int h;		/* 高 */
+	int fps;	/* 帧率 */
+	bool rt;	/* 是否实时拼接 */
 };
 
-#define ORIGIN_FILE_PREFIX "origin"
+#define ORIGIN_FILE_PREFIX	"origin"
 
 #define PARSE_PARAM_OBJ(msg) \
 auto root_obj = std::make_shared<json_obj>(msg); \
@@ -64,10 +64,14 @@ int access_msg_parser::check_disk_space(unsigned int size, std::string path)
 	return INS_OK;
 }
 
+
+/*
+ * 配置参数路径: /home/nvidia/insta360/etc/cam_config.xml
+ */
 void access_msg_parser::setup()
 {
+	/* 存储设备路径 <storage>/home/nvidia</storage>      */
 	xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_STORAGE, storage_path_);
-	//if (storage_path_ == "") storage_path_ = "/sdcard";
 	
 	//preview_url_ = "/sdcard/playlist.m3u8";
 	//preview_url_ = "rtmp://127.0.0.1/live/preview";
@@ -95,14 +99,22 @@ void access_msg_parser::setup()
 	}
 
 	LOGINFO("storage path:%s fanless:%d pano audio:%d audiotostitch:%d stab_rt:%d logo:%d", 
-		storage_path_.c_str(), 
-		b_fanless_, 
-		b_pano_audio_, 
-		b_audio_to_stitch_, 
-		b_stab_rt_, 
-		b_logo_on_);
+			storage_path_.c_str(), 
+			b_fanless_, 
+			b_pano_audio_, 
+			b_audio_to_stitch_, 
+			b_stab_rt_, 
+			b_logo_on_);
 }
 
+
+/***********************************************************************************************
+** 函数名称: parse_cmd_name
+** 函数功能: 提取消息的"name"字段
+** 入口参数:
+**		msg - 消息对象
+** 返 回 值: 成功返回消息的name; 否则返回null
+*************************************************************************************************/
 std::string access_msg_parser::parse_cmd_name(const char* msg)
 {
 	auto root_obj = std::make_shared<json_obj>(msg);
@@ -114,6 +126,7 @@ std::string access_msg_parser::parse_cmd_name(const char* msg)
 		return cmd;
 	}
 }
+
 
 int access_msg_parser::preview_option(const char* msg, ins_video_option& opt)
 {
@@ -130,14 +143,15 @@ int access_msg_parser::preview_option(const char* msg, ins_video_option& opt)
 	opt.origin.storage_mode = INS_STORAGE_MODE_NONE;
 	opt.origin.live_prefix = "";
 	opt.stiching.url_second = "";
-	opt.stiching.hdmi_display = true;//预览都是同时显示到hdmi
-	if (!b_audio_to_stitch_) {
+	opt.stiching.hdmi_display = true;		/* 预览都是同时显示到hdmi */
+
+	if (!b_audio_to_stitch_) {				/* 拼接不需要音频 */
 		opt.b_audio = false;
 	} else {
-		opt.audio.type = INS_AUDIO_N_C;
+		opt.audio.type = INS_AUDIO_N_C;		/* 原始流不需要音频,拼接流需要普通音频 */
 	}
 
-	if (opt.index != INS_CAM_ALL_INDEX) {	//单镜头合焦HDMI预览
+	if (opt.index != INS_CAM_ALL_INDEX) {	/* 单镜头合焦HDMI预览 */
 		opt.b_stiching = false;
 	} else {
 		if (!opt.b_stiching) {
@@ -151,11 +165,12 @@ int access_msg_parser::preview_option(const char* msg, ins_video_option& opt)
 			ret = hls_dir_prepare(HLS_PREVIEW_STREAM_DIR);
 			RETURN_IF_NOT_OK(ret);
 		} else {
-			opt.stiching.url = RTMP_PREVIEW_URL;
+			opt.stiching.url = RTMP_PREVIEW_URL;	/* RTMP的预览地址: "rtmp://127.0.0.1/live/preview" */
 		}
 	}
 	return INS_OK;
 }
+
 
 int32_t access_msg_parser::get_audio_type(bool stitch)
 {
@@ -200,12 +215,11 @@ int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 		opt.duration = 15*60; //无风扇模式只录制15分钟
 		opt.audio.fanless = true;
 	}
-	// else
-	// {
+	
+	// else {
 	// 	if (cpu_temp > CPU_GPU_START_TEMP_THRESHOLD 
 	// 		|| gpu_temp > CPU_GPU_START_TEMP_THRESHOLD 
-	// 		|| battery_temp > BATTERY_START_TEMP_THRESHOLD)
-	// 	{	
+	// 		|| battery_temp > BATTERY_START_TEMP_THRESHOLD) {	
 	// 		LOGERR("temperature high cpu:%d gpu:%d battery:%lf", cpu_temp, gpu_temp, battery_temp);
 	// 		return INS_ERR_TEMPERATURE_HIGH;
 	// 	}
@@ -469,21 +483,17 @@ static int parser_option(std::shared_ptr<json_obj> obj, std::map<std::string, in
 	// 	opt1.insert(std::make_pair(property, value1));
 	// 	opt2.insert(std::make_pair(property, value2));
 	// }
-	//depthMap是一个字符串，存在value2中，value1不用
-	if (property == ACCESS_MSG_OPT_DEPTH_MAP || property == ACCESS_MSG_OPT_IQTYPE)
-	{
-		if (!obj->get_string(ACCESS_MSG_OPT_VALUE, value2))
-		{
+	
+	// depthMap是一个字符串，存在value2中，value1不用
+	if (property == ACCESS_MSG_OPT_DEPTH_MAP || property == ACCESS_MSG_OPT_IQTYPE) {
+		if (!obj->get_string(ACCESS_MSG_OPT_VALUE, value2)) {
 			LOGERR("key:%s not fond", ACCESS_MSG_OPT_VALUE);
 			return INS_ERR_INVALID_MSG_FMT;
 		}
 		opt1.insert(std::make_pair(property, value1)); 
 		opt2.insert(std::make_pair(property, value2));
-	}
-	else
-	{
-		if (!obj->get_int(ACCESS_MSG_OPT_VALUE, value1))
-		{
+	} else {
+		if (!obj->get_int(ACCESS_MSG_OPT_VALUE, value1)) {
 			LOGERR("key:%s not fond", ACCESS_MSG_OPT_VALUE);
 			return INS_ERR_INVALID_MSG_FMT;
 		}
@@ -499,24 +509,21 @@ int access_msg_parser::option_option(const char* msg, std::map<std::string, int>
 {
 	PARSE_PARAM_OBJ(msg);
 	
-	if (param_obj->is_array())
-	{
+	if (param_obj->is_array()) {
 		auto v_property = root_obj->get_string_array(ACCESS_MSG_PARAM);
-		for (unsigned i = 0; i < v_property.size(); i++)
-		{
+		for (unsigned i = 0; i < v_property.size(); i++) {
 			auto obj = std::make_shared<json_obj>(v_property[i].c_str());
 			int ret = parser_option(obj, opt1, opt2);
 			RETURN_IF_NOT_OK(ret);
 		}
-	}
-	else
-	{
+	} else {
 		int ret = parser_option(param_obj, opt1, opt2);
 		RETURN_IF_NOT_OK(ret);
 	}
 
 	return INS_OK;
 }
+
 
 // int access_msg_parser::set_ntscpal_option(const char* msg, std::string& mode, int& index)
 // {
@@ -567,8 +574,7 @@ int access_msg_parser::hdmi_option(const char* msg, ins_video_option& opt)
 	PARSE_PARAM_OBJ(msg);
 
 	auto origin_obj = param_obj->get_obj(ACCESS_MSG_OPT_ORIGIN);
-	if (origin_obj == nullptr)
-	{
+	if (origin_obj == nullptr) {
 		LOGERR("key:origin not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -605,8 +611,7 @@ int access_msg_parser::storage_option(const char* msg, std::string& path)
 {
 	PARSE_PARAM_OBJ(msg);
 
-	if (!param_obj->get_string(ACCESS_MSG_OPT_PATH, path))
-	{
+	if (!param_obj->get_string(ACCESS_MSG_OPT_PATH, path)) {
 		LOGERR("key:storagePath not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -642,8 +647,7 @@ int access_msg_parser::calibration_option(const char* msg, std::string& mode, in
 	auto param_obj = root_obj->get_obj(ACCESS_MSG_PARAM); 
 	if (!param_obj) return INS_OK; 
 
-	if (param_obj->get_string("mode", mode))
-	{
+	if (param_obj->get_string("mode", mode)) {
 		if (mode != "pano" && mode != "3d") return INS_ERR_INVALID_MSG_PARAM;
 	}
 
@@ -658,16 +662,15 @@ int access_msg_parser::upgrade_fw_option(const char* msg, std::string& path, std
 {
 	PARSE_PARAM_OBJ(msg);
 
-	if (!param_obj->get_string(ACCESS_MSG_OPT_PATH, path))
-	{
+	if (!param_obj->get_string(ACCESS_MSG_OPT_PATH, path)) {
 		LOGERR("key:path not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
+	
 	if (path == "") return INS_ERR_INVALID_MSG_PARAM;
 
 
-	if (!param_obj->get_string("version", version))
-	{
+	if (!param_obj->get_string("version", version)) {
 		LOGERR("key:version not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -678,18 +681,16 @@ int access_msg_parser::upgrade_fw_option(const char* msg, std::string& path, std
 	return INS_OK;
 }
 
+
+
 int access_msg_parser::parase_index(const std::shared_ptr<json_obj> obj, int& index, int defaut_index) const
 {
-	if (obj->get_int("index", index))
-	{
-		if ((index > INS_CAM_NUM || index <= 0) && index != INS_CAM_ALL_INDEX)
-		{
+	if (obj->get_int("index", index)) {
+		if ((index > INS_CAM_NUM || index <= 0) && index != INS_CAM_ALL_INDEX) {
 			LOGERR("invalid index:%d", index);
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
-	}
-	else
-	{
+	} else {
 		index = defaut_index;
 	}
 
@@ -706,121 +707,103 @@ int access_msg_parser::parse_video_option(std::shared_ptr<json_obj> param_obj, i
 	param_obj->get_boolean("saveFile", option.b_to_file);
 	param_obj->get_string("storagePath", option.path);
 
-	if (!param_obj->get_boolean("stabilization", option.b_stabilization))
-	{
+	if (!param_obj->get_boolean("stabilization", option.b_stabilization)) {
 		option.b_stabilization = b_stab_rt_;
 	}
 
 	// auto result = xml_config::get_string(INS_CONFIG_OPTION, INS_CONFIG_RECORD_TO_FILE);
-	// if (result == "off") 
-	// {
-	// 	option.b_to_file = false;
+	// if (result == "off") {
+	//	option.b_to_file = false;
 	// 	LOGINFO("config not save to file");
 	// }
 
 	auto origin_obj = param_obj->get_obj(ACCESS_MSG_OPT_ORIGIN);
-	if (origin_obj == nullptr)
-	{
+	if (origin_obj == nullptr) {	/* "origin"字段不存在,返回410错误 */
 		LOGERR("key:origin not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
 
-	if (!param_obj->get_int("duration", option.duration))
-	{
+	if (!param_obj->get_int("duration", option.duration)) {
 		option.duration = -1;
 	}
 
 	auto timelapse_obj = param_obj->get_obj("timelapse");
-	if (timelapse_obj) parse_timelapse_option(timelapse_obj, option.timelapse);
+	if (timelapse_obj) 
+		parse_timelapse_option(timelapse_obj, option.timelapse);
 
 	parse_origin_option(origin_obj, option.origin/*, option.timelapse.enable*/);
 	if (option.path != "") //如果指定了存储路径肯定是存储在nvidia的
 	{
 		option.origin.storage_mode = INS_STORAGE_MODE_NV;
 	}
-	if (option.type == INS_PREVIEW) //容错客户端发预览的时候带saveOrigin参数
-	{
+	
+	if (option.type == INS_PREVIEW) {	// 容错客户端发预览的时候带saveOrigin参数
 		option.origin.storage_mode = INS_STORAGE_MODE_NONE;
 	}
 
 	auto stiching_obj = param_obj->get_obj(ACCESS_MSG_OPT_STICHING);
-	if (stiching_obj == nullptr)
-	{
+	if (stiching_obj == nullptr) {
 		option.b_stiching = false;
 		LOGINFO("key:stiching not fond");
-	}
-	else
-	{
+	} else {
 		option.b_stiching = true;
 		int ret = parse_stich_option(stiching_obj, option.stiching);
 		RETURN_IF_NOT_OK(ret);
-		if (option.stiching.mode != INS_MODE_PANORAMA) //3d不使用陀螺仪
-		{
+		if (option.stiching.mode != INS_MODE_PANORAMA) { /* 3d不使用陀螺仪 */
 			option.b_stabilization = false;
 		}
 	}
 
 	auto s_stab = property_get("sys.stab_on");
-	if (s_stab == "false" && option.b_stabilization)
-	{
+	if (s_stab == "false" && option.b_stabilization) {
 		option.b_stabilization = false;
 		LOGINFO("------config stab off");
 	}
 
 	auto s_audio = property_get("sys.use_audio");
-	if (s_audio == "true" && !option.timelapse.enable)
-	{
+	if (s_audio == "true" && !option.timelapse.enable) {
 		auto audio_obj = param_obj->get_obj(ACCESS_MSG_OPT_AUDIO);
-		if (audio_obj == nullptr)
-		{
+		if (audio_obj == nullptr) {
 			option.b_audio = false;
 			LOGINFO("key:audio not fond");
-		}
-		else
-		{
+		} else {
 			option.b_audio = true;
 			int ret = parse_audio_option(audio_obj, option.audio);
 			RETURN_IF_NOT_OK(ret);
 		}
-	}
-	else
-	{
+	} else {
 		LOGINFO("------config no audio");
 		option.b_audio = false;
 	}
 
 	auto auto_connect_obj = param_obj->get_obj("autoConnect"); //just for living
-	if (auto_connect_obj)
-	{
+	if (auto_connect_obj) {
 		auto_connect_obj->get_boolean("enable", option.auto_connect.enable);
 		auto_connect_obj->get_int("interval", option.auto_connect.interval);
 		auto_connect_obj->get_int("count", option.auto_connect.count);
 	}
 
-	if (b_logo_on_ /*&& option.b_stiching*/) //非实时拼接也会用辅码流拼接预览流也要logo
-	{
+	if (b_logo_on_ /*&& option.b_stiching*/) { /* 非实时拼接也会用辅码流拼接预览流也要logo */
 		std::string logo_file = storage_path_ + "/" + INS_LOGO_FILE;
-		if (!access(logo_file.c_str(), 0)) option.logo_file = logo_file;
+		if (!access(logo_file.c_str(), 0)) 
+			option.logo_file = logo_file;
 	}
 
 	ret = check_video_option(option);
 	RETURN_IF_NOT_OK(ret);
 
+
 	//实时拼接且存储同时存原片的时候，主码流固定分辨率，拼接用辅码流
-	// if (option.origin.storage_mode != INS_STORAGE_MODE_NONE && option.b_stiching)
-	// {
-	// 	if (option.stiching.framerate != 30)
-	// 	{
+	// if (option.origin.storage_mode != INS_STORAGE_MODE_NONE && option.b_stiching) {
+	// 	if (option.stiching.framerate != 30) {
 	// 		LOGERR("stitching framerate:%d not 30", option.stiching.framerate);
 	// 		return INS_ERR_INVALID_MSG_PARAM;
 	// 	}
-	// 	if (option.stiching.mode == INS_MODE_PANORAMA)
-	// 	{
+	
+	// 	if (option.stiching.mode == INS_MODE_PANORAMA) {
 	// 		option.origin.width = 3840;
 	// 		option.origin.height = 2160;
-	// 	}
-	// 	else
-	// 	{
+	// 	} else {
 	// 		option.origin.width = 3200;
 	// 		option.origin.height = 2400;
 	// 	}
@@ -831,6 +814,7 @@ int access_msg_parser::parse_video_option(std::shared_ptr<json_obj> param_obj, i
 	return INS_OK;
 }
 
+
 int access_msg_parser::parse_picture_option(std::shared_ptr<json_obj> param_obj, ins_picture_option& option) const 
 {
 	auto ret = parase_index(param_obj, option.index, INS_CAM_ALL_INDEX); 
@@ -839,14 +823,12 @@ int access_msg_parser::parse_picture_option(std::shared_ptr<json_obj> param_obj,
 	param_obj->get_string("storagePath", option.path);
 	param_obj->get_boolean("thumbnail", option.b_thumbnail);
 
-	if (!param_obj->get_boolean("stabilization", option.b_stabilization))
-	{
+	if (!param_obj->get_boolean("stabilization", option.b_stabilization)) {
 		option.b_stabilization = b_stab_rt_;
 	}
 
 	auto origin_obj = param_obj->get_obj(ACCESS_MSG_OPT_ORIGIN);
-	if (origin_obj == nullptr)
-	{
+	if (origin_obj == nullptr) {
 		LOGERR("key:origin not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -856,21 +838,16 @@ int access_msg_parser::parse_picture_option(std::shared_ptr<json_obj> param_obj,
 	if (delay > 0) option.delay = delay;
 
 	parse_origin_option(origin_obj, option.origin, true);
-	if (option.path != "") //如果指定了存储路径肯定是存储在nvidia的
-	{
+	if (option.path != "") {	//如果指定了存储路径肯定是存储在nvidia的
 		option.origin.storage_mode = INS_STORAGE_MODE_NV;
 	}
 
 	auto stiching_obj = param_obj->get_obj(ACCESS_MSG_OPT_STICHING);
-	if (stiching_obj == nullptr)
-	{
+	if (stiching_obj == nullptr) {
 		option.b_stiching = false;
 		//LOGINFO("key:stiching not fond");
-	}
-	else
-	{
-		if (option.origin.mime == INS_RAW_MIME)
-		{
+	} else {
+		if (option.origin.mime == INS_RAW_MIME) {
 			LOGERR("don't support stiching when taking raw");
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
@@ -878,29 +855,25 @@ int access_msg_parser::parse_picture_option(std::shared_ptr<json_obj> param_obj,
 		option.b_stiching = true;
 		int ret = parse_stich_option(stiching_obj, option.stiching);
 		RETURN_IF_NOT_OK(ret);
-		if (option.stiching.mode != INS_MODE_PANORAMA) //3d不使用陀螺仪
-		{
+		if (option.stiching.mode != INS_MODE_PANORAMA) {	// 3d不使用陀螺仪
 			option.b_stabilization = false;
 		}
 	}
 
 	auto s_stab = property_get("sys.stab_on");
-	if (s_stab == "false" && option.b_stabilization) 
-	{
+	if (s_stab == "false" && option.b_stabilization) {
 		option.b_stabilization = false;
 		LOGINFO("------config stab off");
 	}
 
 	auto burst_obj = param_obj->get_obj(ACCESS_MSG_OPT_BURST);
-	if (burst_obj != nullptr)
-	{
+	if (burst_obj != nullptr) {
 		burst_obj->get_boolean("enable", option.burst.enable);
 		burst_obj->get_int("count", option.burst.count);
 	}
 
 	auto hdr_obj = param_obj->get_obj(ACCESS_MSG_OPT_HDR);
-	if (hdr_obj != nullptr)
-	{
+	if (hdr_obj != nullptr) {
 		hdr_obj->get_boolean("enable", option.hdr.enable);
 		hdr_obj->get_int("count", option.hdr.count);
 		hdr_obj->get_int("min_ev", option.hdr.min_ev);
@@ -908,29 +881,23 @@ int access_msg_parser::parse_picture_option(std::shared_ptr<json_obj> param_obj,
 	}
 
 	auto bracket_obj = param_obj->get_obj(ACCESS_MSG_OPT_BRACKET);
-	if (bracket_obj != nullptr)
-	{
+	if (bracket_obj != nullptr) {
 		bracket_obj->get_boolean("enable", option.bracket.enable);
 		bracket_obj->get_int("count", option.bracket.count);
 		bracket_obj->get_int("min_ev", option.bracket.min_ev);
 		bracket_obj->get_int("max_ev", option.bracket.max_ev);
 	}
 
-	if (option.origin.storage_mode == INS_STORAGE_MODE_DEFAULT)
-	{
+	if (option.origin.storage_mode == INS_STORAGE_MODE_DEFAULT) {
 		//busrt/hdr默认分开存raw/jpg
-		if (option.bracket.enable || option.hdr.enable || option.burst.enable)
-		{
+		if (option.bracket.enable || option.hdr.enable || option.burst.enable) {
 			option.origin.storage_mode = INS_STORAGE_MODE_AB_NV;
-		}
-		else
-		{
+		} else {
 			option.origin.storage_mode = INS_STORAGE_MODE_NV;
 		}
 	}
 
-	if (b_logo_on_)
-	{
+	if (b_logo_on_) {
 		std::string logo_file = storage_path_ + "/" + INS_LOGO_FILE;
 		if (!access(logo_file.c_str(), 0)) option.logo_file = logo_file;
 	}
@@ -940,13 +907,11 @@ int access_msg_parser::parse_picture_option(std::shared_ptr<json_obj> param_obj,
 
 int access_msg_parser::parse_video_file_option(std::shared_ptr<json_obj> param_obj, ins_video_file_option& option) const 
 {
-	for (int i = 0; i < 6; i++)
-	{
+	for (int i = 0; i < 6; i++) {
 		std::stringstream ss;
 		ss << "file" << i +1;
 		std::string url;
-		if (!param_obj->get_string(ss.str().c_str(), url))
-		{
+		if (!param_obj->get_string(ss.str().c_str(), url)) {
 			LOGERR("key:%s not found", ss.str().c_str());
 			return INS_ERR_INVALID_MSG_FMT;
 		}
@@ -1007,29 +972,21 @@ int access_msg_parser::parse_origin_option(std::shared_ptr<json_obj> origin_obj,
 {
 	bool save_origin = false;
 	origin_obj->get_boolean(ACCESS_MSG_OPT_SAVE_ORIGIN, save_origin);
-	if (save_origin)
-	{
+	if (save_origin) {
 		int32_t loc_mode = b_pic?INS_STORAGE_MODE_DEFAULT:INS_STORAGE_MODE_AB_NV; //默认
 		origin_obj->get_int(ACCESS_MSG_OPT_STORAGE_LOC, loc_mode);
 		option.storage_mode = loc_mode;
-	}
-	else
-	{
+	} else {
 		//不支持同时原始流存文件和原始流推流
 		origin_obj->get_string("liveUrl", option.live_prefix);
 	}
 
 	origin_obj->get_string(ACCESS_MSG_OPT_MIME, option.mime);
-	if (option.mime == ACCESS_MSG_OPT_MIME_H264)
-	{
+	if (option.mime == ACCESS_MSG_OPT_MIME_H264) {
 		option.mime = INS_H264_MIME;
-	}
-	else if (option.mime == ACCESS_MSG_OPT_MIME_H265)
-	{
+	} else if (option.mime == ACCESS_MSG_OPT_MIME_H265) {
 		option.mime = INS_H265_MIME;
-	}
-	else if (option.mime == ACCESS_MSG_OPT_MIME_JPEG)
-	{
+	} else if (option.mime == ACCESS_MSG_OPT_MIME_JPEG) {
 		option.mime = INS_JPEG_MIME;
 	}
 	else if (option.mime == ACCESS_MSG_OPT_MIME_RAW)
@@ -1155,38 +1112,28 @@ int access_msg_parser::parse_mode(std::shared_ptr<json_obj> obj, int& mode) cons
 
 int access_msg_parser::parse_audio_option(std::shared_ptr<json_obj> audio_obj, ins_audio_option& option) const
 {
-	if (audio_obj->get_string(ACCESS_MSG_OPT_MIME, option.mime))
-	{
-		if (option.mime == ACCESS_MSG_OPT_MIME_AAC)
-		{
+	if (audio_obj->get_string(ACCESS_MSG_OPT_MIME, option.mime)) {
+		if (option.mime == ACCESS_MSG_OPT_MIME_AAC) {
 			option.mime = INS_AAC_MIME;
-		}
-		else
-		{
+		} else {
 			LOGERR("invalid audio mime type:%s", option.mime.c_str());
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
-	}
-	//default
-	else
-	{
+	}else {	//default
 		option.mime = INS_AAC_MIME;
 	}
 
-	if (!audio_obj->get_int(ACCESS_MSG_OPT_FORMAT_SAMPLERATE, option.samplerate))
-	{
+	if (!audio_obj->get_int(ACCESS_MSG_OPT_FORMAT_SAMPLERATE, option.samplerate)) {
 		LOGERR("no sample rate in json msg");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
 
-	if (!audio_obj->get_int(ACCESS_MSG_OPT_FORMAT_BITRATE, option.bitrate))
-	{
+	if (!audio_obj->get_int(ACCESS_MSG_OPT_FORMAT_BITRATE, option.bitrate)) {
 		LOGERR("no bitrate in json msg");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
 
-	if (!audio_obj->get_string(ACCESS_MSG_OPT_FORMAT_SAMPLE_FORMAT, option.samplefmt))
-	{
+	if (!audio_obj->get_string(ACCESS_MSG_OPT_FORMAT_SAMPLE_FORMAT, option.samplefmt)) {
 		LOGERR("no sample format in json msg");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -1211,12 +1158,12 @@ std::string access_msg_parser::gen_file_prefix(std::string type)
 	char date_str[256] = {0};
 
 	snprintf(date_str, 255, "%04d%02d%02d_%02d%02d%02d", 
-		now->tm_year + 1900,
-		now->tm_mon + 1,
-		now->tm_mday,
-		now->tm_hour,
-		now->tm_min,
-		now->tm_sec);
+			now->tm_year + 1900,
+			now->tm_mon + 1,
+			now->tm_mday,
+			now->tm_hour,
+			now->tm_min,
+			now->tm_sec);
 
 	std::string url = type + "_" + std::string(date_str);
 
@@ -1226,37 +1173,25 @@ std::string access_msg_parser::gen_file_prefix(std::string type)
 int access_msg_parser::create_file_dir(std::string prefix, std::string& path)
 {	
 	bool b_custom_path = true;
-	if (path == "")
-	{
+	if (path == "") {
 		b_custom_path = false;
 		path = storage_path_ + "/" + prefix;
 	}
 
-	for (int i = 0; ; i++)
-	{
+	for (int i = 0; ; i++) {
 		//路径不存在，创建路径
-		if (access(path.c_str(), 0))
-		{
-			if (mkdir(path.c_str(), 0755))
-			{
+		if (access(path.c_str(), 0)) {
+			if (mkdir(path.c_str(), 0755)) {
 				LOGERR("mkdir:%s fail", path.c_str());
 				path = "";
 				return INS_ERR_FILE_OPEN;
-			}
-			else
-			{
+			} else {
 				LOGINFO("create dir:%s success", path.c_str());
 				return INS_OK;
 			}
-		}
-		//如果是指定的路径，就覆盖写
-		else if (b_custom_path)
-		{
+		} else if (b_custom_path) {	// 如果是指定的路径，就覆盖写
 			return INS_OK;	
-		}
-		//如果自动生成的路径，不能覆盖
-		else
-		{
+		} else {	//如果自动生成的路径，不能覆盖
 			LOGINFO("dir:%s exist, change dirname", path.c_str());
 			std::stringstream ss;
 			ss << storage_path_ << "/" << prefix << "_" << i;
@@ -1269,10 +1204,11 @@ int access_msg_parser::check_video_option(const ins_video_option& option) const
 {	
 	int ret = INS_OK;
 
-	if (option.b_stiching)
-	{
-		if (option.origin.framerate != option.stiching.framerate && option.stiching.format != "jpeg")
-		{
+	if (option.b_stiching) {	/* 使能了实时拼接 */
+		/*
+	 	 * 原始流的帧率与拼接流的帧率不一致(拼接流为非jpeg), 错误
+	 	 */
+		if (option.origin.framerate != option.stiching.framerate && option.stiching.format != "jpeg") {
 			LOGERR("origin fps:%d != stiching fps:%d", option.origin.framerate, option.stiching.framerate);
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
@@ -1280,15 +1216,13 @@ int access_msg_parser::check_video_option(const ins_video_option& option) const
 		ret = check_stich_option(option.stiching);
 		RETURN_IF_NOT_OK(ret);
 
-		if (option.origin.storage_mode == INS_STORAGE_MODE_NV || option.origin.storage_mode == INS_STORAGE_MODE_NONE)
-		{
+		if (option.origin.storage_mode == INS_STORAGE_MODE_NV 
+			|| option.origin.storage_mode == INS_STORAGE_MODE_NONE) {
 			int ret = check_origin_video_option(option.origin, true, option.timelapse.enable);
 			RETURN_IF_NOT_OK(ret);
-		}
-		else
-		{
-			if (option.origin.width > 3840 || option.origin.height > 2400 || option.stiching.framerate > 60)
-			{
+		} else {
+			if (option.origin.width > 3840 || option.origin.height > 2400 
+				|| option.stiching.framerate > 60) {
 				LOGERR("storage in module & stiching,w:%d h:%d fps:%d not support", 
 					option.origin.width, option.origin.height, option.stiching.framerate);
 				return INS_ERR_INVALID_MSG_PARAM;
@@ -1298,23 +1232,18 @@ int access_msg_parser::check_video_option(const ins_video_option& option) const
 			int ret = check_origin_video_option(option.origin, false, option.timelapse.enable);
 			RETURN_IF_NOT_OK(ret);
 		}
-	}
-	else
-	{
+	} else {
 		ret = check_origin_video_option(option.origin, false, option.timelapse.enable);
 		RETURN_IF_NOT_OK(ret);
 	}
 
-	if (option.b_audio)
-	{
+	if (option.b_audio) {	/* 使能音频时, 检查音频参数是否合法 */
 		ret = check_audio_option(option.audio);
 		RETURN_IF_NOT_OK(ret);
 	}
 
-	if (option.timelapse.enable)
-	{
-		if (option.timelapse.interval < 2000)
-		{
+	if (option.timelapse.enable) {	/* 使能timelapse时,检查timelapse的间隔是否大于2s */
+		if (option.timelapse.interval < 2000) {
 			LOGERR("timelapse interval:%d < 2000ms", option.timelapse.interval);
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
@@ -1323,18 +1252,22 @@ int access_msg_parser::check_video_option(const ins_video_option& option) const
 	return INS_OK;
 }
 
+
 int access_msg_parser::check_stich_option(const ins_stiching_option& option) const
 {
-	if (option.width > 4096 || option.height > 4096 
-		|| option.width < 64 || option.height < 64
-		|| option.framerate > 60)
-	{
+	/*
+ 	 * 实时拼接参数限制: 宽高不能大于4096,小于64, 帧率不能大于60
+ 	 */
+	if (option.width > 4096 
+		|| option.height > 4096 
+		|| option.width < 64 
+		|| option.height < 64
+		|| option.framerate > 60) {
 		LOGERR("stich option w:%d h:%d fps:%d not support", option.width, option.height, option.framerate);
 		return INS_ERR_INVALID_MSG_PARAM;
 	}
 
-	// if (option.width*option.height > 4096*2048)
-	// {
+	// if (option.width*option.height > 4096*2048) {
 	// 	LOGERR("stich option w:%d h:%d fps:%d not support", option.width, option.height, option.framerate);
 	// 	return INS_ERR_INVALID_MSG_PARAM;
 	// }
@@ -1411,14 +1344,14 @@ int access_msg_parser::check_origin_video_option(const ins_origin_option& option
 		}
 	}
 
-	// if (!b_resolution_support)
-	// {
+	// if (!b_resolution_support) {
 	// 	LOGERR("origin resolution w:%d h:%d fps:%d rtstich:%d not support", option.width, option.height, option.framerate, b_stiching);
 	// 	return INS_ERR_INVALID_MSG_PARAM;
 	// }
 
 	return INS_OK;
 }
+
 
 int access_msg_parser::check_picture_option(const ins_picture_option& option) const
 {

@@ -6,6 +6,15 @@
 #include <string>
 #include "json_obj.h"
 
+
+
+
+/***********************************************************************************************
+** 函数名称: setup
+** 函数功能: 创建消息发送器(同步和异步)
+** 入口参数:
+** 返 回 值: 成功返回INS_OK
+*************************************************************************************************/
 int access_msg_sender::setup()
 {
 	msg_sender_ = std::make_shared<fifo_write>();
@@ -19,6 +28,14 @@ int access_msg_sender::setup()
 	return INS_OK;
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: re_setup
+** 函数功能: 重新初始化消息发送器(同步和异步)
+** 入口参数:
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_sender::re_setup()
 {
 	msg_sender_ = nullptr;
@@ -32,6 +49,18 @@ void access_msg_sender::re_setup()
 }
 
 
+
+/***********************************************************************************************
+** 函数名称: send_rsp_msg
+** 函数功能: 发送响应消息
+** 入口参数:
+**		sequence - 序列值
+**		rsp_code - 响应码(用来区分响应的状态)
+**		cmd		 - 响应的命令(对应请求)
+**		res_obj	 - results
+**		b_sync	 - 同步还是异步发送
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_sender::send_rsp_msg(unsigned int sequence, int rsp_code, const std::string& cmd, const json_obj* res_obj, bool b_sync) const
 {
 	json_obj root_obj;
@@ -63,6 +92,16 @@ void access_msg_sender::send_rsp_msg(unsigned int sequence, int rsp_code, const 
 }
 
 
+
+/***********************************************************************************************
+** 函数名称: send_ind_msg
+** 函数功能: 发送指示消息
+** 入口参数:
+**		cmd		 - 响应的命令(对应请求)
+**		rsp_code - 响应码(用来区分响应的状态)
+**		res_obj	 - results
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_sender::send_ind_msg(std::string cmd, int rsp_code, const json_obj* res_obj)
 {	
 	auto sequence = get_ind_msg_sequece(cmd);
@@ -93,6 +132,8 @@ void access_msg_sender::send_ind_msg(std::string cmd, int rsp_code, const json_o
 	msg_sender_a_->queue_msg(msg);
 }
 
+
+
 void access_msg_sender::send_ind_msg_(std::string cmd, const json_obj* param)
 {	
 	auto sequence = get_ind_msg_sequece(cmd);
@@ -107,6 +148,16 @@ void access_msg_sender::send_ind_msg_(std::string cmd, const json_obj* param)
 	msg_sender_a_->queue_msg(msg);
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: set_ind_msg_sequece
+** 函数功能: 设置指示消息的sequence
+** 入口参数:
+**		cmd		 - 响应的命令(对应请求)
+**		sequence - 序列值
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_sender::set_ind_msg_sequece(std::string cmd, unsigned int sequence)
 {
 	if (map_msg_seq_.count(cmd) > 0) {
@@ -116,6 +167,14 @@ void access_msg_sender::set_ind_msg_sequece(std::string cmd, unsigned int sequen
 	}
 }
 
+
+/***********************************************************************************************
+** 函数名称: get_ind_msg_sequece
+** 函数功能: 获取指定命令的sequence
+** 入口参数:
+**		cmd		 - 响应的命令(对应请求)
+** 返 回 值: 存在返回对应的sequence; 否则返回0
+*************************************************************************************************/
 unsigned int access_msg_sender::get_ind_msg_sequece(std::string cmd)
 {
 	if (map_msg_seq_.count(cmd) > 0) {
@@ -124,3 +183,4 @@ unsigned int access_msg_sender::get_ind_msg_sequece(std::string cmd)
 		return 0;
 	}
 }
+

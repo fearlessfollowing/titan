@@ -10,12 +10,12 @@ struct dev_contex {
     libusb_transfer* transfer = nullptr;
 };
 
-#define ENDPOINT_SEND_CMD  (0x01)
-#define ENDPOINT_SEND_DATA (0x04)
-#define ENDPOINT_RECV_CMD  (0x83)
-#define ENDPOINT_RECV_DATA (0x82)
-#define PRO_USB_VID        (0x4255)
-//#define PRO_USB_VID        (0x2E1A)
+#define ENDPOINT_SEND_CMD  		(0x01)		/* 用于发命令的端点 */
+#define ENDPOINT_SEND_DATA 		(0x04)		/* 用于发数据的端点 */
+#define ENDPOINT_RECV_CMD  		(0x83)		/* 接收命令的端点 */
+#define ENDPOINT_RECV_DATA 		(0x82)		/* 接收数据的端点 */
+#define PRO_USB_VID        		(0x4255)
+//#define PRO_USB_VID        	(0x2E1A)
 
 usb_device* usb_device::instance_ = nullptr;
 
@@ -107,7 +107,7 @@ int usb_device::init()
 		return INS_ERR;
 	}
 
-    //libusb_set_debug(nullptr, LIBUSB_LOG_LEVEL_INFO);
+    // libusb_set_debug(nullptr, LIBUSB_LOG_LEVEL_INFO);
 
     for (int i = 0; i < INS_CAM_NUM; i++) {
         pid_.insert(std::make_pair(i+1, nullptr));
@@ -132,7 +132,6 @@ int usb_device::init()
     th_ = std::thread(&usb_device::event_handle_task, this);
 	
     LOGINFO("libusb init success");
-
 	return INS_OK;
 }
 
@@ -349,7 +348,7 @@ int32_t usb_device::usb_transfer_async(int pid, int ep, unsigned char* data, int
 
     if (ret < 0) {
         if (ctx->second->stop) {
-            return LIBUSB_ERROR_CANCLE; //正常停止不打印错误日志
+            return LIBUSB_ERROR_CANCLE; /* 正常停止不打印错误日志 */
         } else {
             LOGERR("pid:%d ep:0x%x bulk transfer size:%d fail:%d %s", pid, ep, size, ret, libusb_error_name(ret));
         }
@@ -358,18 +357,15 @@ int32_t usb_device::usb_transfer_async(int pid, int ep, unsigned char* data, int
     return ret;
 }
 
-// int usb_device::swich_usb_err(int usb_err, int ins_err)
-// {
-//     if (usb_err == LIBUSB_ERROR_NO_DEVICE)
-//     {
-//         return INS_ERR_CAMERA_OFFLINE;
-//     }
-//     else if (usb_err == LIBUSB_ERROR_TIMEOUT)
-//     {
-//         return INS_ERR_TIME_OUT;
-//     }
-//     else
-//     {
-//         return ins_err;
-//     }
-// }
+#if 0
+int usb_device::swich_usb_err(int usb_err, int ins_err)
+{
+	if (usb_err == LIBUSB_ERROR_NO_DEVICE) {
+		return INS_ERR_CAMERA_OFFLINE;
+	} else if (usb_err == LIBUSB_ERROR_TIMEOUT) {
+		return INS_ERR_TIME_OUT;
+	} else {
+		return ins_err;
+	}
+}
+#endif

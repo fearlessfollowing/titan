@@ -222,10 +222,13 @@ private:
 		#else
 		camm_util::gen_gyro_accel_packet(gyro, gyro_buff_);
 		#endif
+		
 		ins_frame frame;
 		frame.buf = gyro_buff_;
 		frame.media_type = INS_MEDIA_CAMM_GYRO;
+
 		frame.dts = frame.pts = gyro->pts - gyro_delta_ts_;
+		
 		//printf("write gyro pts:%ld queue:%lu\n", frame.pts, gyro_queue_.size());
 		return write_mux(&frame);
 	}

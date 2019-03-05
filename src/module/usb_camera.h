@@ -27,8 +27,7 @@ struct amba_frame_info;
 class usb_camera {
 
 public:
-
-			usb_camera(uint32_t pid, uint32_t index) : pid_(pid) , index_(index) { 
+			usb_camera(uint32_t pid, uint32_t index): pid_(pid), index_(index) { 
 				pool_ = std::make_shared<obj_pool<ins_frame>>(-1, "usb frame");
 				th_cmd_read_ = std::thread(&usb_camera::read_cmd_task, this);
 			};
@@ -149,21 +148,21 @@ private:
 	std::mutex 								mtx_cmd_rsp_;
 	std::string 							cmd_result_; // json, data content
 	
-	double fps_ = 30;
-	int32_t delta_time_cur_ = 0; //delta time between tx1 and a12
-	int32_t delta_time_new_ = 0; //delta time between tx1 and a12
-	uint32_t sequence_cur_ = 0;
-	uint32_t sequence_delta_time_ = -1; //should change to new delta time at this sequence
-	int32_t pic_cnt_ = 0; //module will take more than one pic when in burst mode
-	int32_t single_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
-	int32_t total_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
+	double 		fps_ = 30;
+	int32_t 	delta_time_cur_ = 0; //delta time between tx1 and a12
+	int32_t 	delta_time_new_ = 0; //delta time between tx1 and a12
+	uint32_t 	sequence_cur_ = 0;
+	uint32_t 	sequence_delta_time_ = -1; //should change to new delta time at this sequence
+	int32_t 	pic_cnt_ = 0; //module will take more than one pic when in burst mode
+	int32_t 	single_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
+	int32_t 	total_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
 	std::string pic_type_ = INS_PIC_TYPE_PHOTO;
-	uint32_t pic_seq_ = 0;
-	uint32_t raw_seq_ = 0;
-	FILE* log_file_fp_ = nullptr;
-	uint32_t frame_seq_ = 0;
-	bool b_retransmit_ = false;
-	int64_t start_pts_ = INS_PTS_NO_VALUE;
+	uint32_t 	pic_seq_ = 0;
+	uint32_t 	raw_seq_ = 0;
+	FILE* 		log_file_fp_ = nullptr;
+	uint32_t 	frame_seq_ = 0;
+	bool 		b_retransmit_ = false;
+	int64_t 	start_pts_ = INS_PTS_NO_VALUE;
 	std::shared_ptr<obj_pool<ins_frame>> pool_;
 	std::shared_ptr<insbuff> gyro_buff_;
 	struct timeval 		tm_module_end_;

@@ -15,6 +15,7 @@ void fifo_read::stop()
 	INS_THREAD_JOIN(th_);
 }
 
+
 int fifo_read::start(std::string name, std::function<void(const char*, unsigned int)>handle_read_data)
 {
     name_ = name;
@@ -32,28 +33,21 @@ void fifo_read::ev_async_cb(ev::async &w, int e)
 
 void fifo_read::ev_io_cb(ev::io &w, int e)  
 {
-	while (!quit_)
-	{
+	while (!quit_) {
 		char buff[PIPE_BUF] = {0};
-		int ret = read(fd_,buff,sizeof(buff));
-		if (ret <= 0)
-		{
-			if (errno == EAGAIN && ret != 0)
-			{
+		int ret = read(fd_, buff, sizeof(buff));
+		if (ret <= 0) {
+			if (errno == EAGAIN && ret != 0) {
 				//LOGINFO("fifo read eagain");
 				usleep(30*1000);
 				continue;
-			}
-			else
-			{
+			} else {
 				LOGINFO("fifo read ret:%d errno:%d %s, restart read-fifo", ret, errno, strerror(errno));
 				nofity_fifo_close();
 				ev_loop_.break_loop(ev::ALL);
 				break;
 			}
-		}
-		else
-		{
+		} else {
 			//LOGINFO("fifo read size:%d", ret);
 			handle_read_data_(buff, ret);
 		}
@@ -62,21 +56,17 @@ void fifo_read::ev_io_cb(ev::io &w, int e)
 
 void fifo_read::task()
 {
-	while (!quit_)
-	{
+	while (!quit_) {
 		ins_util::check_create_dir(name_);
-		if (access(name_.c_str(), F_OK) == -1)
-		{
-			if (mkfifo(name_.c_str(), 0666))
-			{
+		if (access(name_.c_str(), F_OK) == -1) {
+			if (mkfifo(name_.c_str(), 0666)) {
 				LOGINFO("make fifo:%s fail", name_.c_str());
 				return;
 			}
 		}
 
         fd_ = open(name_.c_str(), O_RDONLY|O_NONBLOCK);
-		if (fd_ == -1)
-		{
+		if (fd_ == -1) {
 			LOGERR("read fifo:%s open fail", name_.c_str());
 			return;
 		}

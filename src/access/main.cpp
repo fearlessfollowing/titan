@@ -13,15 +13,16 @@ int32_t main(int32_t argc, char *argv[])
 {	
 	int32_t option;
 	bool b_deamon = false;
-	while ((option = getopt(argc, argv, "d:n:")) != -1) 
-	{
-		switch (option) 
-		{
+	
+	while ((option = getopt(argc, argv, "d:n:")) != -1) {
+		switch (option) {
 			case 'd':
 				b_deamon = true;
 				break;
+			
 			case 'n':
 				break;
+
 			default: 
 				break;
 		}
@@ -31,8 +32,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	ins_log::init(INS_LOG_PATH, "log");
 
-	if (singleton(PID_LOCK_FILE) != INS_OK)
-	{
+	if (singleton(PID_LOCK_FILE) != INS_OK) {
 		LOGERR("singleton run fail"); 
 		return -1;
 	}
@@ -43,12 +43,11 @@ int32_t main(int32_t argc, char *argv[])
     nice(1);
 
 	//x11(HDMI) env
-	if (setenv("DISPLAY", ":0", 1))
-	{
+	if (setenv("DISPLAY", ":0", 1)) {
 		LOGINFO("set env DISPLAY fail");
 	}
-	if (setenv("XAUTHORITY", "/var/run/lightdm/root/:0", 1))
-	{
+	
+	if (setenv("XAUTHORITY", "/var/run/lightdm/root/:0", 1)) {
 		LOGINFO("set env XAUTHORITY fail");
 	}
 
@@ -61,8 +60,7 @@ int32_t main(int32_t argc, char *argv[])
 
     struct rlimit limite;
     limite.rlim_cur = limite.rlim_max = RLIM_INFINITY;
-    if (0 != setrlimit(RLIMIT_CORE, &limite))
-    {
+    if (0 != setrlimit(RLIMIT_CORE, &limite)) {
     	LOGERR("setrlimit fail:%d %s", strerror(errno));
     }
 
@@ -72,7 +70,8 @@ int32_t main(int32_t argc, char *argv[])
 
 	auto center = std::make_shared<access_msg_center>();
 
-	if (center->setup()) return -1;
+	if (center->setup()) 
+		return -1;
 
 	wait_signal_terminate();
 

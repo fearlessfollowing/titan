@@ -45,59 +45,65 @@ uint32_t access_msg_center::state_ = 0;
 
 #define INS_REG_ACCESS_MSG(msg, func) handler_[msg] = std::bind(func, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
+
 void access_msg_center::register_all_msg()
 {
-	INS_REG_ACCESS_MSG(ACCESS_CMD_START_PREVIEW, &access_msg_center::start_preview)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_PREVIEW, &access_msg_center::stop_preview)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_RESTART_PREVIEW, &access_msg_center::restart_preview)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_START_RECORD, &access_msg_center::start_record)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_RECORD, &access_msg_center::stop_record)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_START_LIVE, &access_msg_center::start_live)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_LIVE, &access_msg_center::stop_live)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_TAKE_PICTURE, &access_msg_center::take_picture)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_OFFSET, &access_msg_center::set_offset)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_OFFSET, &access_msg_center::get_offset)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_IMAGE_PARAM, &access_msg_center::get_image_param)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_STORAGE_PATH, &access_msg_center::change_storage_path)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_STORAGE, &access_msg_center::query_storage)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_QUREY_STATE, &access_msg_center::query_state)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION, &access_msg_center::calibration)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_UPGRADE_FW, &access_msg_center::upgrade_fw)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION_AWB, &access_msg_center::calibration_awb)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION_BPC, &access_msg_center::calibration_bpc)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION_BLC, &access_msg_center::calibration_blc)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_START_QRCODE_SCAN, &access_msg_center::start_qr_scan)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_QRCODE_SCAN, &access_msg_center::stop_qr_scan)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_FORMAT_CAMERA_MOUDLE, &access_msg_center::format_camera_moudle)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_MODULE_LOG_FILE, &access_msg_center::get_module_log_file)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STORAGE_SPEED_TEST, &access_msg_center::test_storage_speed)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_POWEROFF, &access_msg_center::power_off_req)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_LOW_BAT_ACT, &access_msg_center::power_off_req)    
-	INS_REG_ACCESS_MSG(ACCESS_CMD_GYRO_CALIBRATION, &access_msg_center::gyro_calibration)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_MAGMETER_CALIBRATION, &access_msg_center::magmeter_calibration)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_OPTION, &access_msg_center::set_option)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_OPTION, &access_msg_center::get_option) 
+	/*
+ 	 * 来自外部的消息(web_server) 
+ 	 */
+	INS_REG_ACCESS_MSG(ACCESS_CMD_START_PREVIEW, 			&access_msg_center::start_preview)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_PREVIEW, 			&access_msg_center::stop_preview)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_RESTART_PREVIEW, 			&access_msg_center::restart_preview)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_START_RECORD, 			&access_msg_center::start_record)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_RECORD, 				&access_msg_center::stop_record)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_START_LIVE, 				&access_msg_center::start_live)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_LIVE, 				&access_msg_center::stop_live)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_TAKE_PICTURE, 			&access_msg_center::take_picture)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_OFFSET, 				&access_msg_center::set_offset)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_OFFSET, 				&access_msg_center::get_offset)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_IMAGE_PARAM, 			&access_msg_center::get_image_param)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_STORAGE_PATH, 		&access_msg_center::change_storage_path)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_STORAGE, 			&access_msg_center::query_storage)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_QUREY_STATE, 				&access_msg_center::query_state)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION, 				&access_msg_center::calibration)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_UPGRADE_FW, 				&access_msg_center::upgrade_fw)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION_AWB, 			&access_msg_center::calibration_awb)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION_BPC, 			&access_msg_center::calibration_bpc)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CALIBRATION_BLC, 			&access_msg_center::calibration_blc)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_START_QRCODE_SCAN, 		&access_msg_center::start_qr_scan)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_QRCODE_SCAN, 		&access_msg_center::stop_qr_scan)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_FORMAT_CAMERA_MOUDLE, 	&access_msg_center::format_camera_moudle)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_MODULE_LOG_FILE, 		&access_msg_center::get_module_log_file)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STORAGE_SPEED_TEST, 		&access_msg_center::test_storage_speed)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_POWEROFF, 				&access_msg_center::power_off_req)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_LOW_BAT_ACT, 				&access_msg_center::power_off_req)    
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GYRO_CALIBRATION, 		&access_msg_center::gyro_calibration)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_MAGMETER_CALIBRATION, 	&access_msg_center::magmeter_calibration)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_OPTION, 				&access_msg_center::set_option)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_OPTION, 				&access_msg_center::get_option) 
 	INS_REG_ACCESS_MSG(ACCESS_CMD_TEST_MODULE_COMMUNICATION, &access_msg_center::test_module_communication)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_TEST_MODULE_SPI, &access_msg_center::test_module_spi)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_START_CAPTURE_AUDIO, &access_msg_center::start_capture_audio)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_CAPTURE_AUDIO, &access_msg_center::stop_capture_audio)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_SYSTEM_TIME_CHANGE, &access_msg_center::system_time_change)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_STORAGE_TEST, &access_msg_center::storage_test_1)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_UPDATE_GAMMA_CURVE, &access_msg_center::update_gamma_curve)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_MODULE_USB_MODE, &access_msg_center::change_module_usb_mode)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_GPS_STATUS, &access_msg_center::query_gps_status)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_GYRO_CAL_RES, &access_msg_center::set_gyro_calibration_res)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_GYRO_CAL_RES, &access_msg_center::get_gyro_calibration_res)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_BATTERY_TEMP, &access_msg_center::query_battery_temp)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_DELETE_FILE, &access_msg_center::delete_file)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_MODULE_POWON, &access_msg_center::module_power_on)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_MODULE_POWOFF, &access_msg_center::module_power_off)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_TEST_MODULE_SPI, 			&access_msg_center::test_module_spi)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_START_CAPTURE_AUDIO, 		&access_msg_center::start_capture_audio)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_CAPTURE_AUDIO, 		&access_msg_center::stop_capture_audio)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_SYSTEM_TIME_CHANGE, 		&access_msg_center::system_time_change)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_STORAGE_TEST,	 			&access_msg_center::storage_test_1)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_UPDATE_GAMMA_CURVE, 		&access_msg_center::update_gamma_curve)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_MODULE_USB_MODE, 	&access_msg_center::change_module_usb_mode)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_GPS_STATUS, 		&access_msg_center::query_gps_status)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_GYRO_CAL_RES, 		&access_msg_center::set_gyro_calibration_res)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_GYRO_CAL_RES, 		&access_msg_center::get_gyro_calibration_res)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_BATTERY_TEMP, 		&access_msg_center::query_battery_temp)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_DELETE_FILE, 				&access_msg_center::delete_file)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_MODULE_POWON, 			&access_msg_center::module_power_on)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_MODULE_POWOFF, 			&access_msg_center::module_power_off)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_START_MAGMETER_CALIBRATION, &access_msg_center::start_magmeter_calibration)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_STOP_MAGMETER_CALIBRATION, &access_msg_center::stop_magmeter_calibration)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_UDISK_MODE, &access_msg_center::change_udisk_mode)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_UDISK_MODE, 		&access_msg_center::change_udisk_mode)
 	
 	
-	//stitching box msg
+	/*
+	 * stitching box消息
+	 */
 	#if 0
 	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_BOX, &access_msg_center::s_start_box)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_BOX, &access_msg_center::s_stop_box)
@@ -112,7 +118,9 @@ void access_msg_center::register_all_msg()
 	INS_REG_ACCESS_MSG(ACCESS_CMD_S_QUERY_TASK, &access_msg_center::s_query_task)
 	#endif
 	
-	//internal msg
+	/*
+	 * 进程内部消息
+	 */
 	INS_REG_ACCESS_MSG(INTERNAL_CMD_FIFO_CLOSE, &access_msg_center::internal_fifo_close)
 	INS_REG_ACCESS_MSG(INTERNAL_CMD_SINK_FINISH, &access_msg_center::internal_sink_finish)
 	INS_REG_ACCESS_MSG(INTERNAL_CMD_PIC_FINISH, &access_msg_center::internal_pic_finish)
@@ -134,10 +142,11 @@ void access_msg_center::register_all_msg()
 	INS_REG_ACCESS_MSG(INTERNAL_CMD_DEL_FILE_F, &access_msg_center::internal_delete_file_finish)
 }
 
+
 void access_msg_center::queue_msg(unsigned int sequence, const std::string& content) 
 {
 	//LOGINFO("internal send msg:%s", content.c_str());
-	auto msg = std::make_shared<access_msg_buff>(0,content.c_str(), content.length()); 
+	auto msg = std::make_shared<access_msg_buff>(0, content.c_str(), content.length()); 
 	receiver_->queue_msg(msg); 
 };
 
@@ -174,34 +183,43 @@ access_msg_center::~access_msg_center()
 	LOGINFO("center destroy 2");
 }
 
+
 int access_msg_center::setup()
 {
 	int ret;
-	register_all_msg();
-	ffutil::init();
 	
-	cam_manager::power_off_all();  
-	hw_util::switch_fan(true);
+	register_all_msg();				/* 注册所有的消息处理 */
+	ffutil::init();					/* 初始化通信fifo */
+	
+	cam_manager::power_off_all(); 	/* 给模组断电 */ 
+	hw_util::switch_fan(true);		/* 开风扇 */
 
-	state_ = CAM_STATE_IDLE; 
+	state_ = CAM_STATE_IDLE; 		/* 初始化系统状态为IDLE状态 */
 
-	msg_parser_.setup();
-	camera_info::setup();
+	msg_parser_.setup();			/* 初始化消息解析器 */
+	camera_info::setup();			/* 获取系统信息 */
 
 	sender_ = std::make_shared<access_msg_sender>();
 	ret = sender_->setup();
 	RETURN_IF_NOT_OK(ret);
 
-	camera_info::set_volume(INS_DEFAULT_AUDIO_GAIN); //恢复默认gain
+	camera_info::set_volume(INS_DEFAULT_AUDIO_GAIN); 	/* 恢复默认gain */
 
 	std::function<void(const std::shared_ptr<access_msg_buff>)> func = [this](const std::shared_ptr<access_msg_buff> msg)
 	{
 		handle_msg(msg);
 	};
 
+
+	/*
+	 * receiver中创建用于处理所有收到的消息(handle_msg来处理所有收到的消息)
+	 * - 从FIFO读到的消息
+	 * - 进程内部其他线程发送的消息
+	 */
 	receiver_ = std::make_shared<access_msg_receiver>();
 	ret = receiver_->start(INS_FIFO_TO_SERVER, func);
 	RETURN_IF_NOT_OK(ret);
+
 
 	//用黑色背景遮盖ubuntu界面
 	insx11::setup_x(); 
@@ -236,19 +254,30 @@ int access_msg_center::setup()
 }
  
 
+
+
+/***********************************************************************************************
+** 函数名称: handle_msg
+** 函数功能: 消息处理中心线程处理消息
+** 入口参数:
+**		msg - 消息对象
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::handle_msg(const std::shared_ptr<access_msg_buff> msg)
 {
+	/* 调用msg_parser_解析出消息的"name" */
 	std::string cmd = msg_parser_.parse_cmd_name(msg->content);
 	if (handler_.count(cmd) <= 0) {
 		LOGINFO("unsupport cmd:%s", cmd.c_str());
 		sender_->send_rsp_msg(msg->sequence, INS_ERR_INVALID_MSG_FMT, cmd);
 	} else {
-		if (cmd != ACCESS_CMD_S_QUERY_TASK_LIST) {	// 轮询消息不打印
+		if (cmd != ACCESS_CMD_S_QUERY_TASK_LIST) {	/* 轮询消息不打印 */
 			LOGINFO("[----MESSAGE----] seq:%d %s", msg->sequence, msg->content);
 		}
 		handler_[cmd](msg->content, cmd, msg->sequence);
 	}
 }
+
 
 void access_msg_center::internal_fifo_close(const char* msg, std::string cmd, int sequence)
 {
@@ -696,21 +725,16 @@ void access_msg_center::set_option(const char* msg, std::string cmd, int sequenc
 	ret = msg_parser_.option_option(msg, opt, opt2);
 	BREAK_IF_NOT_OK(ret);
 
-	for (auto it = opt.begin(); it != opt.end(); it++)
-	{
+	for (auto it = opt.begin(); it != opt.end(); it++) {
 		int ret_tmp;
 		auto it2 = opt2.find(it->first);
-		if (it2 != opt2.end())
-		{
+		if (it2 != opt2.end()) {
 			ret_tmp = set_one_option(it->first, it->second, it2->second);
-		}
-		else
-		{
+		} else {
 			ret_tmp = set_one_option(it->first, it->second);
 		}
 
-		if (ret_tmp != INS_OK) 
-		{
+		if (ret_tmp != INS_OK) {
 			res.insert(std::make_pair(it->first, ret_tmp));
 			ret = ret_tmp;
 		}
@@ -721,16 +745,12 @@ void access_msg_center::set_option(const char* msg, std::string cmd, int sequenc
 	//LOGINFO("opt size:%d res size:%d", opt.size(), res.size());
 
 	//1.设置一个 2.设置多个但是全部ok 3.设置多个，但是解析参数出错
-	if (opt.size() <= 1 || res.empty())
-	{
+	if (opt.size() <= 1 || res.empty()) {
 		sender_->send_rsp_msg(sequence, ret, cmd);
-	}
-	else
-	{
+	} else {
 		json_obj res_obj;
 		auto array = json_obj::new_array();
-		for (auto it = res.begin(); it != res.end(); it++) 
-		{ 
+		for (auto it = res.begin(); it != res.end(); it++) { 
 			json_obj obj;
 			obj.set_string("property", it->first);
 			obj.set_int("code", it->second);
@@ -738,8 +758,10 @@ void access_msg_center::set_option(const char* msg, std::string cmd, int sequenc
 			obj.set_string("description", des);
 			array->array_add(&obj);
 		} 
+		
 		res_obj.set_obj("detail", array.get());
-		if (ret != INS_OK) ret = INS_ERR;
+		if (ret != INS_OK) 
+			ret = INS_ERR;
 		sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 	}
 }
@@ -788,6 +810,18 @@ void access_msg_center::restart_preview(const char* msg, std::string cmd, int se
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 }
 
+
+
+
+/***********************************************************************************************
+** 函数名称: start_preview
+** 函数功能: 开启预览
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::start_preview(const char* msg, std::string cmd, int sequence)
 {	
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -796,9 +830,9 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 	ret = msg_parser_.preview_option(msg, opt);
 	BREAK_IF_NOT_OK(ret);
 
-	if (opt.index != -1) {	// 单镜头合焦HDMI预览
-		BREAK_NOT_IN_IDLE();
-		OPEN_CAMERA_IF_ERR_BREAK(-1);
+	if (opt.index != -1) {	/* 单镜头合焦HDMI预览(相机需处于IDLE状态) */
+		BREAK_NOT_IN_IDLE();			/* 1.状态检查 */
+		OPEN_CAMERA_IF_ERR_BREAK(-1);	/* 2.打开模组 */
 		singlen_mgr_ = std::make_shared<singlen_mgr>();
 		ret = singlen_mgr_->start_focus(camera_.get(), opt);
 		if (ret != INS_OK) {
@@ -1094,6 +1128,8 @@ int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 	return INS_OK;
 }
 
+
+
 void access_msg_center::take_picture(const char* msg, std::string cmd, int sequence)
 {
 	ins_picture_option opt;
@@ -1133,6 +1169,8 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 	}
 }
 
+
+
 void access_msg_center::query_state(const char* msg, std::string cmd, int sequence)
 {
 	json_obj res_obj;
@@ -1144,10 +1182,15 @@ void access_msg_center::query_state(const char* msg, std::string cmd, int sequen
 	res_obj.set_string("moduleVersion", camera_info::get_m_ver());
 	res_obj.set_int("GPSState", gps_mgr::get()->get_state());
 
+	/*
+	 * 获取当前的options参数
+	 */
 	state_mgr_.get_state_param(state_, res_obj);
 
 	sender_->send_rsp_msg(sequence, INS_OK, cmd, &res_obj);
 }
+
+
 
 //任何时候都可以更新offset，预览的时候可以实时更新，   
 //但是录像/直播的时候不能实时更新，只更新到配置文件
@@ -1165,20 +1208,17 @@ void access_msg_center::set_offset(const char* msg, std::string cmd, int sequenc
 		xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_4_3, offset);
 		LOGINFO("restore user offset to factory:%s", offset.c_str());
 	} else {
-		if (opt.factory_setting) //如果是工厂出厂设置 单独存一份
-		{
+		if (opt.factory_setting) {	// 如果是工厂出厂设置 单独存一份
 			LOGINFO("set factory setting offset");
 			xml_config::set_factory_offset(opt.pano_4_3);
 		}
 
-		if (opt.pano_4_3 != "")
-		{
+		if (opt.pano_4_3 != "") {
 			LOGINFO("pano 4:3 offset:%s", opt.pano_4_3.c_str());
 			xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_4_3, opt.pano_4_3);
 		}
 
-		// if (opt.pano_16_9 != "")
-		// {
+		// if (opt.pano_16_9 != "") {
 		// 	LOGINFO("pano 16:9 offset:%s", opt.pano_16_9.c_str());
 		// 	xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_16_9, opt.pano_16_9);
 		// }
@@ -1196,12 +1236,13 @@ void access_msg_center::set_offset(const char* msg, std::string cmd, int sequenc
 		// }
 	}
 
-	if (state_ == CAM_STATE_PREVIEW)  {	// 预览的时候要重启预览立即生效
+	if (state_ == CAM_STATE_PREVIEW)  {	/* 预览的时候要重启预览立即生效 */
 		do_camera_operation_stop(true);
 	}
 
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
+
 
 void access_msg_center::set_gyro_calibration_res(const char* msg, std::string cmd, int sequence)
 {
@@ -1238,6 +1279,16 @@ void access_msg_center::get_gyro_calibration_res(const char* msg, std::string cm
 	}
 }
 
+
+/***********************************************************************************************
+** 函数名称: query_battery_temp
+** 函数功能: 查询电池温度
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::query_battery_temp(const char* msg, std::string cmd, int sequence)
 {
 	double temp = 0;
@@ -1316,6 +1367,17 @@ void access_msg_center::get_image_param(const char* msg, std::string cmd, int se
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: change_storage_path
+** 函数功能: 存储路径发生改变
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::change_storage_path(const char* msg, std::string cmd, int sequence)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -1331,6 +1393,9 @@ void access_msg_center::change_storage_path(const char* msg, std::string cmd, in
 	ret = msg_parser_.storage_option(msg, path);
 	BREAK_IF_NOT_OK(ret);
 
+	/*
+	 * 将存储路径写入到cam_config.xml -> storage字段中
+	 */
 	xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_STORAGE, path);
 
 	DO_WHILE_0_END
@@ -1338,14 +1403,25 @@ void access_msg_center::change_storage_path(const char* msg, std::string cmd, in
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: query_storage
+** 函数功能: 查询模组的容量
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::query_storage(const char* msg, std::string cmd, int sequence)
 {
 	bool b_need_close = false;
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
-	if (camera_ == nullptr) {
+	if (camera_ == nullptr) {	/* 模组处于close状态 */
 		b_need_close = true;
-		OPEN_CAMERA_IF_ERR_BREAK(-1);
+		OPEN_CAMERA_IF_ERR_BREAK(-1);	/* 打开模组 */
 	}
 
 	std::vector<std::string> v_value;
@@ -1364,10 +1440,12 @@ void access_msg_center::query_storage(const char* msg, std::string cmd, int sequ
 
 	DO_WHILE_0_END
 
-	if (b_need_close) close_camera();
+	if (b_need_close) close_camera();	
 
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 }
+
+
 
 void access_msg_center::calibration(const char* msg, std::string cmd, int sequence)
 {
@@ -2075,6 +2153,16 @@ void access_msg_center::internal_delete_file_finish(const char* msg, std::string
 	sender_->send_ind_msg(ACCESS_CMD_DEL_FILE_FINISH_, ret);
 }
 
+
+/***********************************************************************************************
+** 函数名称: module_power_on
+** 函数功能: 请求进入CAM_STATE_MODULE_POWON状态
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::module_power_on(const char* msg, std::string cmd, int sequence)
 {
 	int32_t ret;
@@ -2092,10 +2180,20 @@ void access_msg_center::module_power_on(const char* msg, std::string cmd, int se
 		state_ = CAM_STATE_MODULE_POWON;
 }
 
+
+/***********************************************************************************************
+** 函数名称: module_power_off
+** 函数功能: 请求进入CAM_STATE_MODULE_POWON状态
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::module_power_off(const char* msg, std::string cmd, int sequence)
 {
 	int32_t ret = INS_OK;
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_MODULE_POWON) {
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_MODULE_POWON) {	/* 非IDLE和非CAM_STATE_MODULE_POWON状态返回413 */
 		ret = INS_ERR_NOT_ALLOW_OP_IN_STATE;
 	} else {
 		state_ &= ~CAM_STATE_MODULE_POWON;
@@ -2105,6 +2203,16 @@ void access_msg_center::module_power_off(const char* msg, std::string cmd, int s
 }
 
 
+
+/***********************************************************************************************
+** 函数名称: change_udisk_mode
+** 函数功能: 请求进入/退出U盘模式
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::change_udisk_mode(const char* msg, std::string cmd, int sequence)
 {
 	json_obj obj(msg);
@@ -2113,24 +2221,26 @@ void access_msg_center::change_udisk_mode(const char* msg, std::string cmd, int 
 		sender_->send_rsp_msg(sequence, INS_ERR_INVALID_MSG_PARAM, cmd);
 		return;
 	}
-	int32_t mode = 0; //0:退出u盘 1:进入u盘
+	int32_t mode = 0; 		/* 0:退出u盘 1:进入u盘 */
 	param_obj->get_int("mode", mode);
 	LOGINFO("change udisk mode:%d", mode);
 
-	if (mode) {
-		if (state_ == CAM_STATE_MODULE_POWON) {
+	if (mode) {		/* 请求进入U盘模式 */
+		if (state_ == CAM_STATE_MODULE_POWON) {	/* 如果处于相册页中(相册页中App会设置CAM_STATE_MODULE_POWON状态) */
 			state_ &= ~CAM_STATE_MODULE_POWON;
 			close_camera();
-		} else if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_UDISK_MODE) {
+		} else if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_UDISK_MODE) {	/* 非空闲状态并且非U盘状态: 返回413 */
 			sender_->send_rsp_msg(sequence, INS_ERR_NOT_ALLOW_OP_IN_STATE, cmd);
 			return;
 		}
 		state_ |= CAM_STATE_UDISK_MODE;
-	} else {
+	} else {		/* 请求退出U盘模式 */
 		state_ &= ~CAM_STATE_UDISK_MODE;
 	}
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 }
+
+
 
 void access_msg_center::test_module_communication(const char* msg, std::string cmd, int sequence)
 {
@@ -2303,20 +2413,36 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
 		camera_info::sync_time();
 	}
 	
-	if (source == "") {		// 表示是APP设置时间 
-		camera_info::sync_time(); 						// APP设置时间,要标记
-		sender_->send_rsp_msg(sequence, INS_OK, cmd); 	// 自己设置时间不用回复消息
+	if (source == "") {		/* 表示是APP设置时间  */
+		camera_info::sync_time(); 						/* APP设置时间,要标记 */
+		sender_->send_rsp_msg(sequence, INS_OK, cmd); 	/* 自己设置时间不用回复消息 */
 	}
 }
 
+
+
+
+/***********************************************************************************************
+** 函数名称: open_camera
+** 函数功能: 打开模组
+** 入口参数:
+**		index - 打开的指定的模组(-1代表所有的模组)
+** 返 回 值: 成功返回INS_OK;失败返回错误码
+*************************************************************************************************/
 int access_msg_center::open_camera(int index)
 {
-	if (camera_ != nullptr) return INS_OK;
+	if (camera_ != nullptr) return INS_OK;	/* 模组处于打开状态,直接返回(如果上次打开一个模组,这次需要打开所有模组??) */
 
+	/*
+	 * 对模组进行下电/上电操作
+	 */
 	cam_manager::power_off_all();
 	usleep(5*1000);
 	cam_manager::power_on_all();
 
+	/*
+	 * 构造cam_manager并打开模组
+	 */
 	camera_ = std::make_shared<cam_manager>();
 	int ret = INS_OK;
 	if (index == INS_CAM_ALL_INDEX) {
@@ -2336,6 +2462,14 @@ int access_msg_center::open_camera(int index)
 	}
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: close_camera
+** 函数功能: 关闭模组
+** 入口参数:
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::close_camera()
 {
 	if (state_ & CAM_STATE_RECORD 
@@ -2347,10 +2481,8 @@ void access_msg_center::close_camera()
 	}
 
 	camera_ = nullptr;
-
 	cam_manager::power_off_all();
-	
-	camera_info::set_volume(INS_DEFAULT_AUDIO_GAIN); //恢复默认gain
+	camera_info::set_volume(INS_DEFAULT_AUDIO_GAIN); 	/* 恢复默认gain */
 }
 
 

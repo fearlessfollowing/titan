@@ -27,14 +27,15 @@ int32_t cam_manager::exception()
 	return INS_OK;
 }
 
+
 int cam_manager::power_on_all()
 {
 	LOGINFO("power on module");
-	system("power_manager power_on");
 
-	property_set("module.power", "on");
+	system("power_manager power_on");	/* 给所有的模组上电 */
+	property_set("module.power", "on");	/* 设置属性"module.power" = "on" */
 
-	usb_device::create();
+	usb_device::create();	/* 构建一个usb_device对象(实现USB传输 libusb) */
 
 	return INS_OK;
 }
@@ -43,16 +44,14 @@ int cam_manager::power_off_all()
 {
 	LOGINFO("power off module");
 	system("power_manager power_off");
-
 	property_set("module.power", "off");
 
 	while (usb_device::get() && !usb_device::get()->is_all_close()) {
 		usleep(50*1000);
-		system("power_manager power_off");	// 调用一次power_off,usb可能掉不了电,会卡死在这,故每次循环都调用一次
+		system("power_manager power_off");	/* 调用一次power_off,usb可能掉不了电,会卡死在这,故每次循环都调用一次 */
 	}
 
 	usb_device::destroy();
- 
 	return INS_OK;
 }
 
@@ -78,14 +77,12 @@ cam_manager::cam_manager()
 	// std::string pid_str;
 	// xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_PID, pid_str);
 	// auto pid = strtok((char*)pid_str.c_str(), "_");
-	// while (pid)
-	// {
+	// while (pid) {
 	// 	pid_.push_back(atoi(pid));
 	// 	pid = strtok(nullptr, "_");
 	// }
 
-	// if (pid_.size() < cam_num_)
-	// {
+	// if (pid_.size() < cam_num_) {
 	// 	LOGINFO("pid config invalid, use dafault");
 		pid_.clear();
 		for (unsigned int i = 0; i < cam_num_; i++) {
@@ -181,19 +178,22 @@ int cam_manager::do_open_cam(std::vector<unsigned int>& index)
 		map_cam_.insert(std::make_pair(index[i], cam));
 	}
 
-	//获取模组版本号
+	/* 获取模组版本号 */
 	std::vector<std::string> v_version;
 	int ret = get_one_version(master_index_, v_version);
 	RETURN_IF_NOT_OK(ret);
+
+	/* 跟新模组的版本号到camera_info中 */
 	camera_info::set_m_version(v_version[0]);
 
-	//设置N/P制,模组起来默认是P制, 0=PAL 1=NTSC
+	/* 设置N/P制,模组起来默认是P制, 0=PAL 1=NTSC */
 	auto flicker = camera_info::get_flicker();
 	if (!flicker) 
 		set_all_options("flicker", flicker);
 
 	return INS_OK;
 }
+
 
 void cam_manager::close_all_cam()
 {
@@ -207,10 +207,10 @@ void cam_manager::close_all_cam()
 }
 
 int cam_manager::start_video_rec(
-		unsigned int index, 
-		const cam_video_param& param, 
-		const cam_video_param* sec_param, 
-		const std::shared_ptr<cam_video_buff_i>& queue)
+						unsigned int index, 
+						const cam_video_param& param, 
+						const cam_video_param* sec_param, 
+						const std::shared_ptr<cam_video_buff_i>& queue)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 	
@@ -272,12 +272,10 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
-	//由于A12系统时间不准，每次录像前对一次时
-	for (auto& it : map_cam_)
-	{
+	/* 由于A12系统时间不准，每次录像前对一次时 */
+	for (auto& it : map_cam_) {
 		ret = it.second->set_camera_time();
-		if (ret != INS_OK)
-		{
+		if (ret != INS_OK) {
 			LOGERR("pid:%d set_camera_time fail:%d", pid_[it.first], ret);
 			return ret;
 		}
@@ -285,8 +283,7 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 
 	reset_base_ref();
 
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		std::shared_ptr<cam_video_buff_i> q;
 		auto queue_it = queue.find(it.first);
 		if (queue_it != queue.end()) q = queue_it->second;
@@ -295,14 +292,12 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
 	}
@@ -318,8 +313,7 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 void cam_manager::time_sync_task(bool b_record)
 {
 	auto it = map_cam_.find(master_index_);
-	if (it == map_cam_.end()) 
-	{
+	if (it == map_cam_.end()) {
 		LOGERR("cann't find master index:%d in time sync task", master_index_);
 		return;
 	}
@@ -328,10 +322,9 @@ void cam_manager::time_sync_task(bool b_record)
 
 	int delta_time = 0;
 	int cnt = 0;
-	while (!sync_quit_)
-	{
-		if (cnt++ < 600) 
-		{
+	
+	while (!sync_quit_) {
+		if (cnt++ < 600) {
 			usleep(100*1000);
 			continue;
 		}
@@ -345,8 +338,7 @@ void cam_manager::time_sync_task(bool b_record)
 		unsigned int delay_cnt = 30;
 		if (!b_record) delay_cnt = 2;
 		unsigned int sequence = it->second->get_sequence()+delay_cnt; //delay 
-		for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-		{
+		for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 			it->second->set_delta_time(sequence, delta_time);
 		}
 	}
@@ -379,33 +371,28 @@ int cam_manager::stop_all_video_rec()
 	INS_THREAD_JOIN(th_time_sync_);
 
 	int ret = INS_OK;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto r = it.second->stop_video_rec();
 		if (r != INS_OK) ret = r;
 	}
 
 	std::string s_unspeed_pid;
 	std::map<uint32_t, std::future<int32_t>> map_f;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		map_f.insert(std::make_pair(it.first, std::move(f)));
 	}
 
-	for (auto& it : map_f)
-	{
-		auto r = it.second.get();
+	for (auto& it : map_f) {
+		auto r = it.second.get();s
 		if (r != INS_OK) ret = r;
-		if (r == INS_ERR_M_UNSPEED_STORAGE) 
-		{
+		if (r == INS_ERR_M_UNSPEED_STORAGE) {
 			if (s_unspeed_pid != "") s_unspeed_pid += "_";
 			s_unspeed_pid += std::to_string(pid_[it.first]);
 		}
 	}
 
-	if (s_unspeed_pid != "")
-	{
+	if (s_unspeed_pid != "") {
 		property_set("module.unspeed", s_unspeed_pid);
 		LOGINFO("set module.unspeed = %s", s_unspeed_pid.c_str());
 	}
@@ -418,8 +405,7 @@ int cam_manager::get_video_param(cam_video_param& param, std::shared_ptr<cam_vid
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	auto it = map_cam_.find(master_index_);
-	if (it == map_cam_.end())
-	{
+	if (it == map_cam_.end()) {
 		LOGERR("cann't find master");
 		return INS_ERR;
 	}
@@ -432,21 +418,18 @@ int cam_manager::start_all_timelapse_ex(const cam_photo_param& param, const std:
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	int ret = INS_OK;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto r = it.second->set_photo_param(param);
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
@@ -467,20 +450,16 @@ void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<ca
 	struct timeval tm_start;
 	gettimeofday(&tm_start, nullptr);
 
-	while (!timelapse_quit_)
-	{	
+	while (!timelapse_quit_) {	
 		struct timeval tm;
 		gettimeofday(&tm, nullptr);
 		long long past = tm.tv_sec*1000*1000 + tm.tv_usec - tm_start.tv_sec*1000*1000 - tm_start.tv_usec;
 		long long wait = (long long)sequence*1000*param.interval;
-		if (past  <= wait)
-		{
+		if (past <= wait) {
 			long long delta = wait - past;
 			std::unique_lock<std::mutex> lock(mtx_cv_);
 			cv_.wait_for(lock, std::chrono::microseconds(delta));
-		}
-		else
-		{
+		} else {
 			LOGINFO("timelapse take photo had been delay:%lld", past - wait);
 		}
 
@@ -489,8 +468,7 @@ void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<ca
 		sequence++;
 		param.sequence = sequence;
 		ret = timelapse_take_pic(param, img_repo);
-		if (ret != INS_OK)
-		{	
+		if (ret != INS_OK) {	
 			json_obj obj;
 			obj.set_string("name", INTERNAL_CMD_SINK_FINISH);
 			obj.set_int("code", ret);
@@ -507,39 +485,33 @@ int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::sha
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		ret = it->second->set_camera_time();
 		RETURN_IF_NOT_OK(ret);
 	}
 
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto r = it->second->start_still_capture(param, img_repo);
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
 	}
 
 	std::string s_unspeed_pid;
 	std::map<uint32_t, std::future<int32_t>> map_f;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		map_f.insert(std::make_pair(it.first, std::move(f)));
 	}
 
-	for (auto& it : map_f)
-	{
+	for (auto& it : map_f) {
 		auto r = it.second.get();
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
-		if (r == INS_ERR_M_UNSPEED_STORAGE) 
-		{
+		if (r == INS_ERR_M_UNSPEED_STORAGE) {
 			if (s_unspeed_pid != "") s_unspeed_pid += "_";
 			s_unspeed_pid += std::to_string(pid_[it.first]);
 		}
 	}
 
-	if (s_unspeed_pid != "")
-	{
+	if (s_unspeed_pid != "") {
 		property_set("module.unspeed", s_unspeed_pid);
 		LOGINFO("set module.unspeed = %s", s_unspeed_pid.c_str());
 	}
@@ -549,7 +521,7 @@ int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::sha
 
 int cam_manager::stop_all_timelapse_ex()
 {
-	//std::lock_guard<std::mutex> lock(mtx_); //不锁，不然会和timelapse_take_pic里的锁形成死锁
+	//std::lock_guard<std::mutex> lock(mtx_); /* 不锁，不然会和timelapse_take_pic里的锁形成死锁 */
 
 	timelapse_quit_ = true;
 	cv_.notify_all();
@@ -679,22 +651,15 @@ int cam_manager::set_options(int index, std::string property, int value, int val
 {
 	int ret = INS_ERR_BUSY;
 	int loop_cnt = 20;
-	while (--loop_cnt > 0)
-	{
-		if (!mtx_.try_lock())
-		{
+	
+	while (--loop_cnt > 0) {
+		if (!mtx_.try_lock()) {
 			usleep(50*1000);
 			continue;
-		}
-		else
-		{
-			if (index == INS_CAM_ALL_INDEX)
-			{
+		} else {
+			if (index == INS_CAM_ALL_INDEX) {
 				ret = set_all_options(property, value, value2);
-				
-			}
-			else
-			{
+			} else {
 				ret = set_one_options(index, property, value, value2);
 			}
 
@@ -724,27 +689,25 @@ int cam_manager::set_one_options(int index, std::string property, int value, int
 int cam_manager::set_all_options(std::string property, int value, int value2)
 {
 	int ret = INS_OK;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto r = it->second->set_options(property, value);
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{	
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {	
 		auto f = it->second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
 
 	return ret;
 }
+
 
 int cam_manager::get_options(int index, std::string property, std::string& value)
 {
@@ -753,15 +716,11 @@ int cam_manager::get_options(int index, std::string property, std::string& value
 
 	int ret = INS_ERR_BUSY;
 	int loop_cnt = 20;
-	while (--loop_cnt > 0)
-	{
-		if (!mtx_.try_lock())
-		{
+	while (--loop_cnt > 0) {
+		if (!mtx_.try_lock()) {
 			usleep(200*1000);
 			continue;
-		}
-		else
-		{
+		} else {
 			ret = it->second->get_options(property, value);
 			mtx_.unlock();
 			break;
@@ -775,17 +734,12 @@ int cam_manager::get_all_options(std::string property, std::vector<std::string>&
 {
 	int ret = INS_ERR_BUSY;
 	int loop_cnt = 20;
-	while (--loop_cnt > 0)
-	{
-		if (!mtx_.try_lock())
-		{
+	while (--loop_cnt > 0) {
+		if (!mtx_.try_lock()) {
 			usleep(200*1000);
 			continue;
-		}
-		else
-		{
-			for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-			{
+		} else {
+			for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 				std::string value;
 				ret = it->second->get_options(property, value);
 				BREAK_IF_NOT_OK(ret);
@@ -806,8 +760,7 @@ int cam_manager::send_all_file_data(std::string file_name, int type, int timeout
 	std::shared_ptr<insbuff> buff;
 	unsigned char* data = nullptr;
 	unsigned int size = 0;
-	if (file_name != "")
-	{
+	if (file_name != "") {
 		buff = ins_util::read_entire_file(file_name);
 		if (buff == nullptr) return INS_ERR;
 		data = buff->data();
@@ -820,17 +773,14 @@ int cam_manager::send_all_file_data(std::string file_name, int type, int timeout
 	int i = 0;
 	std::thread th[cam_num_];
 
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++, i++)
-	{
-		th[i] = std::thread([this, it, data, size, type, timeout, &ret]()
-		{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++, i++) {
+		th[i] = std::thread([this, it, data, size, type, timeout, &ret]() {
 			int result = it->second->send_buff_data(data, size, type, timeout);
 			if (result != INS_OK) ret = result;
 		});
 	}
 
-	for (unsigned int i = 0; i < map_cam_.size(); i++)
-	{
+	for (unsigned int i = 0; i < map_cam_.size(); i++) {
 		INS_THREAD_JOIN(th[i]);
 	}
 	
@@ -847,17 +797,14 @@ int cam_manager::send_all_buff_data(const unsigned char* data, unsigned int size
 	int i = 0;
 	std::thread th[cam_num_];
 
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++, i++)
-	{
-		th[i] = std::thread([this, it, data, size, type, timeout, &ret]()
-		{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++, i++) {
+		th[i] = std::thread([this, it, data, size, type, timeout, &ret]() {
 			int result = it->second->send_buff_data(data, size, type, timeout);
 			if (result != INS_OK) ret = result;
 		});
 	}
 
-	for (unsigned int i = 0; i < map_cam_.size(); i++)
-	{
+	for (unsigned int i = 0; i < map_cam_.size(); i++) {
 		INS_THREAD_JOIN(th[i]);
 	}
 	
@@ -869,12 +816,9 @@ int cam_manager::get_version(int index, std::vector<std::string>& version)
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	//当获取所有模组的版本号的时候，不管module_version是否有值，都要重新获取一次
-	if (index == INS_CAM_ALL_INDEX)
-	{
+	if (index == INS_CAM_ALL_INDEX) {
 		return get_all_version(version);
-	}
-	else
-	{
+	} else {
 		return get_one_version(index, version);
 	}
 }
@@ -885,8 +829,9 @@ int cam_manager::get_one_version(int index, std::vector<std::string>& version)
 	if (it == map_cam_.end()) return INS_ERR_CAMERA_NOT_OPEN;
 
 	std::string ver;
-	int ret = it->second->get_version(ver);
+	int ret = it->second->get_version(ver);	/* usb_camera->get_version */
 	RETURN_IF_NOT_OK(ret);
+	
 	version.push_back(ver);
 
 	// auto f = it->second->wait_cmd_over();
@@ -908,16 +853,12 @@ int cam_manager::get_all_version(std::vector<std::string>& version)
 	if (map_cam_.empty()) return INS_ERR_CAMERA_NOT_OPEN;
 
 	int ret = INS_OK;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		std::string ver;
 		auto r = it->second->get_version(ver);
-		if (r != INS_OK) 
-		{
+		if (r != INS_OK) {
 			ret = r;
-		}
-		else
-		{
+		} else {
 			version.push_back(ver);
 		}
 	}
@@ -952,12 +893,9 @@ int cam_manager::get_all_version(std::vector<std::string>& version)
 
 int cam_manager::format_flash(int index)
 {
-	if (index == INS_CAM_ALL_INDEX)
-	{
+	if (index == INS_CAM_ALL_INDEX) {
 		return format_all_flash();
-	}
-	else
-	{
+	} else {
 		return format_one_flash(index);
 	}
 }
@@ -986,21 +924,18 @@ int cam_manager::format_all_flash()
 	if (map_cam_.empty()) return INS_ERR_CAMERA_NOT_OPEN;
 
 	int ret = INS_OK;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto r = it->second->format_flash(); 
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto f = it->second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
@@ -1012,8 +947,7 @@ int cam_manager::change_all_usb_mode()
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto ret = it.second->change_usb_mode();
 		RETURN_IF_NOT_OK(ret);
 		auto f = it.second->wait_cmd_over();
@@ -1043,12 +977,9 @@ int cam_manager::test_spi(int index)
 	int value = 0;
 	root_obj.get_int("value", value);
 
-	if (value)
-	{
+	if (value) {
 		return INS_ERR;
-	}
-	else
-	{
+	} else {
 		return INS_OK;
 	}
 }
@@ -1060,21 +991,18 @@ int cam_manager::get_log_file(std::string file_name)
 	if (map_cam_.empty()) return INS_ERR_CAMERA_NOT_OPEN;
 
 	int ret = INS_OK;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto r = it->second->get_log_file(file_name); 
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto f = it->second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
@@ -1086,12 +1014,9 @@ int64_t cam_manager::get_start_pts(int32_t index)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 	auto it = map_cam_.find(index);
-	if (it == map_cam_.end()) 
-	{
+	if (it == map_cam_.end()) {
 		return INS_PTS_NO_VALUE;
-	}
-	else
-	{
+	} else {
 		return it->second->get_start_pts();
 	}
 }
@@ -1121,16 +1046,12 @@ int cam_manager::upgrade(std::string file_name, std::string version)
 
 	std::thread th[cam_num_];
 	int result[cam_num_];
-	for (unsigned int i = 0; i < cam_num_; i++)
-	{
-		th[i] = std::thread([this, i, &file_name, &result, &md5_value]()
-		{	
+	for (unsigned int i = 0; i < cam_num_; i++) {
+		th[i] = std::thread([this, i, &file_name, &result, &md5_value]() {	
 			result[i] = INS_ERR;
-			int loop = 3;//如果升级失败尝试3次
-			while (loop-- > 0) 
-			{
-				if (INS_OK == map_cam_[i]->upgrade(file_name, md5_value)) 
-				{
+			int loop = 3;	// 如果升级失败尝试3次
+			while (loop-- > 0) {
+				if (INS_OK == map_cam_[i]->upgrade(file_name, md5_value)) {
 					result[i] = INS_OK;
 					break;
 				}
@@ -1138,8 +1059,7 @@ int cam_manager::upgrade(std::string file_name, std::string version)
 		});
 	}
 
-	for (unsigned int i = 0; i < cam_num_; i++)
-	{
+	for (unsigned int i = 0; i < cam_num_; i++) {
 		INS_THREAD_JOIN(th[i]);
 		if (result[i] != INS_OK) ret = INS_ERR;
 	}
@@ -1160,22 +1080,17 @@ int cam_manager::upgrade(std::string file_name, std::string version)
 int cam_manager::check_fw_version(std::string version)
 {
 	int loop_cnt = 1000;
-	while (--loop_cnt > 0)
-	{
-		if (!is_all_open())
-		{
+	while (--loop_cnt > 0) {
+		if (!is_all_open()) {
 			LOGINFO("module start reboot");
 			break;
 		}
-
 		usleep(50*1000);
 	}
 
 	loop_cnt = 1000;
-	while (--loop_cnt > 0)
-	{
-		if (is_all_open())
-		{
+	while (--loop_cnt > 0) {
+		if (is_all_open()) {
 			LOGINFO("all module reboot success");
 			break;
 		}
@@ -1183,29 +1098,25 @@ int cam_manager::check_fw_version(std::string version)
 		usleep(50*1000);
 	}
 
-	if (!is_all_open())
-	{
+	if (!is_all_open()) {
 		LOGERR("not all module reboot success");
 		return INS_ERR;
 	}
 
 	usleep(100*1000);
 
-	for (uint32_t i = 0; i < pid_.size(); i++)
-	{
+	for (uint32_t i = 0; i < pid_.size(); i++) {
 		auto cam = std::make_shared<usb_camera>(pid_[i], i);
 		map_cam_.insert(std::make_pair(i, cam));
 	}
 
 	std::vector<std::string> v_version;
 	get_all_version(v_version);
-	for (unsigned int i = 0; i < v_version.size(); i++)
-	{
+	for (unsigned int i = 0; i < v_version.size(); i++) {
 		auto pos = v_version[i].find(".", 0);
 		if (pos == std::string::npos) return INS_ERR;
 		std::string tmp = v_version[i].substr(pos+1);
-		if (version != tmp)
-		{
+		if (version != tmp) {
 			LOGERR("version check fail, module version:%d %s after upgrade != req version:%d %s", 
 				tmp.length(), tmp.c_str(), version.length(), version.c_str());
 			return INS_ERR;
@@ -1218,21 +1129,18 @@ int cam_manager::check_fw_version(std::string version)
 int cam_manager::reboot_all_camera()
 {
 	int ret = INS_OK;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto r = it->second->reboot();
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++)
-	{
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		auto f = it->second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
@@ -1277,24 +1185,18 @@ int32_t cam_manager::calibration_bpc_all()
 	int32_t ret = INS_OK;
 	std::future<int32_t> futures[INS_CAM_NUM];
 
-	for (int32_t i = 0; i < INS_CAM_NUM; i++)
-	{
-		futures[i] = std::async(std::launch::async, [this, i]
-		{
+	for (int32_t i = 0; i < INS_CAM_NUM; i++) {
+		futures[i] = std::async(std::launch::async, [this, i] {
 			auto it = map_cam_.find(i);
-			if (it == map_cam_.end()) 
-			{
+			if (it == map_cam_.end()) {
 				return INS_ERR_CAMERA_NOT_OPEN;
-			}
-			else
-			{
+			} else {
 				return it->second->calibration_bpc_req();
 			}
 		});
 	}
 
-	for (int32_t i = 0; i < INS_CAM_NUM; i++)
-	{
+	for (int32_t i = 0; i < INS_CAM_NUM; i++) {
 		auto r = futures[i].get();
 		if (r != INS_OK) ret = r;
 	}
@@ -1310,25 +1212,19 @@ int cam_manager::calibration_blc_all(bool b_reset)
 	int32_t ret = INS_OK;
 	std::future<int32_t> futures[INS_CAM_NUM];
 
-	for (int i = 0; i < INS_CAM_NUM; i++)
-	{
-		futures[i] = std::async(std::launch::async, [this, i, b_reset]
-		{
+	for (int i = 0; i < INS_CAM_NUM; i++) {
+		futures[i] = std::async(std::launch::async, [this, i, b_reset] {
 			auto it = map_cam_.find(i);
 			if (it == map_cam_.end())  return INS_ERR_CAMERA_NOT_OPEN;
-			if (b_reset)
-			{
+			if (b_reset) {
 				return it->second->calibration_blc_reset();
-			}
-			else
-			{
+			} else {
 				return it->second->calibration_blc_req();
 			}
 		});	
 	}
 
-	for (int32_t i = 0; i < INS_CAM_NUM; i++)
-	{
+	for (int32_t i = 0; i < INS_CAM_NUM; i++) {
 		auto r = futures[i].get();
 		if (r != INS_OK) ret = r;
 	}
@@ -1343,24 +1239,18 @@ int32_t cam_manager::storage_speed_test(std::map<int32_t, bool>& map_res)
 	std::lock_guard<std::mutex> lock(mtx_);
 	std::future<int32_t> futures[INS_CAM_NUM];
 
-	for (int i = 0; i < INS_CAM_NUM; i++)
-	{
-		futures[i] = std::async(std::launch::async, [this, i]
-		{
+	for (int i = 0; i < INS_CAM_NUM; i++) {
+		futures[i] = std::async(std::launch::async, [this, i] {
 			auto it = map_cam_.find(i);
-			if (it == map_cam_.end())
-			{
+			if (it == map_cam_.end()) {
 				return INS_ERR_CAMERA_NOT_OPEN;
-			}
-			else
-			{
+			} else {
 				return it->second->storage_speed_test();
 			}
 		});	
 	}
 
-	for (int32_t i = 0; i < INS_CAM_NUM; i++)
-	{
+	for (int32_t i = 0; i < INS_CAM_NUM; i++) {
 		auto r = futures[i].get();
 		map_res.insert(std::make_pair(pid_[i], (r==INS_OK)));
 	}
@@ -1373,12 +1263,9 @@ int cam_manager::gyro_calibration()
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	auto it = map_cam_.find(master_index_);
-	if (it == map_cam_.end()) 
-	{
+	if (it == map_cam_.end()) {
 		return INS_ERR_CAMERA_NOT_OPEN;
-	}
-	else
-	{
+	} else {
 		return it->second->gyro_calibration();
 	}
 }
@@ -1388,12 +1275,9 @@ int32_t cam_manager::magmeter_calibration()
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	auto it = map_cam_.find(master_index_);
-	if (it == map_cam_.end()) 
-	{
+	if (it == map_cam_.end()) {
 		return INS_ERR_CAMERA_NOT_OPEN;
-	}
-	else
-	{
+	} else {
 		return it->second->magmeter_calibration();
 	}
 }
@@ -1401,12 +1285,9 @@ int32_t cam_manager::magmeter_calibration()
 int32_t cam_manager::start_magmeter_calibration()
 {
 	auto it = map_cam_.find(master_index_);
-	if (it == map_cam_.end()) 
-	{
+	if (it == map_cam_.end()) {
 		return INS_ERR_CAMERA_NOT_OPEN;
-	}
-	else
-	{
+	} else {
 		return it->second->start_magmeter_calibration();
 	}
 }
@@ -1414,12 +1295,9 @@ int32_t cam_manager::start_magmeter_calibration()
 int32_t cam_manager::stop_magmeter_calibration()
 {
 	auto it = map_cam_.find(master_index_);
-	if (it == map_cam_.end()) 
-	{
+	if (it == map_cam_.end()) {
 		return INS_ERR_CAMERA_NOT_OPEN;
-	}
-	else
-	{
+	} else {
 		return it->second->stop_magmeter_calibration();
 	}
 }
@@ -1429,16 +1307,14 @@ int32_t cam_manager::vig_min_change()
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	int32_t min_value = INT_MAX;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		int32_t value = 0;
 		auto ret = it.second->get_vig_min_value(value);
 		RETURN_IF_NOT_OK(ret);
 		min_value = std::min(min_value, value);
 	}
 
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		it.second->set_vig_min_value(min_value);
 	}
 
@@ -1450,27 +1326,21 @@ int32_t cam_manager::delete_file(std::string dir)
 	std::lock_guard<std::mutex> lock(mtx_);
 	std::future<int32_t> futures[INS_CAM_NUM];
 
-	for (int i = 0; i < INS_CAM_NUM; i++)
-	{
+	for (int i = 0; i < INS_CAM_NUM; i++) {
 		futures[i] = std::async(std::launch::async, [this, i, dir]
 		{
 			auto it = map_cam_.find(i);
-			if (it == map_cam_.end())
-			{
+			if (it == map_cam_.end()) {
 				return INS_ERR_CAMERA_NOT_OPEN;
-			}
-			else
-			{
+			} else {
 				return it->second->delete_file(dir);
 			}
 		});	
 	}
 
 	int32_t ret = INS_OK;
-	for (int32_t i = 0; i < INS_CAM_NUM; i++)
-	{
-		if (futures[i].valid())
-		{
+	for (int32_t i = 0; i < INS_CAM_NUM; i++) {
+		if (futures[i].valid()) {
 			auto r = futures[i].get();
 			if (r != INS_OK) ret = r;
 		}
@@ -1506,8 +1376,7 @@ int cam_manager::get_module_hw_version(int& hw_version)
 
 int cam_manager::parse_module_version(const std::string& version, std::string& hw_ver)
 {
-	if (version[0] == 'V')
-	{
+	if (version[0] == 'V') {
 		hw_ver = "1";
 		return INS_OK;
 	}
@@ -1515,8 +1384,7 @@ int cam_manager::parse_module_version(const std::string& version, std::string& h
 	std::vector<std::string> v;
 	ins_util::split(version, v, ".");
 
-	if (v.size() <= 0) 
-	{
+	if (v.size() <= 0) {
 		LOGERR("invalid version:%s", version.c_str());
 		return INS_ERR;
 	}
@@ -1532,15 +1400,17 @@ void cam_manager::load_config_from_storage(std::string path)
 
 	std::string filename = path + "/cam_config.xml";
 	FILE* fp = fopen(filename.c_str(), "r");
-	if (fp == nullptr) 
-	{
+	if (fp == nullptr) {
 		LOGINFO("-------------file:%s open fail", filename.c_str());
 		return;
 	}
+	
 	char buff[64] = {0};
 	fgets(buff, sizeof(buff), fp);
-	if (buff[strlen(buff)-1] == '\n') buff[strlen(buff)-1] = 0; //去掉换行符
+	if (buff[strlen(buff)-1] == '\n') 
+		buff[strlen(buff)-1] = 0; //去掉换行符
 	fclose(fp);
+
 	LOGINFO("----------%s config pid:%s", filename.c_str(), buff);
 	xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_PID, buff);
 }
@@ -1549,12 +1419,10 @@ int32_t cam_manager::send_data(uint32_t index, uint8_t* data, uint32_t size)
 {
 	//send data 这里不用加锁， usb_camera 里会加锁
 	auto it = map_cam_.find(index);
-	if (it != map_cam_.end()) 
-	{
+	if (it != map_cam_.end()) {
 		it->second->send_data(data, size);
-	}
-	else
-	{
+	} else {
 		return INS_ERR_CAMERA_NOT_OPEN;
 	}
 }
+

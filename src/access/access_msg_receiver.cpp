@@ -7,7 +7,7 @@
 void access_msg_receiver::stop()
 {
 	quit_ = true;
-	INS_THREAD_JOIN(th_);
+	INS_THREAD_JOIN(th_);	/* 消息处理主线程退出 */
 
 	reader_ = nullptr;
 
@@ -37,16 +37,14 @@ void access_msg_receiver::parse_msg(const char* buff, unsigned int size)
 {
 	copy_msg_buff(buff, size);
 
-	while (msg_buff_offset_ >= sizeof(access_msg_head))
-	{
+	while (msg_buff_offset_ >= sizeof(access_msg_head)) {
 		access_msg_head* head = (access_msg_head*)msg_buff_;
 		unsigned sequece = ntohl(head->sequece);
 		unsigned content_len = ntohl(head->content_len);
 		unsigned int msg_len = content_len + sizeof(access_msg_head);
 		//LOGINFO("recv msg, sequece:%u content len:%u", head->sequece, head->content_len);
 
-		if (msg_buff_offset_ < msg_len)
-		{
+		if (msg_buff_offset_ < msg_len) {
 			LOGINFO("msg buff size:%d < msg len:%d", msg_buff_offset_, msg_len);
 			break;
 		}
@@ -57,8 +55,7 @@ void access_msg_receiver::parse_msg(const char* buff, unsigned int size)
 		queue_msg(msg);
 
 		msg_buff_offset_ -= msg_len;
-		if (msg_buff_offset_)
-		{
+		if (msg_buff_offset_) {
 			memmove(msg_buff_, msg_buff_+msg_len, msg_buff_offset_);
 		}
 	}
@@ -66,12 +63,10 @@ void access_msg_receiver::parse_msg(const char* buff, unsigned int size)
 
 void access_msg_receiver::copy_msg_buff(const char* buff, unsigned int size)
 {
-	if (size + msg_buff_offset_ > msg_buff_size_)
-	{
+	if (size + msg_buff_offset_ > msg_buff_size_) {
 		msg_buff_size_ = ((size + msg_buff_offset_)/512 + 1)*512;
 		char* new_buff = new char[msg_buff_size_]();
-		if (msg_buff_)
-		{
+		if (msg_buff_) {
 			memcpy(new_buff, msg_buff_, msg_buff_offset_);
 			delete[] msg_buff_;
 		}
@@ -85,16 +80,12 @@ void access_msg_receiver::copy_msg_buff(const char* buff, unsigned int size)
 
 void access_msg_receiver::task()
 {
-	while (!quit_)
-	{
+	while (!quit_) {
 		auto msg = deque_msg();
-		if (msg == nullptr)
-		{
+		if (msg == nullptr) {
 			usleep(30000);
 			continue;
-		}
-		else
-		{
+		} else {
 			msg_handler_(msg);
 		}
 	}
@@ -110,13 +101,12 @@ std::shared_ptr<access_msg_buff> access_msg_receiver::deque_msg()
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 
-	if (!queue_msg_.size())
-	{
+	if (!queue_msg_.size()) {
 		return nullptr;
 	}
 
 	auto msg = queue_msg_.front();
 	queue_msg_.pop_front();
-
 	return msg;
 }
+

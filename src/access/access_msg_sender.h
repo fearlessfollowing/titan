@@ -7,6 +7,9 @@
 #include "fifo_write.h"
 #include "json_obj.h"
 
+/*
+ * access_msg_sender - 消息发送
+ */
 class access_msg_sender {
 public:
     int             setup();
@@ -19,9 +22,9 @@ public:
 	void            set_ind_msg_sequece(std::string cmd, unsigned int sequence);
 
 private:
-    std::shared_ptr<fifo_write> msg_sender_;
-	std::shared_ptr<fifo_write> msg_sender_a_;
-    std::unordered_map<std::string, unsigned int> map_msg_seq_;
+    std::shared_ptr<fifo_write> 	msg_sender_;				/* 同于发送同步响应 */
+	std::shared_ptr<fifo_write> 	msg_sender_a_;				/* 用于发送异步指示 */
+    std::unordered_map<std::string, unsigned int> map_msg_seq_;	/* 命令及对应的 sequence map */
     unsigned int sequence_ = 0;
 };
 

@@ -84,33 +84,29 @@ int32_t ins_battery::read_temp(double& temp)
     ret = i2c.open(BATTERY_I2C_BUS, BATTERY_I2C_SLAVE_ADDR);
     RETURN_IF_NOT_OK(ret);
 	
-    for (int32_t i = 0; i < 3; i++) 
-    {
+    for (int32_t i = 0; i < 3; i++) {
         ret = read_value(i2c, READ_TEMPERATURE, val);
         RETURN_IF_NOT_OK(ret);
         inner_temp = convert_k_to_c(val);
+
         //LOGINFO("inner temp:%lf %d", inner_temp, val);
-        if (inner_temp < MIN_DEG || inner_temp >= MAX_DEG) 
-        {
+        if (inner_temp < MIN_DEG || inner_temp >= MAX_DEG) {
             usleep(10*1000);
             continue;
-        }
-        else
-        {
+        } else {
             break;
         }
     }
 
     if (inner_temp < MIN_DEG || inner_temp >= MAX_DEG) return INS_ERR;
 
-    for (int32_t i = 0; i < 3; i++) 
-    {
+    for (int32_t i = 0; i < 3; i++) {
         ret = read_value(i2c, READ_INTERNAL_TEMPRATURE, val);
         RETURN_IF_NOT_OK(ret);
         outer_temp = convert_k_to_c(val);
+		
         //LOGINFO("outter temp:%lf %d", outer_temp, val);
-        if (outer_temp < MIN_DEG || outer_temp >= MAX_DEG) 
-        {
+        if (outer_temp < MIN_DEG || outer_temp >= MAX_DEG) {
             usleep(10*1000);
             continue;
         }

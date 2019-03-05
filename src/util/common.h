@@ -6,51 +6,52 @@
 
 #define INS_DIR "/home/nvidia/insta360"
 
-#define INS_FIFO_TO_SERVER   INS_DIR"/fifo/ins_fifo_to_server"
-#define INS_FIFO_TO_CLIENT   INS_DIR"/fifo/ins_fifo_to_client"
-#define INS_FIFO_TO_CLIENT_A INS_DIR"/fifo/ins_fifo_to_client_a"
-#define INS_FIFO_TO_SERVER_FATHER  INS_DIR"/fifo/ins_fifo_to_server_father"
-#define INS_FIFO_TO_CLIENT_FATHER  INS_DIR"/fifo/ins_fifo_to_client_father"
+#define INS_FIFO_TO_SERVER   		INS_DIR"/fifo/ins_fifo_to_server"
+#define INS_FIFO_TO_CLIENT   		INS_DIR"/fifo/ins_fifo_to_client"
+#define INS_FIFO_TO_CLIENT_A 		INS_DIR"/fifo/ins_fifo_to_client_a"
+#define INS_FIFO_TO_SERVER_FATHER  	INS_DIR"/fifo/ins_fifo_to_server_father"
+#define INS_FIFO_TO_CLIENT_FATHER  	INS_DIR"/fifo/ins_fifo_to_client_father"
 
-#define RTMP_PREVIEW_URL "rtmp://127.0.0.1/live/preview"
-#define RTSP_PREVIEW_URL "rtsp://127.0.0.1/live/preview"
-#define RTMP_LIVE_URL    "rtmp://127.0.0.1/live/live"
-#define HLS_PREVIEW_URL  "/tmp/preview/preview.m3u8"
-#define HLS_LIVE_URL     "/tmp/live/live.m3u8"
-#define HLS_PREVIEW_STREAM_DIR   "/tmp/preview"
-#define HLS_LIVE_STREAM_DIR      "/tmp/live"
 
-#define INS_DEFAULT_XML_PATH INS_DIR"/etc"
-#define INS_DEFAULT_XML_FILE INS_DIR"/etc/cam_config.xml"
-#define INS_DEFAULT_XML_2_FILE INS_DIR"/etc/cam_config_2.xml"
-#define INS_FACTORY_SETING_XML INS_DIR"/etc/factory_setting.xml"
-#define INS_GYRO_OFFSET_XML INS_DIR"/etc/gyro_offset.xml"
-#define INS_GYRO_CALIBRATION_XML INS_DIR"/etc/gyro_calibration.xml"
-#define INS_GYRO_DELAY_XML INS_DIR"/etc/gyro_delay.xml"
+#define RTMP_PREVIEW_URL 			"rtmp://127.0.0.1/live/preview"
+#define RTSP_PREVIEW_URL 			"rtsp://127.0.0.1/live/preview"
+#define RTMP_LIVE_URL    			"rtmp://127.0.0.1/live/live"
+#define HLS_PREVIEW_URL  			"/tmp/preview/preview.m3u8"
+#define HLS_LIVE_URL     			"/tmp/live/live.m3u8"
+#define HLS_PREVIEW_STREAM_DIR   	"/tmp/preview"
+#define HLS_LIVE_STREAM_DIR      	"/tmp/live"
+
+#define INS_DEFAULT_XML_PATH 		INS_DIR"/etc"
+#define INS_DEFAULT_XML_FILE 		INS_DIR"/etc/cam_config.xml"
+#define INS_DEFAULT_XML_2_FILE 		INS_DIR"/etc/cam_config_2.xml"
+#define INS_FACTORY_SETING_XML 		INS_DIR"/etc/factory_setting.xml"
+#define INS_GYRO_OFFSET_XML 		INS_DIR"/etc/gyro_offset.xml"
+#define INS_GYRO_CALIBRATION_XML 	INS_DIR"/etc/gyro_calibration.xml"
+#define INS_GYRO_DELAY_XML 			INS_DIR"/etc/gyro_delay.xml"
 
 #define CAMERA_VERSION "1.1"
 
 #define INS_GYRO_VERSION "4"
 
-#define INS_LOG_PATH INS_DIR"/log"
+#define INS_LOG_PATH 				INS_DIR"/log"
 
-#define PID_LOCK_FILE "/var/run/camerad.pid"
+#define PID_LOCK_FILE 				"/var/run/camerad.pid"
 
-#define INS_TASK_LIST_DB_DIR INS_DIR"/database"
-#define INS_TASK_LIST_DB_PATH INS_DIR"/database/box_task"
+#define INS_TASK_LIST_DB_DIR 		INS_DIR"/database"
+#define INS_TASK_LIST_DB_PATH 		INS_DIR"/database/box_task"
 
-#define INS_PROJECT_FILE "pro.prj"
-#define INS_TMEP_PRJ_PATH INS_DIR
+#define INS_PROJECT_FILE 			"pro.prj"
+#define INS_TMEP_PRJ_PATH 			INS_DIR
 
-#define INS_NOISE_SAMPLE_PATH INS_DIR"/noise_sample"
-#define INS_DEPTH_MAP_FILE INS_DIR"/depthMap.dat"
-#define INS_DEPTH_MAP_FILE_NAME "depthMap.dat"
+#define INS_NOISE_SAMPLE_PATH 		INS_DIR"/noise_sample"
+#define INS_DEPTH_MAP_FILE 			INS_DIR"/depthMap.dat"
+#define INS_DEPTH_MAP_FILE_NAME 	"depthMap.dat"
 
-#define INS_GPS_DATA_FILE "gps.dat"
+#define INS_GPS_DATA_FILE 			"gps.dat"
 
-#define INS_AUDIO_DEV_NAME "insta360"
-#define INS_H2N_AUDIO_DEV_NAME "H2n"
-#define INS_H3VR_AUDIO_DEV_NAME "H3-VR"
+#define INS_AUDIO_DEV_NAME 			"insta360"
+#define INS_H2N_AUDIO_DEV_NAME 		"H2n"
+#define INS_H3VR_AUDIO_DEV_NAME 	"H3-VR"
 
 #define INS_AUDIO_N_N  0 //原始没有 + 拼接没有
 #define INS_AUDIO_N_C  1 //原始没有 + 拼接普通
@@ -89,11 +90,11 @@
 #define INS_MODE_3D_TOP_LEFT 1
 #define INS_MODE_3D_TOP_RIGHT 2
 
-#define INS_MAP_FLAT 0
-#define INS_MAP_CUBE 1
+#define INS_MAP_FLAT 	0				/* "flat" */	
+#define INS_MAP_CUBE 	1				/* "cube" */
 
-#define INS_ALGORITHM_NORMAL 0
-#define INS_ALGORITHM_OPTICALFLOW 1
+#define INS_ALGORITHM_NORMAL 		0
+#define INS_ALGORITHM_OPTICALFLOW 	1
 
 #define INS_MEDIA_NONE      0
 #define INS_MEDIA_AUDIO     1

@@ -28,7 +28,7 @@ struct cam_video_param
 
 
 /*
- * cam_photo_param - 拍照参数
+ * cam_photo_param - 拍照参数(用于与模组交互)
  */
 struct cam_photo_param {
 	std::string 	type = "photo";
@@ -42,11 +42,11 @@ struct cam_photo_param {
 	//bool b_file_stream = false;
 	std::string 	file_url;
 
-	int32_t 		sequence = 0; //used in timelapse
-	int32_t 		interval = 0; //ms timelapse
-	int32_t 		count = 1; //burst/hdr
-	int32_t 		min_ev = 32; // used in hdr
-	int32_t 		max_ev = 32; // used in hdr
+	int32_t 		sequence = 0; 	// used in timelapse
+	int32_t 		interval = 0; 	// ms timelapse
+	int32_t 		count = 1; 		// burst/hdr
+	int32_t 		min_ev = 32; 	// used in hdr
+	int32_t 		max_ev = 32; 	// used in hdr
 };
 
 #define AMBA_INVALID_PROPERTY 0x0fffffff

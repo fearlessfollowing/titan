@@ -4,18 +4,22 @@
 #include <string>
 #include <vector>
 
+
+/*
+ * 参数的origin字段参数
+ */
 struct ins_origin_option {
-	std::string 	mime;				/* "h264"/"h265" */
-	int 			bitdepth = 8;
-	int 			width = 0;
-	int 			height = 0;
-	int 			framerate = 0;
-	int 			bitrate = 0; //kbits
-	int 			logmode = 0;
-	bool 			hdr = false;
-	//std::string url_prefix; //store in nvidia
-	std::string 	live_prefix; //live origin stream(rtmp/rtsp/hls )
-	std::string 	module_url; //store in module(amba)
+	std::string 	mime;				/* mime: "h264"/"h265" */
+	int 			bitdepth = 8;		/* bitdepth: 8/10bit */
+	int 			width = 0;			/* width: 原片的宽度 */
+	int 			height = 0;			/* height: 原片的高度 */
+	int 			framerate = 0;		/* framerate:帧率 */
+	int 			bitrate = 0; 		/* bitrate: 码率kbits */
+	int 			logmode = 0;		/* logmode: 是否为log模式 */
+	bool 			hdr = false;		/* hdr: 是否为hdr */
+	//std::string url_prefix; 			//store in nvidia
+	std::string 	live_prefix; 		//live origin stream(rtmp/rtsp/hls )
+	std::string 	module_url; 		/* module_url: 模组中存储的位置 store in module(amba) */
 	int 			storage_mode = -1;	/* 原始流的存储模式 */
 };
 
@@ -34,16 +38,23 @@ struct ins_stiching_option {
 	std::string format;
  };
 
+
+/*
+ * burst节点的参数
+ */
 struct ins_burst_option {
-	bool enable = false;
-	int count = 0;
+	bool enable = false;		/* 是否使能burst */
+	int count = 0;				/* burst拍照的张数 */
 };
 
+/*
+ * hdr节点参数
+ */
 struct ins_hdr_option {
-	bool enable = false;
-	int count = 3;
-	int min_ev = 32;
-	int max_ev = 32;
+	bool enable = false;		/* 是否使能 */
+	int count = 3;				/* 张数 */
+	int min_ev = 32;			/* 最小ev */
+	int max_ev = 32;			/* 最大ev */
 };
 
 struct ins_timelapse_option {
@@ -58,13 +69,13 @@ struct ins_auto_connect {
 };
 
 struct ins_audio_option {
-	std::string mime;//aac
-	std::string samplefmt = "s16"; //s16 f32 
-	std::string ch_layout = "stereo"; //mono stereo
-	int samplerate = 0;
-	int bitrate = 0;
-	int type = 0;
-	bool fanless = false; //是否无风扇模式
+	std::string 	mime;//aac
+	std::string 	samplefmt = "s16"; //s16 f32 
+	std::string 	ch_layout = "stereo"; //mono stereo
+	int 			samplerate = 0;
+	int 			bitrate = 0;
+	int 			type = 0;
+	bool 			fanless = false; //是否无风扇模式
 };
 
 struct ins_picture_option {
@@ -126,9 +137,9 @@ struct ins_offset_option {
 };
 
 struct ins_image_property_option {
-	int 		index = -1; // -1:表示设置所有模组
-	std::string property;
-	int 		value = 0;
+	int 		index = -1; 	/* index: 操作模组的索引值 -1:表示设置所有模组 */
+	std::string property;		/* 属性名 */
+	int 		value = 0;		/* 属性值 */
 };
 
 

@@ -73,12 +73,9 @@ void ins_util::sleep_s(long long time, int read_fd)
 
 std::string ins_util::create_name_by_mode(int mode)
 {
-	if (mode == INS_MODE_PANORAMA)
-	{
+	if (mode == INS_MODE_PANORAMA) {
 		return "pano";
-	}
-	else
-	{
+	} else {
 		return "3d";
 	}
 }

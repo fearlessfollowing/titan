@@ -12,19 +12,17 @@ int32_t jpeg_muxer::create(std::string url, const uint8_t* data, uint32_t size, 
     auto ret = create_jpeg(url, data, size);
     RETURN_IF_NOT_OK(ret);
 
-    if (metadata && !metadata->raw) 
-    {
+    if (metadata && !metadata->raw) {
         set_metadata(url, metadata);
         LOGINFO("exif jpeg:%s created", url.c_str());
-    }
-    else
-    {
+    } else {
         LOGINFO("jpeg:%s created", url.c_str());
     }
 
     return INS_OK;
 }
 
+#if 0
 // int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t size)
 // {
 //     int fd = ::open(url.c_str(), O_CREAT | O_WRONLY, 0666);
@@ -51,12 +49,13 @@ int32_t jpeg_muxer::create(std::string url, const uint8_t* data, uint32_t size, 
 
 //     return ret;
 // }
+#endif
+
 
 int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t size)
 {
     FILE* fp = fopen(url.c_str(), "wb");
-    if (!fp)
-    {
+    if (!fp) {
         LOGERR("jpeg file:%s open fail", url.c_str());
         return INS_ERR_FILE_OPEN;
     }
@@ -64,13 +63,11 @@ int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t s
     auto ret = fwrite(data, 1, size, fp);
     fflush(fp);
     fclose(fp);
-    if (ret < (int32_t)size)
-    {
+
+    if (ret < (int32_t)size) {
         LOGERR("file:%s write error", url.c_str());
         return INS_ERR_FILE_IO;
-    }
-    else
-    {
+    } else {
         return INS_OK;
     }
 }
@@ -78,8 +75,7 @@ int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t s
 int32_t jpeg_muxer::set_metadata(const std::string& url, const jpeg_metadata* metadata)
 {    
     Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(url);
-    if (!image.get())
-	{
+    if (!image.get()) {
         LOGERR("exiv2 open file:%s fail", url.c_str());
         return INS_ERR_FILE_OPEN; 
 	}
@@ -105,12 +101,13 @@ int32_t jpeg_muxer::set_metadata(const std::string& url, const jpeg_metadata* me
     ss << metadata->pts; //照片拍摄时间，精确到us，用于防抖
     ed["Exif.Photo.UserComment"] = ss.str().c_str();
 
-    if (metadata->b_exif) set_photo_meta(ed, metadata->exif);
+    if (metadata->b_exif) 
+		set_photo_meta(ed, metadata->exif);
 
-    if (metadata->b_gps) set_gps_meta(ed, metadata->gps);
+    if (metadata->b_gps) 
+		set_gps_meta(ed, metadata->gps);
 
-    if (metadata->b_spherical) 
-    {
+    if (metadata->b_spherical) {
         Exiv2::XmpData xmp;
         set_sperical_meta(xmp, metadata->width, metadata->height, metadata->map_type);
         image->setXmpData(xmp);
@@ -121,6 +118,7 @@ int32_t jpeg_muxer::set_metadata(const std::string& url, const jpeg_metadata* me
 
     return INS_OK;
 }
+
 
 void jpeg_muxer::set_photo_meta(Exiv2::ExifData& ed, const exif_info& exif)
 {

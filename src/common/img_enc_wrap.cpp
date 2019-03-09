@@ -76,13 +76,10 @@ int32_t img_enc_wrap::encode(const ins_img_frame& frame, std::vector<std::string
 int32_t img_enc_wrap::create_thumbnail(const ins_img_frame& frame, std::string url)
 {
     int32_t th_w, th_h;
-    if (map_ == INS_MAP_CUBE)
-	{
+    if (map_ == INS_MAP_CUBE) {
 		th_w = INS_THUMBNAIL_WIDTH_CUBE;
 		th_h = INS_THUMBNAIL_HEIGHT_CUBE;
-	}
-	else
-	{
+	} else {
 		th_w = INS_THUMBNAIL_WIDTH;
 		th_h = INS_THUMBNAIL_HEIGHT;
     }
@@ -100,12 +97,14 @@ int32_t img_enc_wrap::create_thumbnail(const ins_img_frame& frame, std::string u
 	avpicture_alloc(&o_pic, AV_PIX_FMT_BGR24, th_w, th_h);
 
 	auto sw_ctx = sws_getContext(w, h, AV_PIX_FMT_BGR24, th_w, th_h, AV_PIX_FMT_BGR24,SWS_BICUBIC, nullptr, nullptr, nullptr);
-	if (sw_ctx == nullptr)
-	{
+	if (sw_ctx == nullptr) {
 		LOGERR("sws_getContext fail");
 		return INS_ERR;
 	}
 
+	/*
+	 * 先缩放,再编码
+	 */
 	sws_scale(sw_ctx, i_pic.data, i_pic.linesize, 0, h, o_pic.data, o_pic.linesize);
 
 	tjpeg_enc enc;
@@ -128,3 +127,5 @@ int32_t img_enc_wrap::create_thumbnail(const ins_img_frame& frame, std::string u
 
     return ret;
 }
+
+

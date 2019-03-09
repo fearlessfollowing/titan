@@ -9,8 +9,7 @@
 
 class cam_video_param;
 
-class prj_file_mgr
-{
+class prj_file_mgr {
 public:
     static int32_t add_origin_frag_file(const std::string& path, int sequence);
     static int32_t create_vid_prj(const ins_video_option& opt, std::string path);

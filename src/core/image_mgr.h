@@ -38,7 +38,7 @@ private:
     std::shared_ptr<cam_img_repo>   img_repo_;
     std::shared_ptr<usb_sink>       usb_sink_;
     std::shared_ptr<stabilization>  stablz_;
-    bool                            b_calibration_ = false;
+    bool                            b_calibration_ = false;		/* 是否为拼接校准操作 */
     std::thread                     th_;
     bool                            quit_ = false;
     uint32_t                        jpeg_seq_ = 0;

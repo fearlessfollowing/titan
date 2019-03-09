@@ -25,52 +25,49 @@ class render;
 class nv_jpeg_enc;
 class jpeg_preview_sink;
 
-class video_composer
-{
+class video_composer {
 public:
-    ~video_composer();
+    		~video_composer();
     int32_t open(const compose_option& option);
-    void set_video_repo(std::shared_ptr<all_cam_video_queue> repo)
-    {
+    void 	set_video_repo(std::shared_ptr<all_cam_video_queue> repo) {
         repo_ = repo;
     }
-    void set_stabilizer(std::shared_ptr<stabilization> stablz)
-    {
+	
+    void set_stabilizer(std::shared_ptr<stabilization> stablz) {
         std::lock_guard<std::mutex> lock(mtx_stablz_);
         stablz_ = stablz;   
     }
+	
     int32_t add_encoder(const compose_option& option);
     void delete_encoder(uint32_t index);
+	
     void encoder_del_output(uint32_t enc_index, uint32_t sink_index);
     void encoder_add_output(uint32_t enc_index, uint32_t sink_index, std::shared_ptr<sink_interface> sink);
 
-    static int32_t init_cuda();
-    static bool hdmi_change_;
-    static bool in_hdmi_;
+    static int32_t 	init_cuda();
+    static bool 	hdmi_change_;
+    static bool 	in_hdmi_;
 
 private:
-    void dec_task(int32_t index);
-    void enc_task();
-    void screen_render_task();
+    void 	dec_task(int32_t index);
+    void 	enc_task();
+    void 	screen_render_task();
     int32_t compose(std::vector<NvBuffer*>& v_in_buff, std::map<uint32_t, NvBuffer*>& m_out_buff, const float* mat = nullptr);
     int32_t dequeue_frame(NvBuffer* buff, int32_t index, int64_t& pts);
-    void print_fps_info() ;
-    void re_start_encoder(uint32_t index);
+    void 	print_fps_info() ;
+    void 	re_start_encoder(uint32_t index);
 
-    void queue_free_rend_img(void* img)
-    {
+    void 	queue_free_rend_img(void* img) {
         std::lock_guard<std::mutex> lock(mtx_rend_img_);
         free_rend_img_queue_.push(img);   
     }
 
-    void queue_full_rend_img(void* img)
-    {
+    void 	queue_full_rend_img(void* img) {
         std::lock_guard<std::mutex> lock(mtx_rend_img_);
         full_rend_img_queue_.push(img);   
     }
 
-    void* deque_full_rend_img()
-    {
+    void* 	deque_full_rend_img() {
         std::lock_guard<std::mutex> lock(mtx_rend_img_);
         if (full_rend_img_queue_.empty()) return nullptr;
         auto img = full_rend_img_queue_.front();
@@ -78,23 +75,17 @@ private:
         return img;
     }
 
-    void* deque_free_rend_img()
-    {
+    void* deque_free_rend_img() {
         std::lock_guard<std::mutex> lock(mtx_rend_img_);
-        if (!free_rend_img_queue_.empty())
-        {
+        if (!free_rend_img_queue_.empty()) {
             auto img = free_rend_img_queue_.front();
             free_rend_img_queue_.pop();
             return img;
-        }
-        else if (!full_rend_img_queue_.empty())
-        {
+        } else if (!full_rend_img_queue_.empty()) {
             auto img = full_rend_img_queue_.front();
             full_rend_img_queue_.pop();
             return img;
-        }
-        else
-        {
+        } else {
             abort();
         }
     }
@@ -126,10 +117,10 @@ private:
     std::shared_ptr<nv_jpeg_enc> jpeg_enc_;
     std::shared_ptr<jpeg_preview_sink> jpeg_sink_;
 
-    std::thread th_screen_render_;
-    std::mutex mtx_rend_img_;
-    std::queue<void*> free_rend_img_queue_;
-    std::queue<void*> full_rend_img_queue_;
+    std::thread 		th_screen_render_;
+    std::mutex 			mtx_rend_img_;
+    std::queue<void*> 	free_rend_img_queue_;
+    std::queue<void*> 	full_rend_img_queue_;
 };
 
 #endif

@@ -1130,32 +1130,53 @@ int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 
 
 
+/***********************************************************************************************
+** 函数名称: take_picture
+** 函数功能: 处理拍照请求
+** 入口参数:
+**		msg 	 - 消息数据
+**		cmd		 - 拍照命令"camera._takePicture"
+**		sequence - 通信序列值
+** 返 回 值: 成功返回INS_OK;失败返回错误码
+*************************************************************************************************/
 void access_msg_center::take_picture(const char* msg, std::string cmd, int sequence)
 {
 	ins_picture_option opt;
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
+	/*
+	 * 1.根据拍照参数来初始化ins_picture_option
+	 */
 	ret = msg_parser_.take_pic_option(msg, opt);
 	BREAK_IF_NOT_OK(ret);
 
+	/*
+	 * 2.状态检查
+	 */
 	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);
 
+	/* 
+	 * 3.如果已经处于预览状态(模组已经开启)
+	 */
 	if (state_ & CAM_STATE_PREVIEW) {
 		ret = do_camera_operation_stop(false);
 		if (ret != INS_OK) {
 			do_camera_operation_stop(true); break;
 		}
-	} else {
+	} else {	/* 非预览状态(需要先启动模组) */
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 
+	/*
+	 * 启动img_mgr进行拍照动作
+	 */
 	img_mgr_ = std::make_shared<image_mgr>();
 	ret = img_mgr_->start(camera_.get(), opt);
 	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
 
-	state_ |= CAM_STATE_PIC_SHOOT;
+	state_ |= CAM_STATE_PIC_SHOOT;	/* camer进入状态拍照状态 */
 
 	DO_WHILE_0_END
 
@@ -1163,10 +1184,12 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 	sender_->set_ind_msg_sequece(ACCESS_CMD_PIC_ORIGIN_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd);
 
-	if (ret != INS_OK && opt.path != "") {	// 由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
+	/* 由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹 */
+	if (ret != INS_OK && opt.path != "") {	
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
+	
 }
 
 
@@ -2371,6 +2394,14 @@ void access_msg_center::internal_capture_audio_finish(const char* msg, std::stri
 	sender_->send_ind_msg(ACCESS_CMD_CAPTURE_AUDIO_FINISH_, INS_OK);	
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: system_time_change
+** 函数功能: 系统时间发生改变
+** 入口参数:
+** 返 回 值: 成功返回INS_OK;失败返回错误码
+*************************************************************************************************/
 void access_msg_center::system_time_change(const char* msg, std::string cmd, int sequence)
 {
 	int64_t timestamp = 0;
@@ -2413,7 +2444,7 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
 		camera_info::sync_time();
 	}
 	
-	if (source == "") {		/* 表示是APP设置时间  */
+	if (source == "") {	/* 表示是APP设置时间  */
 		camera_info::sync_time(); 						/* APP设置时间,要标记 */
 		sender_->send_rsp_msg(sequence, INS_OK, cmd); 	/* 自己设置时间不用回复消息 */
 	}
@@ -2514,7 +2545,7 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 			if (state_mgr_.preview_opt_.index == -1) {
 				video_mgr_ = std::make_shared<video_mgr>();
 				ret = video_mgr_->start(camera_.get(), state_mgr_.preview_opt_);
-			} else {	// 单镜头合焦预览
+			} else {	/* 单镜头合焦预览 */
 				singlen_mgr_ = std::make_shared<singlen_mgr>();
 				ret = singlen_mgr_->start_focus(camera_.get(), state_mgr_.preview_opt_);
 			}

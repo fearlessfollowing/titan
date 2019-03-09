@@ -14,16 +14,15 @@ std::vector<ins_img_frame> all_lens_hdr::process(const std::vector<std::vector<s
 
     ins_clock t;
     std::future<ins_img_frame> f[INS_CAM_NUM];
-    for (uint32_t i = 0; i < vv_file.size(); i++)
-    {
+    for (uint32_t i = 0; i < vv_file.size(); i++) {
         f[i] = std::async(std::launch::async, &all_lens_hdr::single_group_process, this, vv_file[i]);
     }
 
     std::vector<ins_img_frame> v_hdr_frame;
-    for (uint32_t i = 0; i < INS_CAM_NUM; i++)
-    {
+    for (uint32_t i = 0; i < INS_CAM_NUM; i++) {
         auto frame = f[i].get();
-        if (frame.buff) v_hdr_frame.push_back(frame);
+        if (frame.buff) 
+			v_hdr_frame.push_back(frame);
     }
 
     LOGINFO("HDR time:%lf", t.elapse());
@@ -35,12 +34,11 @@ ins_img_frame all_lens_hdr::single_group_process(const std::vector<std::string>&
 {
     ins_img_frame hdr_frame;
     std::vector<Mat> v_dec_img;
-    for (uint32_t i = 0; i < v_file.size(); i++)
-    {
+
+    for (uint32_t i = 0; i < v_file.size(); i++) {
         //LOGINFO("imread:%s", v_file[i].c_str());
         auto img = imread(v_file[i]);
-        if (img.empty())
-        {
+        if (img.empty()) {
             LOGERR("imread:%s fail", v_file[i].c_str()); 
             return hdr_frame;
         }
@@ -49,12 +47,9 @@ ins_img_frame all_lens_hdr::single_group_process(const std::vector<std::string>&
 
     Mat hdr_img;
     hdr::HDR hdr_process;
-    if (v_dec_img.size() == 3) //3张调用这个接口效果要好些,有优化
-    {
+    if (v_dec_img.size() == 3) {	// 3张调用这个接口效果要好些,有优化
         hdr_process.runHDR(v_dec_img[0], v_dec_img[1], v_dec_img[2], hdr_img);
-    }
-    else
-    {
+    } else {
         hdr_process.runHDR(v_dec_img, hdr_img);
     }
 
@@ -65,3 +60,4 @@ ins_img_frame all_lens_hdr::single_group_process(const std::vector<std::string>&
 
     return hdr_frame;
 }
+

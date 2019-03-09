@@ -12,6 +12,48 @@
 
 #define BITRATE_1CH 64000 //bit
 
+
+#if 0
+
+switch_inner_audio.sh
+----------------------------------------------------------------------	
+#!/bin/sh	
+echo 000e 0100 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 000f 0808 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0027 1400 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0028 1010 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0061 8000 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0063 e818 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0064 0c00 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0065 0000 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0066 0000 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 006a 001b > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 006c 0200 > /sys/bus/i2c/devices/1-001c/codec_reg
+-----------------------------------------------------------------------
+
+switch_outer_linein_audio.sh
+-----------------------------------------------------------------------	
+#!/bin/sh	
+echo 000e 0040 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 000f 1f1f > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0027 3420 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0028 3030 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0061 8006 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0063 e81c > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0064 1c00 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0065 0c00 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 0066 0300 > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 006a 003d > /sys/bus/i2c/devices/1-001c/codec_reg
+echo 006c 3600 > /sys/bus/i2c/devices/1-001c/codec_reg
+-----------------------------------------------------------------------
+
+
+switch_outer_mic_audio.sh
+
+
+#endif 
+
+
 audio_mgr::~audio_mgr()
 {
     quit_ = true;
@@ -60,8 +102,8 @@ int32_t audio_mgr::open(const audio_param& param)
 int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
 {   
     dev_type_ = INS_SND_TYPE_INNER;
-
-    //system("external_mic_off.sh");
+    
+	system("switch_inner_audio.sh");
 
     //card=1 device=0
     auto dev = std::make_shared<audio_reader>();
@@ -77,8 +119,7 @@ int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
     ret = spatial_handle_->open(samplerate_, channel_, fanless);
     RETURN_IF_NOT_OK(ret);
 
-    if (type != INS_AUDIO_N_C) //也就是在预览的时候用到
-    {
+    if (type != INS_AUDIO_N_C) {	// 也就是在预览的时候用到
         spatial_ = true;
 
         std::deque<ins_pcm_frame> one;
@@ -133,7 +174,7 @@ int32_t audio_mgr::open_outer_35mm_mic(bool hdmi_audio)
 {
     dev_type_ = INS_SND_TYPE_35MM;
 
-    //system("external_mic_on.sh");
+	system("switch_outer_linein_audio.sh");
 
     auto dev = std::make_shared<audio_reader>();
     dev->set_frame_cb(0, [this](uint32_t index, ins_pcm_frame& frame){ on_pcm_data(index, frame); });
@@ -144,8 +185,7 @@ int32_t audio_mgr::open_outer_35mm_mic(bool hdmi_audio)
     ret = open_audio_enc(samplerate_, channel_, BITRATE_1CH*channel_);
     RETURN_IF_NOT_OK(ret);
 
-    if (hdmi_audio)
-    {
+    if (hdmi_audio) {
         play_ = std::make_shared<audio_play>();
         if (play_->open(samplerate_, channel_) != INS_OK) play_ = nullptr;
     }

@@ -59,11 +59,11 @@
 #define INS_AUDIO_Y_C  3 //原始有 + 拼接普通
 #define INS_AUDIO_Y_S  4 //原始有 + 拼接全景声
 
-#define INS_STORAGE_MODE_NONE -1
-#define INS_STORAGE_MODE_NV 0
-#define INS_STORAGE_MODE_AB_NV 1
-#define INS_STORAGE_MODE_AB 2
-#define INS_STORAGE_MODE_DEFAULT 3
+#define INS_STORAGE_MODE_NONE 		-1
+#define INS_STORAGE_MODE_NV 		0
+#define INS_STORAGE_MODE_AB_NV 		1
+#define INS_STORAGE_MODE_AB 		2
+#define INS_STORAGE_MODE_DEFAULT 	3
 
 #define INS_PREVIEW   0
 #define INS_RECORD    1
@@ -122,11 +122,11 @@
 #define INS_PREVIEW_HEIGHT  960
 #define INS_PREVIEW_BITRATE 3000 //Kbits
 
-#define INS_THUMBNAIL_WIDTH 1920
-#define INS_THUMBNAIL_HEIGHT 960
+#define INS_THUMBNAIL_WIDTH 		1920
+#define INS_THUMBNAIL_HEIGHT 		960
 
-#define INS_THUMBNAIL_WIDTH_CUBE 1440
-#define INS_THUMBNAIL_HEIGHT_CUBE 960
+#define INS_THUMBNAIL_WIDTH_CUBE 	1440
+#define INS_THUMBNAIL_HEIGHT_CUBE 	960
 
 #define INS_FANLESS_START_TEMP 65
 #define INS_FANLESS_STOP_TEMP 85
@@ -145,16 +145,16 @@
 #define INS_STABLZ_TYPE_XYZ  0
 #define INS_STABLZ_TYPE_Z 1
 
-#define INS_CROP_FLAG_PIC 0
-#define INS_CROP_FLAG_4_3 1
-#define INS_CROP_FLAG_16_9 2
-#define INS_CROP_FLAG_2_1 3
-#define INS_CROP_FLAG_11 11
-#define INS_CROP_FLAG_12 12
-#define INS_CROP_FLAG_13 13
+#define INS_CROP_FLAG_PIC 	0
+#define INS_CROP_FLAG_4_3 	1
+#define INS_CROP_FLAG_16_9 	2
+#define INS_CROP_FLAG_2_1 	3
+#define INS_CROP_FLAG_11 	11
+#define INS_CROP_FLAG_12 	12
+#define INS_CROP_FLAG_13 	13
 
-#define INS_OFFSET_FACTORY 0
-#define INS_OFFSET_USER 1
+#define INS_OFFSET_FACTORY 	0
+#define INS_OFFSET_USER 	1
 
 #define INS_H264_MIME "h264"
 #define INS_H265_MIME "h265"
@@ -164,19 +164,19 @@
 #define INS_RAW_JPEG_MIME  "raw+jpeg"
 
 //#define INS_PIC_TYPE_RAW "raw"
-#define INS_PIC_TYPE_BURST "burst"
-#define INS_PIC_TYPE_HDR "hdr"
-#define INS_PIC_TYPE_BRACKET "bracket"
-#define INS_PIC_TYPE_TIMELAPSE "timelapse"
+#define INS_PIC_TYPE_BURST 		"burst"
+#define INS_PIC_TYPE_HDR 		"hdr"
+#define INS_PIC_TYPE_BRACKET 	"bracket"
+#define INS_PIC_TYPE_TIMELAPSE 	"timelapse"
 //#define INS_PIC_TYPE_JPEG "jpeg"
-#define INS_PIC_TYPE_PHOTO "photo" //normal
-#define INS_VIDEO_TYPE "video"
+#define INS_PIC_TYPE_PHOTO 		"photo" //normal
+#define INS_VIDEO_TYPE 			"video"
 
 #define INS_CAM_ALL_INDEX -1
 #define INS_CAM_MASTER_INDEX -2
 
-#define INS_RAW_EXT ".dng"
-#define INS_JPEG_EXT ".jpg"
+#define INS_RAW_EXT 			".dng"
+#define INS_JPEG_EXT 			".jpg"
 
 #define INS_LOGO_FILE "_logo.png"
 

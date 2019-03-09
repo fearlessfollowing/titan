@@ -32,8 +32,7 @@ static void add_accel_offset(XMLDocument& xml_doc, XMLElement* e_gyro)
 	double x = 0, y = 0, z = 1;//default value
 	xml_config::get_accel_offset(x, y, z);
 	auto e_calibration = xml_doc.NewElement("calibration");  
-	if (!e_calibration)
-	{
+	if (!e_calibration) {
 		LOGERR("new element acc_offset fail");
 		return;
 	}
@@ -56,8 +55,7 @@ static void add_accel_offset(XMLDocument& xml_doc, XMLElement* e_gyro)
 static void add_depth_map(XMLDocument& xml_doc, XMLElement* e_root, std::string path)
 {
 	//depth map
-	if (!access(INS_DEPTH_MAP_FILE, 0))
-	{
+	if (!access(INS_DEPTH_MAP_FILE, 0)) {
 		std::string cmd;
 		cmd += "cp " ;
 		cmd += INS_DEPTH_MAP_FILE;
@@ -68,9 +66,7 @@ static void add_depth_map(XMLDocument& xml_doc, XMLElement* e_root, std::string 
 		e_file->SetText(INS_DEPTH_MAP_FILE_NAME);
 		e_depth_map->LinkEndChild(e_file);
 		e_root->LinkEndChild(e_depth_map);
-	}
-	else
-	{
+	} else {
 		LOGINFO("no depth map info");
 	}
 }
@@ -138,22 +134,19 @@ int32_t prj_file_mgr::add_first_frame_ts(std::string path, int64_t ts)
 	std::string url = path + "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 
 	auto e_fft = xml_doc.NewElement("first_frame_timestamp");
-	if (!e_fft)
-	{
+	if (!e_fft) {
 		LOGERR("new first_frame_timestamp fail");
 		return INS_ERR;
 	}
@@ -176,29 +169,25 @@ int32_t prj_file_mgr::add_first_frame_ts(std::string path, std::map<uint32_t, in
 	std::string url = path + "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 
 	auto e_gyro = e_root->FirstChildElement("gyro");  
-	if (!e_gyro)
-	{
+	if (!e_gyro) {
 		LOGERR("xml: cann't find element:gyro");
 		return INS_ERR;
 	}
 
 	auto sts_group = xml_doc.NewElement("sts_group");
-	for (uint32_t i = 1; i <= INS_CAM_NUM; i++)
-	{
+	for (uint32_t i = 1; i <= INS_CAM_NUM; i++) {
 		auto it = first_frame_ts.find(i);
 		assert(it != first_frame_ts.end());
 		auto e_start_ts = xml_doc.NewElement("start_ts");
@@ -225,56 +214,42 @@ int32_t prj_file_mgr::add_audio_info(const std::string& path, std::string dev_na
 	std::string url = path + "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 	
 	auto e_audio = xml_doc.NewElement("audio");  
-	if (!e_audio)
-	{
+	if (!e_audio) {
 		LOGERR("xml: cann't find element:audio");
 		return INS_ERR;
 	}
 
-	if (storage_loc == INS_STORAGE_MODE_AB)
-	{
+	if (storage_loc == INS_STORAGE_MODE_AB) {
 		e_audio->SetAttribute("storage_loc", 1);
-	}
-	else if (storage_loc == INS_STORAGE_MODE_NV)
-	{
+	} else if (storage_loc == INS_STORAGE_MODE_NV) {
 		e_audio->SetAttribute("storage_loc", 0);
 		e_audio->SetAttribute("file", AUDIO_CAMM_FILE);
-	}
-	else if (storage_loc == INS_STORAGE_MODE_AB_NV)
-	{
+	} else if (storage_loc == INS_STORAGE_MODE_AB_NV) {
 		e_audio->SetAttribute("storage_loc", 0);
-		if (single)
-		{
+		if (single) {
 			e_audio->SetAttribute("file", "audio.mp4");
-		}
-		else
-		{
+		} else {
 			e_audio->SetAttribute("file", AUDIO_CAMM_FILE_AUX);
 		}
 	}
 
 	e_audio->SetAttribute("audio_device", dev_name.c_str());
 
-	if (b_spatial) 
-	{
+	if (b_spatial) {
 		e_audio->SetAttribute("spatial_audio", "true");
-	}
-	else
-	{
+	} else {
 		e_audio->SetAttribute("spatial_audio", "false");
 	}
 
@@ -287,6 +262,7 @@ int32_t prj_file_mgr::add_audio_info(const std::string& path, std::string dev_na
 	return INS_OK;
 }
 
+
 int32_t prj_file_mgr::add_gyro_gps(const std::string& path,int32_t storage_loc, double rs_time, int32_t delay_time, int32_t orientation, bool single)
 {
 	std::lock_guard<std::mutex> lock(_mtx);
@@ -296,22 +272,19 @@ int32_t prj_file_mgr::add_gyro_gps(const std::string& path,int32_t storage_loc, 
 	std::string url = path + "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 
 	auto e_gyro = e_root->FirstChildElement("gyro"); 
-	if (!e_gyro)
-	{
+	if (!e_gyro) {
 		LOGERR("xml: cann't find element:gyro");
 		return INS_ERR;
 	}
@@ -322,36 +295,27 @@ int32_t prj_file_mgr::add_gyro_gps(const std::string& path,int32_t storage_loc, 
 	add_accel_offset(xml_doc, e_gyro);
 
 	auto e_gps = xml_doc.NewElement("gps");  
-	if (!e_gps)
-	{
+	if (!e_gps) {
 		LOGERR("xml: cann't find element:gps");
 		return INS_ERR;
 	}
 
-	if (storage_loc == INS_STORAGE_MODE_AB)
-	{
+	if (storage_loc == INS_STORAGE_MODE_AB) {
 		e_gyro->SetAttribute("storage_loc", 1);
 		e_gps->SetAttribute("storage_loc", 1);
-	}
-	else if (storage_loc == INS_STORAGE_MODE_NV)
-	{
+	} else if (storage_loc == INS_STORAGE_MODE_NV) {
 		e_gyro->SetAttribute("storage_loc", 0);
 		e_gyro->SetAttribute("file", AUDIO_CAMM_FILE);
 
 		e_gps->SetAttribute("storage_loc", 0);
 		e_gps->SetAttribute("file", AUDIO_CAMM_FILE);
-	}
-	else if (storage_loc == INS_STORAGE_MODE_AB_NV)
-	{
+	} else if (storage_loc == INS_STORAGE_MODE_AB_NV) {
 		e_gyro->SetAttribute("storage_loc", 0);
 		e_gps->SetAttribute("storage_loc", 0);
-		if (single)
-		{
+		if (single) {
 			e_gyro->SetAttribute("file", "audio.mp4");
 			e_gps->SetAttribute("file", "audio.mp4");
-		}
-		else
-		{
+		} else {
 			e_gyro->SetAttribute("file", AUDIO_CAMM_FILE_AUX);
 			e_gps->SetAttribute("file", AUDIO_CAMM_FILE_AUX);
 		}
@@ -374,30 +338,26 @@ int prj_file_mgr::add_origin_frag_file(const std::string& path, int sequence)
 	std::string url = path + "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* element = xml_doc.RootElement();
-	if (!element)
-	{
+	if (!element) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 	
 	element = element->FirstChildElement("origin");  
-	if (!element)
-	{
+	if (!element) {
 		LOGERR("xml: cann't find element:origin");
 		return INS_ERR;
 	}
 
 	auto filegroup_node = xml_doc.NewElement("filegroup");  
 	
-	for (int i = INS_CAM_NUM; i > 0; i--)
-	{
+	for (int i = INS_CAM_NUM; i > 0; i--) {
 		char str[64] = {0};
 		sprintf(str, "origin_%d_%03d.mp4", i, sequence);
     	auto file_node = xml_doc.NewElement("file"); 
@@ -420,29 +380,25 @@ int32_t prj_file_mgr::updata_video_info(std::string path, cam_video_param* param
 	std::string url = path +  "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 
 	auto e_origin = e_root->FirstChildElement("origin");
-	if (!e_origin)
-	{	
+	if (!e_origin) {	
 		LOGERR("video prj no origin");
 		return INS_ERR;
 	}
 
 	auto e_metadata = e_origin->FirstChildElement("metadata"); 
-	if (!e_metadata)
-	{	
+	if (!e_metadata) {	
 		LOGERR("video prj no metadata");
 		return INS_ERR;
 	}
@@ -470,15 +426,13 @@ int32_t prj_file_mgr::add_aux_file_info(std::string path, const std::shared_ptr<
 	std::string url = path +  "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
@@ -499,20 +453,16 @@ int32_t prj_file_mgr::add_aux_file_info(std::string path, const std::shared_ptr<
 	std::stringstream ss;
 	ss << aux_info->bitrate << "K";
 	e_metadata->SetAttribute("bitrate", ss.str().c_str());
-	if (storage_loc == INS_STORAGE_MODE_AB)
-	{
+	if (storage_loc == INS_STORAGE_MODE_AB) {
 		e_metadata->SetAttribute("storage_loc", 1);
-	}
-	else
-	{
+	} else {
 		e_metadata->SetAttribute("storage_loc", 0);
 	}
 
 	e_aux->LinkEndChild(e_metadata);
 
 	auto e_file_group = xml_doc.NewElement("filegroup");
-	for (int i = INS_CAM_NUM; i > 0; i--)
-	{
+	for (int i = INS_CAM_NUM; i > 0; i--) {
 		auto e_file = xml_doc.NewElement("file");
 		std::stringstream ss;
 		ss << "origin_" << i << "_lrv.mp4";
@@ -537,23 +487,20 @@ int32_t prj_file_mgr::add_preview_info(std::string path, uint32_t bitrate, uint3
 	std::string url = path +  "/" + INS_PROJECT_FILE;
 
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str()))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(url.c_str())) {
 		LOGERR("xml file:%s load fail", url.c_str());
 		return INS_ERR; 
 	}
 
 	XMLElement* e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("xml: cann't find root element");
 		return INS_ERR;
 	}
 
 	bool stitching_exist = true;
 	auto e_stitching = e_root->FirstChildElement("stitching");  
-	if (!e_stitching)
-	{
+	if (!e_stitching) {
 		e_stitching = xml_doc.NewElement("stitching");
 		stitching_exist = false;
 	}
@@ -578,6 +525,7 @@ int32_t prj_file_mgr::add_preview_info(std::string path, uint32_t bitrate, uint3
 
 	return INS_OK;
 }
+
 
 int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path)
 {
@@ -606,20 +554,16 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 	e_root->LinkEndChild(e_version);
 
 	//origin
-	if (opt.origin.storage_mode != INS_STORAGE_MODE_NONE)
-	{
+	if (opt.origin.storage_mode != INS_STORAGE_MODE_NONE) {
 		std::string type;
 		std::string file_patten;
 		auto e_origin = xml_doc.NewElement("origin");
 		auto e_metadata = xml_doc.NewElement("metadata");
 		auto e_metadata_aux = xml_doc.NewElement("metadata");
 		
-		if (opt.origin.mime == INS_JPEG_MIME)
-		{
+		if (opt.origin.mime == INS_JPEG_MIME) {
 			e_metadata->SetAttribute("mime", INS_JPEG_MIME);
-		}
-		else
-		{
+		} else {
 			e_metadata->SetAttribute("mime", INS_RAW_MIME);
 		}
 		e_metadata_aux->SetAttribute("mime", INS_JPEG_MIME);
@@ -629,82 +573,59 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 		e_metadata_aux->SetAttribute("width", opt.origin.width);
 		e_metadata_aux->SetAttribute("height", opt.origin.height);
 		
-		if (opt.burst.enable)
-		{
+		if (opt.burst.enable) {
 			type = "burst";
 			file_patten = "origin_%d_";
 			e_metadata->SetAttribute("count", opt.burst.count);
 			e_metadata_aux->SetAttribute("count", opt.burst.count);
-		}
-		else if (opt.hdr.enable)
-		{
+		} else if (opt.hdr.enable) {
 			type = "hdr";
 			file_patten = "origin_%d_";
 			e_metadata->SetAttribute("count", opt.hdr.count);
 			e_metadata_aux->SetAttribute("count", opt.hdr.count);
-		}
-		else if (opt.bracket.enable)
-		{
+		} else if (opt.bracket.enable) {
 			type = "bracket";
 			file_patten = "origin_%d_";
 			e_metadata->SetAttribute("count", opt.bracket.count);
 			e_metadata_aux->SetAttribute("count", opt.bracket.count);
-		}
-		else if (opt.timelapse.enable)
-		{
+		} else if (opt.timelapse.enable) {
 			type = "timelapse";
 			file_patten = "origin_%d_";
 			e_metadata->SetAttribute("interval", opt.timelapse.interval);
 			e_metadata->SetAttribute("count", 100000);
 			e_metadata_aux->SetAttribute("interval", opt.timelapse.interval);
 			e_metadata_aux->SetAttribute("count", 100000);
-		}
-		else
-		{
+		} else {
 			type = "photo";
 			file_patten = "origin_";
 		}
 		e_metadata->SetAttribute("type", type.c_str());
 		e_metadata_aux->SetAttribute("type", type.c_str());
 		
-		if (opt.origin.storage_mode == INS_STORAGE_MODE_NV)
-		{
+		if (opt.origin.storage_mode == INS_STORAGE_MODE_NV) {
 			e_metadata->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 0);
 			e_metadata_aux->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 0);
-		}
-		else if (opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV)
-		{
-			if (opt.origin.mime == INS_JPEG_MIME) 
-			{
+		} else if (opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {
+			if (opt.origin.mime == INS_JPEG_MIME)  {
 				e_metadata->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 0);
-			}
-			else if (opt.origin.mime == INS_RAW_MIME)
-			{
+			} else if (opt.origin.mime == INS_RAW_MIME) {
 				e_metadata->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 1);
-			}
-			else
-			{
+			} else {
 				e_metadata->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 1); //raw
 				e_metadata_aux->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 0); //jpeg
 			}
-		}
-		else
-		{
+		} else {
 			e_metadata->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 1);
 			e_metadata_aux->SetAttribute(ACCESS_MSG_OPT_STORAGE_LOC, 1);
 		}
 		e_origin->LinkEndChild(e_metadata);
 		
-		for (int i = INS_CAM_NUM; i > 0; i--)
-		{
+		for (int i = INS_CAM_NUM; i > 0; i--) {
 			auto e_file = xml_doc.NewElement("file");
 			std::stringstream ss;
-			if (opt.origin.mime == INS_JPEG_MIME)
-			{
+			if (opt.origin.mime == INS_JPEG_MIME) {
 				ss << file_patten << i << INS_JPEG_EXT;
-			}
-			else
-			{
+			} else {
 				ss << file_patten << i << INS_RAW_EXT;
 			}
 			
@@ -714,13 +635,11 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 
 		e_root->LinkEndChild(e_origin);
 
-		if (opt.origin.mime == INS_RAW_JPEG_MIME)
-		{
+		if (opt.origin.mime == INS_RAW_JPEG_MIME) {
 			auto e_aux_origin = xml_doc.NewElement("auxorigin");
 			e_aux_origin->LinkEndChild(e_metadata_aux);
 
-			for (int i = INS_CAM_NUM; i > 0; i--)
-			{
+			for (int i = INS_CAM_NUM; i > 0; i--) {
 				auto e_file = xml_doc.NewElement("file");
 				std::stringstream ss;
 				ss << file_patten << i << INS_JPEG_EXT;
@@ -732,18 +651,14 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 	}
 
 	//thumbnail
-	if (!opt.timelapse.enable && opt.origin.mime != INS_RAW_MIME) //只要非timelapse非raw都有缩略图
-	{
+	if (!opt.timelapse.enable && opt.origin.mime != INS_RAW_MIME) {	/* 只要非timelapse非raw都有缩略图 */
 		auto e_thumbnail = xml_doc.NewElement("thumbnail");
 		e_thumbnail->SetAttribute("src", "thumbnail.jpg");
 		e_thumbnail->SetAttribute("mime",INS_JPEG_MIME);
-		if (opt.stiching.map_type == INS_MAP_CUBE && opt.b_stiching) //非实时拼接的时候，缩略图都是flat的
-		{
+		if (opt.stiching.map_type == INS_MAP_CUBE && opt.b_stiching) {	/* 非实时拼接的时候，缩略图都是flat的 */
 			e_thumbnail->SetAttribute("width", INS_THUMBNAIL_WIDTH_CUBE);
 			e_thumbnail->SetAttribute("height", INS_THUMBNAIL_HEIGHT_CUBE);
-		}
-		else
-		{
+		} else {
 			e_thumbnail->SetAttribute("width", INS_THUMBNAIL_WIDTH);
 			e_thumbnail->SetAttribute("height", INS_THUMBNAIL_HEIGHT);
 		}
@@ -751,8 +666,7 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 	}
 
 	//stitching
-	if (opt.b_stiching)
-	{
+	if (opt.b_stiching) {
 		auto e_stitching = xml_doc.NewElement("stitching");
 		auto e_file_stitching = xml_doc.NewElement("file_stitching");
 		e_file_stitching->SetAttribute("type", "photo");
@@ -761,20 +675,17 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 		e_file_stitching->SetAttribute("src", file_name.c_str());
 		e_file_stitching->SetAttribute("width", opt.stiching.width);
 		e_file_stitching->SetAttribute("height", opt.stiching.height);
-		if (opt.stiching.map_type == INS_MAP_CUBE)
-		{
+
+		if (opt.stiching.map_type == INS_MAP_CUBE) {
 			e_file_stitching->SetAttribute("map", "cube");
-		}
-		else
-		{
+		} else {
 			e_file_stitching->SetAttribute("map", "flat");
 		}
 		e_stitching->LinkEndChild(e_file_stitching);
 		e_root->LinkEndChild(e_stitching);
 	}
 
-	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV || opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV)
-	{
+	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV || opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {
 		auto e_gyro = xml_doc.NewElement("gyro");
 		e_gyro->SetAttribute("version", INS_GYRO_VERSION);
 		e_gyro->SetAttribute("storage_loc", 0);
@@ -793,6 +704,7 @@ int prj_file_mgr::create_pic_prj(const ins_picture_option& opt, std::string path
 
 	return INS_OK;
 }
+
 
 int prj_file_mgr::create_vid_prj(const ins_video_option& opt, std::string path)
 {
@@ -821,8 +733,7 @@ int prj_file_mgr::create_vid_prj(const ins_video_option& opt, std::string path)
 	e_root->LinkEndChild(e_version);
 	
 	//origin
-	if (opt.origin.storage_mode != INS_STORAGE_MODE_NONE)
-	{
+	if (opt.origin.storage_mode != INS_STORAGE_MODE_NONE) {
 		int32_t storage_loc = (opt.origin.storage_mode == INS_STORAGE_MODE_NV)?0:1;
 		std::string type;
 		auto e_origin = xml_doc.NewElement("origin");
@@ -846,8 +757,7 @@ int prj_file_mgr::create_vid_prj(const ins_video_option& opt, std::string path)
 		e_origin->LinkEndChild(e_metadata);
 
 		auto e_file_group = xml_doc.NewElement("filegroup");
-		for (int i = INS_CAM_NUM; i > 0; i--)
-		{
+		for (int i = INS_CAM_NUM; i > 0; i--) {
 			auto e_file = xml_doc.NewElement("file");
 			std::stringstream ss;
 			ss << "origin_" << i << ".mp4";
@@ -861,17 +771,14 @@ int prj_file_mgr::create_vid_prj(const ins_video_option& opt, std::string path)
 		e_gyro->SetAttribute("version", INS_GYRO_VERSION);
 		std::vector<double> v_quat;
 		xml_config::get_gyro_rotation(v_quat);
-		if (v_quat.size() == 4)
-		{
+		if (v_quat.size() == 4) {
 			auto e_rotation = xml_doc.NewElement("imu_rotation");
 			e_rotation->SetAttribute("x", v_quat[0]);
 			e_rotation->SetAttribute("y", v_quat[1]);
 			e_rotation->SetAttribute("z", v_quat[2]);
 			e_rotation->SetAttribute("w", v_quat[3]);
 			e_gyro->LinkEndChild(e_rotation);
-		}
-		else
-		{
+		} else {
 			LOGERR("cann't get imu rotation");
 		}
 		e_root->LinkEndChild(e_gyro);
@@ -879,8 +786,7 @@ int prj_file_mgr::create_vid_prj(const ins_video_option& opt, std::string path)
 
 	//stitching
 	if ((opt.stiching.url != "" &&  (opt.stiching.url.find(".mp4", 0) != std::string::npos)) 
-		|| (opt.stiching.url_second != "" &&  (opt.stiching.url_second.find(".mp4", 0) != std::string::npos)))
-	{
+		|| (opt.stiching.url_second != "" &&  (opt.stiching.url_second.find(".mp4", 0) != std::string::npos))) {
 		auto e_stitching = xml_doc.NewElement("stitching");
 		auto e_file_stitching = xml_doc.NewElement("file_stitching");
 		e_file_stitching->SetAttribute("type", "video");
@@ -894,12 +800,9 @@ int prj_file_mgr::create_vid_prj(const ins_video_option& opt, std::string path)
 		std::stringstream ss;
 		ss << opt.stiching.bitrate << "K";
 		e_file_stitching->SetAttribute("bitrate", ss.str().c_str());
-		if (opt.stiching.map_type == INS_MAP_CUBE)
-		{
+		if (opt.stiching.map_type == INS_MAP_CUBE) {
 			e_file_stitching->SetAttribute("map", "cube");
-		}
-		else
-		{
+		} else {
 			e_file_stitching->SetAttribute("map", "flat");
 		}
 		e_stitching->LinkEndChild(e_file_stitching);

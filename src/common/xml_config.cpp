@@ -464,23 +464,23 @@ int xml_config::get_gyro_rotation(std::vector<double>& quat)
 	return INS_OK;
 }
 
+
 std::string xml_config::get_offset(int32_t crop_flag, int32_t type)
 {
 	//LOGINFO("---------------crop:%d type:%d", crop_flag, type);
 
 	std::string pic_offset;
-	if (type == INS_OFFSET_FACTORY)
-	{
+	if (type == INS_OFFSET_FACTORY) {
 		pic_offset = get_factory_offset();
-		if (pic_offset == "")
-		{
+		if (pic_offset == "") {
 			LOGERR("----------NO factory offset");
 		}
 	}
-	if (pic_offset == "")
-	{
+	
+	if (pic_offset == "") {
 		get_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_4_3, pic_offset);
-		if (pic_offset == "") pic_offset = INS_DEFAULT_OFFSET_PANO_4_3;
+		if (pic_offset == "") 
+			pic_offset = INS_DEFAULT_OFFSET_PANO_4_3;
 	}
 
 	std::string offset;
@@ -488,6 +488,7 @@ std::string xml_config::get_offset(int32_t crop_flag, int32_t type)
 
 	return offset;
 }
+
 
 int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, bool hdr)
 {

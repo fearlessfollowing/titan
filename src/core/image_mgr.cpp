@@ -75,7 +75,8 @@ void image_mgr::task()
     bool future_got = false;
 
 	while (!quit_) {
-        if (cnt_cur >= cnt) break;
+
+		if (cnt_cur >= cnt) break;	/* 当前完成的组数大于等于需求组数,退出 */
 
         if (!future_got) {
             if (std::future_status::ready == future.wait_for(0s)) {
@@ -85,19 +86,22 @@ void image_mgr::task()
             }
         }
 
+		/*
+		 * std::map<uint32_t, std::shared_ptr<ins_frame>>
+		 */
         auto v_frame = img_repo_->dequeue_frame();
         if (v_frame.empty()) {
-            usleep(20*1000);
+            usleep(20 * 1000);
             continue;
         }
 
         cnt_cur++;
 
-        if (b_calibration_) {   // calibration只拍一张
+        if (b_calibration_) {   /* calibration只拍一张 */
             calibration(v_frame);
             break;  
         } else {
-            process(v_frame);   // 出错也继续处理下一组
+            process(v_frame);   /* 出错也继续处理下一组 */
         }
 	}
 
@@ -111,7 +115,7 @@ void image_mgr::task()
         ret = future.get();
 
     if (!quit_) 
-        send_pic_finish_msg(ret, option_.path);
+        send_pic_finish_msg(ret, option_.path);	/* 发送拍照完成消息(内部消息) */
 
     LOGINFO("image task exit");
 }
@@ -132,18 +136,23 @@ int image_mgr::process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_f
 		RETURN_IF_NOT_OK(ret);
 	}
 
+	/*
+	 * 实时拼接(raw/burst不支持，bracket/hdr不在此处理)
+	 * compose: 解码一组照片 -> 拼接 -> 生成jpeg拼接照片和缩略图照片
+	 */
 	if (option_.b_stiching
         && !option_.hdr.enable
         && !option_.bracket.enable
         && !option_.burst.enable 
         && !m_frame.begin()->second->metadata.raw) {
-        ret = compose(m_frame, option_); // 实时拼接，raw/burst不支持，bracket/hdr不在此处理
+        ret = compose(m_frame, option_); 
         RETURN_IF_NOT_OK(ret);
     }
+		
     //非实时拼接也要拼接一张缩略图
     else if (!option_.b_stiching
         && !m_frame.begin()->second->metadata.raw
-        && jpeg_seq_ == 1 //burst/bracket/hdr有多组，用第一组生成缩略图
+        && jpeg_seq_ == 1 		//burst/bracket/hdr有多组，用第一组生成缩略图
         && option_.index == -1) //单镜头拍照不生成缩略图
     {
         ins_picture_option option; 
@@ -161,26 +170,38 @@ int image_mgr::process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_f
 }
 
 
+
+/**********************************************************************************************
+ * 函数名称: task
+ * 功能秒数: 拍照线程
+ * 参   数: 
+ * 返 回 值: 无
+ *********************************************************************************************/
 std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
 {
 	cam_photo_param param;
 	param.width = option_.origin.width;
 	param.height = option_.origin.height;
     param.mime = option_.origin.mime;
-    param.file_url = option_.origin.module_url;
+    param.file_url = option_.origin.module_url;		/* 文件名 */
 
-    // 需要模组传流的情况：1.原始流存在nvidia 2.需要实时拼接 3.拼接校准
-    if (option_.origin.storage_mode == INS_STORAGE_MODE_NV) {   // jpg/raw都存nv
+    /* 
+     * 需要模组传流的情况：
+     *	1.原始流存在nvidia 
+     *	2.需要实时拼接 
+     *	3.拼接校准
+     */
+    if (option_.origin.storage_mode == INS_STORAGE_MODE_NV) {   /* jpg/raw都存nv */
         param.b_usb_raw = true;
         param.b_usb_jpeg = true;
         param.b_file_raw = false;
         param.b_file_jpeg = false;
-    } else if (option_.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {   // jpg存nv,raw存amba
+    } else if (option_.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {   /* jpg存nv,raw存amba */
         param.b_usb_raw = false;
         param.b_usb_jpeg = true;
         param.b_file_raw = true;
         param.b_file_jpeg = false;
-    } else {
+    } else {		
         param.b_usb_raw = false;
         param.b_usb_jpeg = false;
         param.b_file_raw = true;
@@ -191,17 +212,17 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
         param.b_usb_jpeg = true;
     }
 	
-	if (option_.burst.enable) {
+	if (option_.burst.enable) {				/* 拍照类型为burst */
 		param.type = INS_PIC_TYPE_BURST;
 		param.count = option_.burst.count;
 		cnt = option_.burst.count;
-	} else if (option_.hdr.enable) {
+	} else if (option_.hdr.enable) {		/* 拍照类型为hdr */
 		param.type = INS_PIC_TYPE_HDR;
 		param.count = option_.hdr.count;
 		param.min_ev = option_.hdr.min_ev;
 		param.max_ev = option_.hdr.max_ev;
 		cnt = option_.hdr.count;
-	} else if (option_.bracket.enable) {
+	} else if (option_.bracket.enable) {	/* 拍照类型为bracket */
 		param.type = INS_PIC_TYPE_BRACKET;
 		param.count = option_.bracket.count;
 		param.min_ev = option_.bracket.min_ev;
@@ -214,6 +235,7 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
 
     if (!param.b_usb_jpeg && !param.b_usb_raw) 
         cnt = 0; // 代表不需要去接收流
+        
     if (param.b_usb_jpeg && param.b_usb_raw && param.mime == INS_RAW_JPEG_MIME) 
         cnt *= 2;
 
@@ -238,9 +260,15 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
 }
 
 
+
 int32_t image_mgr::compose(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame, const ins_picture_option& option)
 {   
-    //dec
+    /*
+	 * 1.使用JPEG解码器,将每个模组的照片进行解码,解码后丢入v_dec_img容器中
+	 * 2.调用do_compose将解码后的数据进行合并并编码
+	 * Thinking:
+	 *	- jpeg解码后是什么格式的数据?
+	 */
     tjpeg_dec dec;
     auto ret = dec.open(TJPF_BGR);
     RETURN_IF_NOT_OK(ret);
@@ -249,8 +277,9 @@ int32_t image_mgr::compose(const std::map<uint32_t, std::shared_ptr<ins_frame>>&
     for (int32_t i = 0; i < INS_CAM_NUM; i++) {
         auto it = m_frame.find(i);
         assert(it != m_frame.end());
+	
         ins_img_frame F;
-        ret = dec.decode(it->second->page_buf->data(),it->second->page_buf->size(), F);
+        ret = dec.decode(it->second->page_buf->data(), it->second->page_buf->size(), F);
         BREAK_IF_NOT_OK(ret);
         v_dec_img.push_back(F);
     }
@@ -258,22 +287,27 @@ int32_t image_mgr::compose(const std::map<uint32_t, std::shared_ptr<ins_frame>>&
     return do_compose(v_dec_img, m_frame.begin()->second->metadata, option);
 }
 
+
 int32_t image_mgr::do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_metadata& ori_meta, const ins_picture_option& option)
 {
     int32_t ret = INS_OK;
 
+	#if 0
     // offset
     // int32_t hw_version = 3; 
     // camera_->get_module_hw_version(hw_version);
     // offset_wrap ow; 
     // auto ret = ow.calc(v_dec_img, hw_version);
     // std::string offset = ow.get_4_3_offset();
+	#endif
 
-    //默认使用工厂标定的offset,如果没有标定的使用用户校准的
+    /* 默认使用工厂标定的offset,如果没有标定的使用用户校准的 */
     std::string offset = xml_config::get_offset(INS_CROP_FLAG_PIC);
     LOGINFO("pic offset:%s", offset.c_str());
 
-    //stitching
+    /*
+	 * 拼接算法选择
+	 */
     uint32_t type;
     if (option.stiching.algorithm == INS_ALGORITHM_OPTICALFLOW) {
         type = INS_BLEND_TYPE_OPTFLOW;
@@ -285,8 +319,12 @@ int32_t image_mgr::do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_
     blender.set_map_type(option.stiching.map_type);
     blender.set_speed(ins::SPEED::SLOW);
     blender.setup(offset);
-    if (option.logo_file != "") 
-        blender.set_logo(option.logo_file); // 必须在setup后调用
+
+	/*
+	 * 如果需要叠加水印,设置水印
+	 */
+    if (option.logo_file != "") 	/* 必须在setup后调用 */
+        blender.set_logo(option.logo_file); 
 
     if (stablz_) {
         LOGINFO("-----pic pts:%lld", ori_meta.pts);
@@ -295,13 +333,18 @@ int32_t image_mgr::do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_
         blender.set_rotation(mat.m);
     }
 
-    //enc
+    /*
+	 * 进行拼接处理
+	 */
     ins_img_frame stitch_img;
     stitch_img.w = option.stiching.width;
     stitch_img.h = option.stiching.height;
     ret = blender.blend(v_dec_img, stitch_img);
     RETURN_IF_NOT_OK(ret);
 
+	/*
+	 * 拼接完成后进行编码,将图片转换为jpeg格式
+	 */
     jpeg_metadata metadata = ori_meta;
     metadata.width = option.stiching.width;
     metadata.height = option.stiching.height;
@@ -309,31 +352,34 @@ int32_t image_mgr::do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_
     metadata.map_type = option.stiching.map_type;
     img_enc_wrap enc(option.stiching.mode, option.stiching.map_type, &metadata);
     std::stringstream ss;
-    if (option.b_stiching) {   // 表示实时拼接
+    if (option.b_stiching) {   	/* 表示实时拼接 */
         ss << option.stiching.url << "/" << ins_util::create_name_by_mode(option.stiching.mode) << ".jpg";
-    } else {   // 表示非实时拼接生成缩略图
+    } else {   					/* 表示非实时拼接生成缩略图 */
         ss << option_.path << "/thumbnail.jpg";
     }
-    
+
+	/*
+	 * 编码图片为jpeg格式
+	 */
     std::vector<std::string> url;
     url.push_back(ss.str());
     ret = enc.encode(stitch_img, url);
     RETURN_IF_NOT_OK(ret);
 
-    //thumbnail
-    if (option.b_stiching) {   // 表示实时拼接，要同时生成缩略图
+    if (option.b_stiching) {   /* 表示实时拼接，要同时生成缩略图 */
         std::string s = option.stiching.url + "/thumbnail.jpg";
-        enc.create_thumbnail(stitch_img, s);
+        enc.create_thumbnail(stitch_img, s);	/* 创建缩略图 */
     }
+	
     return INS_OK;
 }
 
 int32_t image_mgr::hdr_compose()
 {
     int32_t count;
-    if (option_.hdr.enable) {
+    if (option_.hdr.enable) {				/* 使能HDR */
         count = option_.hdr.count;
-    } else if (option_.bracket.enable) {
+    } else if (option_.bracket.enable) {	/* 使能bracket */
         count = option_.bracket.count;
     } else {
         LOGERR("not hdr/bracket no hdr compose");
@@ -341,7 +387,7 @@ int32_t image_mgr::hdr_compose()
     }
 
     std::vector<std::vector<std::string>> vv_file;
-    for (int32_t i = INS_CAM_NUM; i > 0; i--) {   // 拼接顺序为6-1
+    for (int32_t i = INS_CAM_NUM; i > 0; i--) {   /* 拼接顺序为 8 - 1 */
         std::vector<std::string> v_file;
         for (int32_t j = 1; j <= count; j++) {
             std::stringstream ss;
@@ -362,6 +408,7 @@ int32_t image_mgr::hdr_compose()
     metadata_.map_type = option_.stiching.map_type;
     return do_compose(v_hdr_img, metadata_, option_);
 }
+
 
 int32_t image_mgr::calibration(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame)
 {
@@ -395,20 +442,20 @@ int32_t image_mgr::calibration(const std::map<uint32_t, std::shared_ptr<ins_fram
 		// xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_3D_RIGHT, offset_4_3);
 	}
 
-    // std::string offset_16_9 = ow.get_16_9_offset();
-	// if (offset_16_9 != "")
-	// {
-	// 	LOGINFO("pano 16:9 offset:\n%s", offset_16_9.c_str());
-	// 	xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_16_9, offset_16_9);
-	// }
+	#if 0
+	std::string offset_16_9 = ow.get_16_9_offset();
+	if (offset_16_9 != "") {
+		LOGINFO("pano 16:9 offset:\n%s", offset_16_9.c_str());
+		xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_16_9, offset_16_9);
+	}
 
-    // std::string offset_2_1 = ow.get_2_1_offset();
-	// if (offset_2_1 != "")
-	// {
-	// 	LOGINFO("pano 2:1 offset:\n%s", offset_2_1.c_str());
-	// 	xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_2_1, offset_2_1);
-	// }
-
+	std::string offset_2_1 = ow.get_2_1_offset();
+	if (offset_2_1 != "") {
+		LOGINFO("pano 2:1 offset:\n%s", offset_2_1.c_str());
+		xml_config::set_value(INS_CONFIG_OFFSET, INS_CONFIG_OFFSET_PANO_2_1, offset_2_1);
+	}
+	#endif
+	
     return INS_OK;
 }
 
@@ -416,7 +463,7 @@ int32_t image_mgr::calibration(const std::map<uint32_t, std::shared_ptr<ins_fram
 int32_t image_mgr::save_origin(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame)
 {   
 	for (auto it = m_frame.begin(); it != m_frame.end(); it++) {
-        //单模组拍照：所有都拍但是只存一个
+        /* 单模组拍照：所有都拍但是只存一个 */
 		if (option_.index != -1 && (int32_t)it->second->pid != option_.index) continue;
 
 		std::stringstream ss;
@@ -514,3 +561,4 @@ void image_mgr::print_option(const ins_picture_option& option) const
 		LOGINFO("bracket enable:%d count:%d min ev:%d max ev:%d", option.bracket.enable, option.bracket.count, option.bracket.min_ev, option.bracket.max_ev);
 	}
 }	
+

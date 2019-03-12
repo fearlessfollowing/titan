@@ -34,9 +34,8 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 	param.interval = option.timelapse.interval;
 	param.file_url = option.origin.module_url;
 
-	//全存大卡
-	if (option.origin.storage_mode == INS_STORAGE_MODE_NV)
-    {
+
+	if (option.origin.storage_mode == INS_STORAGE_MODE_NV) {	// 全存大卡
         param.b_usb_jpeg = true;
 		param.b_usb_raw = true;
 		param.b_file_jpeg = false;
@@ -47,25 +46,17 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 		// 	auto ret = open_composer(option.path, option.timelapse.interval);
 		// 	RETURN_IF_NOT_OK(ret);
 		// }
-    }
-	//jpeg存大卡 raw存小卡
-	else if (option.origin.storage_mode == INS_STORAGE_MODE_AB_NV)
-	{
-		if (param.mime == INS_RAW_MIME || param.mime == INS_RAW_JPEG_MIME)
-		{
+    } else if (option.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {	// jpeg存大卡 raw存小卡
+		if (param.mime == INS_RAW_MIME || param.mime == INS_RAW_JPEG_MIME) {
 			param.b_usb_raw = false;
 			param.b_file_raw = true;
 		}
 
-		if (param.mime == INS_JPEG_MIME || param.mime == INS_RAW_JPEG_MIME)
-		{
+		if (param.mime == INS_JPEG_MIME || param.mime == INS_RAW_JPEG_MIME) {
 			param.b_usb_jpeg = true;
 			param.b_file_jpeg = false;
 		}
-	}
-	//全存小卡
-    else
-    {
+	} else {	// 全存小卡
         param.b_usb_jpeg = false;
 		param.b_usb_raw = false;
 		param.b_file_jpeg = true;
@@ -73,12 +64,13 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 		open_usb_sink(option.prj_path);
     }
 
-	if (param.b_usb_jpeg || param.b_usb_raw)
-	{
+	if (param.b_usb_jpeg || param.b_usb_raw) {
 		std::map<uint32_t,std::shared_ptr<pic_seq_sink>> sinks;
-		for (int32_t i = 0; i < INS_CAM_NUM; i++) 
-		{
-			bool key_sink = (camera_->master_index() == i)?true:false;
+		
+		for (int32_t i = 0; i < INS_CAM_NUM; i++) {
+			bool key_sink = (camera_->master_index() == i) ? true : false;
+			
+			/* 每个模组创建一个pic_seq_sink对象(对应一个处理线程) */
 			auto sink = std::make_shared<pic_seq_sink>(option.path, key_sink);
 			sinks.insert(std::make_pair(i, sink));
 		}
@@ -87,6 +79,7 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 		std::string gyro_name = option.path + "/gyro.mp4";
 		auto sink = std::make_shared<stream_sink>(gyro_name);
 		sink->set_gyro(true, false);
+		
 		auto S = std::static_pointer_cast<gyro_sink>(sink);
 		cam_repo_->add_gyro_sink(S);
 		sink->start(0);
@@ -145,8 +138,7 @@ int32_t timelapse_mgr::open_composer(std::string path, uint32_t interval)
 
 void timelapse_mgr::print_option(const ins_video_option& option) const
 {
-    if (option.timelapse.enable)
-    {
+    if (option.timelapse.enable) {
         LOGINFO("timelapse option: enable:%d interval:%d", option.timelapse.enable, option.timelapse.interval);
     }
 
@@ -161,8 +153,7 @@ void timelapse_mgr::print_option(const ins_video_option& option) const
 		option.b_to_file, 
 		option.b_stabilization);
 
-	if (option.b_stiching)
-	{
+	if (option.b_stiching) {
 		LOGINFO("stiching option: mime:%s width:%d height:%d framerate:%d bitrate:%d, mode:%d url:%s",  
 			option.stiching.mime.c_str(),
 			option.stiching.width, 

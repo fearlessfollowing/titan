@@ -481,7 +481,7 @@ void access_msg_center::internal_pic_finish(const char* msg, std::string cmd, in
 
 	do_camera_operation_stop(true);
 
-	// 等所有操作完成后再回响应，避免客户端快速进行其他操作容易造成模组异常
+	/* 等所有操作完成后再回响应，避免客户端快速进行其他操作容易造成模组异常 */
 	if (b_calibration) {
 		sender_->send_ind_msg(ACCESS_CMD_CALIBRATION_FINISH_, ret);
 	} else {
@@ -903,6 +903,7 @@ int access_msg_center::do_stop_preview()
 	return INS_OK;
 }
 
+
 void access_msg_center::start_record(const char* msg, std::string cmd, int sequence)
 {
 	ins_video_option opt;
@@ -920,7 +921,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 	
-	if (opt.timelapse.enable) {
+	if (opt.timelapse.enable) {		/* 拍摄的是timelapse */
 		timelapse_mgr_ = std::make_shared<timelapse_mgr>();
 		ret = timelapse_mgr_->start(camera_.get(), opt);
 		if (ret != INS_OK) {
@@ -935,8 +936,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 			do_camera_operation_stop(true); break;
 		}
 
-		// if (opt.audio.fanless)  
-		// {
+		// if (opt.audio.fanless) {
 		// 	int stop_temp = INS_FANLESS_STOP_TEMP;
 		// 	xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_STOP_TEMP, stop_temp);
 		// 	LOGINFO("config max temp:%d", stop_temp);
@@ -978,7 +978,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 	sender_->set_ind_msg_sequece(ACCESS_CMD_RECORD_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 
-	if (ret != INS_OK && opt.path != "") {	//由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
+	if (ret != INS_OK && opt.path != "") {	/* 由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹 */
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
@@ -2521,11 +2521,11 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 {
 	std::lock_guard<std::mutex> lock(camera_operation_stop_mtx_);
 
-	video_mgr_ = nullptr;
-	img_mgr_ = nullptr;
-	timelapse_mgr_ = nullptr;
-	qr_scanner_ = nullptr;
-	singlen_mgr_ = nullptr;
+	video_mgr_ 		= nullptr;
+	img_mgr_ 		= nullptr;
+	timelapse_mgr_ 	= nullptr;
+	qr_scanner_ 	= nullptr;
+	singlen_mgr_ 	= nullptr;
 
 	auto ret = INS_OK;
 	if (camera_) 

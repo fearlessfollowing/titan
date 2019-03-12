@@ -151,14 +151,14 @@ private:
 	void send_box_result(std::string cmd, int32_t sequence, const std::map<std::string,int32_t>& res);
 	int32_t set_depth_map(const std::string& depth_map);
 
-	std::shared_ptr<cam_manager>			camera_;		/* Camera管理器(用于管理所有的模组) */
+	std::shared_ptr<cam_manager>			camera_;			/* Camera管理器(用于管理所有的模组) */
 	std::shared_ptr<ins_timer> 				timer_;
 	std::shared_ptr<timelapse_mgr>	 		timelapse_;
 	std::shared_ptr<temp_monitor> 			t_monitor_;
 	std::shared_ptr<box_task_mgr> 			task_mgr_;
 	std::shared_ptr<video_mgr> 				video_mgr_;
 	std::shared_ptr<image_mgr> 				img_mgr_;
-	std::shared_ptr<timelapse_mgr> 			timelapse_mgr_;
+	std::shared_ptr<timelapse_mgr> 			timelapse_mgr_;		/* timelapse管理器 */
 	std::shared_ptr<singlen_mgr> 			singlen_mgr_;
 	std::shared_ptr<qr_scanner> 			qr_scanner_;
 	std::shared_ptr<audio_record> 			audio_rec_;

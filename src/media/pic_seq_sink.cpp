@@ -10,9 +10,7 @@ uint32_t pic_seq_sink::cnt_ = 0;
 std::mutex pic_seq_sink::mtx_s_;
 std::condition_variable pic_seq_sink::cv_;
 
-pic_seq_sink::pic_seq_sink(std::string url, bool is_key_sink)
-    : url_(url)
-    , is_key_sink_(is_key_sink)
+pic_seq_sink::pic_seq_sink(std::string url, bool is_key_sink): url_(url), is_key_sink_(is_key_sink)
 {
     th_ = std::thread(&pic_seq_sink::task, this);
 }
@@ -29,20 +27,16 @@ void pic_seq_sink::queue_frame(const std::shared_ptr<ins_frame>& frame)
 {
     if (quit_) return; 
     std::lock_guard<std::mutex> lock(mtx_);
-    if (queue_.size() > 30)
-    {
+    if (queue_.size() > 30) {
         LOGINFO("%s queue:%d full", url_.c_str(), queue_.size());
-        if (is_key_sink_)
-        {
+        if (is_key_sink_) {
             json_obj obj;
             obj.set_string("name", INTERNAL_CMD_SINK_FINISH);
             obj.set_int("code", INS_ERR_UNSPEED_STORAGE);
             access_msg_center::queue_msg(0, obj.to_string());
         }
         quit_ = true;
-    }
-    else
-    {
+    } else {
         queue_.push_back(frame);
     }
 }
@@ -59,26 +53,21 @@ std::shared_ptr<ins_frame> pic_seq_sink::deque_frame()
 void pic_seq_sink::task()
 {
     std::shared_ptr<ins_frame> frame;
-    while (!quit_)
-    {
+    while (!quit_) {
         frame = deque_frame();
-        if (frame == nullptr)
-        {
+        if (frame == nullptr) {
             usleep(30*1000);
             continue;
         }
  
         write_frame(frame);
 
-        //同步各个镜头,保证一组照片存完后再存下一组
+        /* 同步各个镜头,保证一组照片存完后再存下一组 */
         std::unique_lock<std::mutex> lock(mtx_s_);
-        if (++cnt_ >= INS_CAM_NUM)
-        {
+        if (++cnt_ >= INS_CAM_NUM) {
             cnt_ = 0;
             cv_.notify_all();
-        }
-        else
-        {
+        } else {
             cv_.wait(lock);
         }
     }
@@ -86,11 +75,9 @@ void pic_seq_sink::task()
 
 void pic_seq_sink::write_frame(const std::shared_ptr<ins_frame>& frame)
 {
-    if (is_key_sink_ && !(frame->sequence%3)) //每3张,检测一次磁盘空间,不要检测太频繁
-    {
-        if (ins_util::disk_available_size(url_.c_str()) < INS_MIN_SPACE_MB - 100)
-        {
-            quit_ = true; //磁盘满退出 
+    if (is_key_sink_ && !(frame->sequence % 3)) {	/* 每3张,检测一次磁盘空间,不要检测太频繁 */
+        if (ins_util::disk_available_size(url_.c_str()) < INS_MIN_SPACE_MB - 100) {
+            quit_ = true; /* 磁盘满退出   */
             LOGERR("pid:%d no disk space left", frame->pid);
             std::stringstream ss;
 		    ss << "{\"name\":\"" << INTERNAL_CMD_SINK_FINISH << "\",\"code\":" << INS_ERR_NO_STORAGE_SPACE << "}";
@@ -108,18 +95,18 @@ void pic_seq_sink::write_frame(const std::shared_ptr<ins_frame>& frame)
     muxer.create(ss.str(), frame->page_buf->data(), frame->page_buf->size(), &frame->metadata);
 }
 
+
+
 // int pic_seq_sink::check_disk_space(uint32_t pid)
 // {
 // 	if (ins_util::disk_available_size(url_.c_str()) > INS_MIN_SPACE_MB - 100) return INS_OK;
 	
 // 	LOGERR("pid:%d no disk space left", pid);
 
-// 	if (is_key_sink_)
-// 	{
+// 	if (is_key_sink_) {
 // 		std::stringstream ss;
 // 		ss << "{\"name\":\"" << INTERNAL_CMD_SINK_FINISH << "\",\"code\":" << INS_ERR_NO_STORAGE_SPACE << "}";
 // 		access_msg_center::queue_msg(0, ss.str());
 // 	}
-
 //     return INS_ERR;
 // }

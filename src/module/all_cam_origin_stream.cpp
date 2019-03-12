@@ -9,8 +9,7 @@ all_cam_origin_stream::all_cam_origin_stream(
 	: video_param_(video_param)
 	, stream_sink_(sink)
 {
-	for (auto it = sink.begin(); it != sink.end(); it++)
-	{
+	for (auto it = sink.begin(); it != sink.end(); it++) {
 		position_.insert(std::make_pair(it->first, 0));
 	}
 }
@@ -21,8 +20,7 @@ void all_cam_origin_stream::set_sps_pps(
 {
 	b_sps_pps_set_ = true;
 
-	for (auto it = stream_sink_.begin(); it != stream_sink_.end(); it++)
-	{
+	for (auto it = stream_sink_.begin(); it != stream_sink_.end(); it++) {
 		unsigned int index = it->first;
 		video_param_.config = std::make_shared<insbuff>(sps[index]->size() + pps[index]->size());
 		memcpy(video_param_.config->data(), sps[index]->data(), sps[index]->size());
@@ -35,20 +33,16 @@ void all_cam_origin_stream::queue_frame(std::map<unsigned int, std::shared_ptr<i
 {
 	//6路原始流MP4文件分段要同步 3500000000
 	bool b_frag = false;
-	for (auto it = frame.begin(); it != frame.end(); it++)
-	{
+	for (auto it = frame.begin(); it != frame.end(); it++) {
 		position_[it->first] += it->second->page_buf->size();
-		if (position_[it->first] > 3500000000 && it->second->is_key_frame)
-		{
+		if (position_[it->first] > 3500000000 && it->second->is_key_frame) {
 			b_frag = true;
 			break;
 		}
 	}
 
-	for (auto it = stream_sink_.begin(); it != stream_sink_.end(); it++)
-	{
-		if (b_frag) 
-		{
+	for (auto it = stream_sink_.begin(); it != stream_sink_.end(); it++) {
+		if (b_frag) {
 			position_[it->first] = 0;
 			frame[it->first]->b_fragment = true;
 		}

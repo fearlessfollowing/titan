@@ -47,8 +47,7 @@ void all_cam_video_queue::queue_frame(std::map<unsigned int, std::shared_ptr<ins
 
 	do_discard_frame(frame.begin()->second->is_key_frame);
 
-	for (auto it = queue_.begin(); it != queue_.end(); it++)
-	{
+	for (auto it = queue_.begin(); it != queue_.end(); it++) {
 		// if (frame[it->first]->is_key_frame)
 		// {
 		// 	key_frames_not_deque_[it->first] += 1;
@@ -77,27 +76,19 @@ void all_cam_video_queue::do_discard_frame(bool b_keyframe)
 	// 	printf("\n");
 	// }
 
-	if (queue_.begin()->second.size() > 45)
-	{
+	if (queue_.begin()->second.size() > 45) {
 		full_cnt_++;
-	}
-	else
-	{
+	} else {
 		full_cnt_ = 0;
 	}
 
 	if (full_cnt_ > 90) discard_frames_++;
 
-	if (queue_.begin()->second.size() > 120)
-	{
+	if (queue_.begin()->second.size() > 120) {
 		discard_frames_ = queue_.begin()->second.size() - 10;
-	}
-	else if (queue_.begin()->second.size() > 10)
-	{
+	} else if (queue_.begin()->second.size() > 10) {
 		discard_frames_ = std::min(discard_frames_, (unsigned)(queue_.begin()->second.size()-10));
-	}
-	else
-	{
+	} else {
 		discard_frames_ = 0;
 	}
 
@@ -105,17 +96,14 @@ void all_cam_video_queue::do_discard_frame(bool b_keyframe)
 
 	LOGINFO("video sync queue discard frames:%d", discard_frames_);
 
-	for (auto it = queue_.begin(); it != queue_.end(); it++)
-	{
+	for (auto it = queue_.begin(); it != queue_.end(); it++) {
 		int cnt = discard_frames_;
-		while (!it->second.empty() && cnt-- > 0)
-		{
+		while (!it->second.empty() && cnt-- > 0) {
 			it->second.pop();
 		}
 
 		//一般不会出现这种各路之间相差30帧的情况，如果出现说明解码器肯定异常了，只能reset解决了
-		if (cnt > 0)
-		{
+		if (cnt > 0) {
 			LOGERR("sync queue size diff too many, codec may in error state");
 			quit_ = true;
 			send_reset_msg(INS_ERR_CODEC_DIE);
@@ -126,17 +114,13 @@ void all_cam_video_queue::do_discard_frame(bool b_keyframe)
 
 std::shared_ptr<insbuff> all_cam_video_queue::get_sps(unsigned int index)
 {
-	while (1)
-	{
+	while (1) {
 		mtx_.lock();
 		auto it = sps_.find(index);
-		if (it != sps_.end())
-		{
+		if (it != sps_.end()) {
 			mtx_.unlock();
 			return it->second;
-		}
-		else
-		{
+		} else {
 			mtx_.unlock();
 			usleep(10000); //10ms
 		}
@@ -145,17 +129,13 @@ std::shared_ptr<insbuff> all_cam_video_queue::get_sps(unsigned int index)
 
 std::shared_ptr<insbuff> all_cam_video_queue::get_pps(unsigned int index)
 {
-	while (1)
-	{
+	while (1) {
 		mtx_.lock();
 		auto it = pps_.find(index);
-		if (it != pps_.end())
-		{
+		if (it != pps_.end()) {
 			mtx_.unlock();
 			return it->second;
-		}
-		else
-		{
+		} else {
 			mtx_.unlock();
 			usleep(10000); //10ms
 		}
@@ -169,18 +149,14 @@ std::shared_ptr<ins_frame> all_cam_video_queue::deque_frame(unsigned int index)
 	//key_frames_not_deque_[index] = 0;
 
 	auto it = queue_.find(index);
-	if (it == queue_.end())
-	{
+	if (it == queue_.end()) {
 		return nullptr;
 	}
 
-	if (it->second.empty())
-	{
+	if (it->second.empty()) {
 		// printf("index:%d deque frame null\n", index);
 		return nullptr;
-	}
-	else
-	{
+	} else {
 		// printf("index:%d deque frame success\n", index);
 		auto frame = it->second.front();
 		it->second.pop();

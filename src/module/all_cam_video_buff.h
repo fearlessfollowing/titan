@@ -16,29 +16,28 @@
 
 //#define DEBUG_GYRO_PTS
 
-class all_cam_video_buff : public cam_video_buff_i
-{
+class all_cam_video_buff : public cam_video_buff_i {
 public:
-    all_cam_video_buff(const std::vector<uint32_t>& index, std::string path = "");
-    ~all_cam_video_buff(){};
-	virtual void set_sps_pps(uint32_t index, const std::shared_ptr<insbuff>& sps, const std::shared_ptr<insbuff>& pps) override;
-	virtual void queue_frame(uint32_t index, std::shared_ptr<ins_frame> frame) override;
-    virtual void queue_gyro(const uint8_t* data, uint32_t size, uint64_t delta_ts) override; //模组间对齐时间
-	virtual void queue_expouse(uint32_t pid, uint32_t seq, uint64_t ts, uint64_t exposure_ns) override;
-    virtual void set_first_frame_ts(uint32_t pid, int64_t timestamp) override;
+    				all_cam_video_buff(const std::vector<uint32_t>& index, std::string path = "");
+    				~all_cam_video_buff(){};
+	virtual void 	set_sps_pps(uint32_t index, const std::shared_ptr<insbuff>& sps, const std::shared_ptr<insbuff>& pps) override;
+	virtual void 	queue_frame(uint32_t index, std::shared_ptr<ins_frame> frame) override;
+    virtual void 	queue_gyro(const uint8_t* data, uint32_t size, uint64_t delta_ts) override; //模组间对齐时间
+	virtual void 	queue_expouse(uint32_t pid, uint32_t seq, uint64_t ts, uint64_t exposure_ns) override;
+    virtual void 	set_first_frame_ts(uint32_t pid, int64_t timestamp) override;
 
     void clear();
-    void add_output(uint32_t index, const std::shared_ptr<all_cam_queue_i>& out)
-    {
+    void add_output(uint32_t index, const std::shared_ptr<all_cam_queue_i>& out) {
         std::lock_guard<std::mutex> lock(mtx_out_);
         out_.insert(std::make_pair(index, out));
     }
-    void del_output(uint32_t index)
-    {
+	
+    void del_output(uint32_t index) {
         std::lock_guard<std::mutex> lock(mtx_out_);
         auto it = out_.find(index);
         if (it != out_.end()) out_.erase(it);
     }
+	
     void add_gyro_sink(std::shared_ptr<gyro_sink>& sink)
     {
         std::lock_guard<std::mutex> lock(mtx_gyro_);
@@ -46,8 +45,8 @@ public:
         if (!exp_pool_) exp_pool_ = std::make_shared<obj_pool<exposure_times>>(-1, "exp obj");
         sinks_.push_back(sink);
     }
-    void del_all_gyro_sink()
-    {
+	
+    void del_all_gyro_sink() {
         std::lock_guard<std::mutex> lock(mtx_gyro_);
         sinks_.clear();
     }
@@ -69,8 +68,9 @@ private:
     std::shared_ptr<obj_pool<insbuff>> buff_pool_;
     std::shared_ptr<obj_pool<exposure_times>> exp_pool_;
     std::vector<std::shared_ptr<gyro_sink>> sinks_;
-    std::map<uint32_t, int64_t> first_frame_ts_;
+    std::map<uint32_t, int64_t> 			first_frame_ts_;		/* 各模组第一帧的时间戳 */
     std::string path_;
+	
     #ifdef DEBUG_GYRO_PTS
     int64_t last_pts_ = 0;
     #endif

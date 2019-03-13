@@ -185,16 +185,16 @@ int32_t access_msg_parser::get_audio_type(bool stitch)
 
 int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 {
-	PARSE_PARAM_OBJ(msg);
+	PARSE_PARAM_OBJ(msg);	/* 获取"name"字段来区分是录像还是直播存片 */
+
+	auto command = root_obj->get_obj(ACCESS_MSG_NAME);
+
+	opt.name = command;
 
 	opt.type = INS_RECORD;
 	int ret = parse_video_option(param_obj, opt);
 	RETURN_IF_NOT_OK(ret);
 
-	// if (opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV)
-	// {
-	// 	opt.origin.storage_mode = INS_STORAGE_MODE_AB;
-	// }
 
 	opt.auto_connect.enable = false;
 	opt.stiching.url_second = "";
@@ -227,8 +227,18 @@ int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 
 	opt.audio.type = get_audio_type(opt.b_stiching);
 
-	std::string start_str = opt.timelapse.enable?"PIC":"VID";
+	/*
+	 * - 需要区别录像还是直播存片
+	 * - 
+	 */
+	std::string start_str = opt.timelapse.enable? "PIC" : "VID";
+
+#if 0
 	std::string file_prefix = gen_file_prefix(start_str);
+#else 
+
+#endif
+
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV 
 		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
 		|| opt.b_stiching) {
@@ -365,7 +375,8 @@ int access_msg_parser::take_pic_option(const char* msg, ins_picture_option& opt)
 	int ret = parse_picture_option(param_obj, opt);
 	RETURN_IF_NOT_OK(ret);
 
-	std::string file_prefix = gen_file_prefix("PIC");
+	std::string file_prefix = gen_pic_file_prefix("PIC", opt);	// gen_file_prefix -> gen_pic_file_prefix
+	LOGINFO("file_prefix = %s", file_prefix.c_str());
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV 
 		|| opt.origin.storage_mode == INS_STORAGE_MODE_AB_NV 
 		|| opt.b_stiching) {
@@ -732,8 +743,7 @@ int access_msg_parser::parse_video_option(std::shared_ptr<json_obj> param_obj, i
 		parse_timelapse_option(timelapse_obj, option.timelapse);
 
 	parse_origin_option(origin_obj, option.origin/*, option.timelapse.enable*/);
-	if (option.path != "") //如果指定了存储路径肯定是存储在nvidia的
-	{
+	if (option.path != "") {	// 如果指定了存储路径肯定是存储在nvidia的
 		option.origin.storage_mode = INS_STORAGE_MODE_NV;
 	}
 	
@@ -1170,9 +1180,106 @@ std::string access_msg_parser::gen_file_prefix(std::string type)
 	return url;
 }
 
+std::string access_msg_parser::gen_video_file_prefix(ins_video_option& opt)
+{
+	struct timeval time;
+	gettimeofday(&time, nullptr); 
+	struct tm* now = localtime(&time.tv_sec);
+	char date_str[256] = {0};
+
+	snprintf(date_str, 255, "%04d%02d%02d_%02d%02d%02d", 
+			now->tm_year + 1900,
+			now->tm_mon + 1,
+			now->tm_mday,
+			now->tm_hour,
+			now->tm_min,
+			now->tm_sec);
+
+	/*
+	 * 录像还是直播存片
+	 */
+	std::string type = "VID";
+	if (opt.name == ACCESS_CMD_START_RECORD) {
+		if (opt.timelapse.enable) {	/* Raw和非Raw */
+			type = "PIC_TLP";
+		} else {	
+			/* 1.如果是街景  VID_GSV*/
+
+			/* 2.如果是10bit */
+
+			/* 3.如果是60fps */
+
+			/* 4.如果支持LOG模式 */
+
+			/* 5.如果支持HDR模式 */
+		}
+	} else if (opt.name == ACCESS_CMD_START_LIVE) {
+		type = "VID_LIV";
+	} else {
+		LOGERR("invalid command name: %s", opt.name.c_str());
+	}
+
+	std::string url = type + "_" + std::string(date_str);
+
+	return url;
+}
+
+
+/*
+ * PIC_XXXX_XXXX_XXX
+ * PIC_RAW_XXXX_XXXX_XXX
+ * PIC_AEB[3,5,7,9]_XXXX_XXXX
+ * PIC_BST_XXXX_XXXX
+ */
+std::string access_msg_parser::gen_pic_file_prefix(std::string type, ins_picture_option& opt)
+{
+	struct timeval time;
+	gettimeofday(&time, nullptr); 
+	struct tm* now = localtime(&time.tv_sec);
+	char date_str[256] = {0};
+
+	std::string prefix = type;
+	
+	if (opt.burst.enable) {	/* Burst模式 - Raw存Amba */
+		prefix += "_BST";
+	} else if (opt.bracket.enable) {	/* bracket模式 - Raw存Amba */
+		if (opt.bracket.count == 3) {
+			prefix += "_AEB3";
+		} else if (opt.bracket.count == 5) {
+			prefix += "_AEB5";
+		} else if (opt.bracket.count == 7) {
+			prefix += "_AEB7";
+		} else if (opt.bracket.count == 9) {
+			prefix += "_AEB9";
+		} else {
+			LOGERR("invalid aeb count given: %d", opt.bracket.count);
+		}
+	} else {	/* 普通模式 */
+		LOGINFO("normal mode: mime: %s", opt.origin.mime.c_str());
+		if (opt.origin.mime == "raw+jpeg") {
+			prefix += "_RAW";
+		}
+	}
+
+	snprintf(date_str, 255, "%04d%02d%02d_%02d%02d%02d", 
+			now->tm_year + 1900,
+			now->tm_mon + 1,
+			now->tm_mday,
+			now->tm_hour,
+			now->tm_min,
+			now->tm_sec);
+
+	std::string url = prefix + "_" + std::string(date_str);
+
+	return url;
+}
+
+
+
 int access_msg_parser::create_file_dir(std::string prefix, std::string& path)
 {	
 	bool b_custom_path = true;
+	
 	if (path == "") {
 		b_custom_path = false;
 		path = storage_path_ + "/" + prefix;
@@ -1191,7 +1298,7 @@ int access_msg_parser::create_file_dir(std::string prefix, std::string& path)
 			}
 		} else if (b_custom_path) {	// 如果是指定的路径，就覆盖写
 			return INS_OK;	
-		} else {	//如果自动生成的路径，不能覆盖
+		} else {	/* 如果自动生成的路径，不能覆盖 */
 			LOGINFO("dir:%s exist, change dirname", path.c_str());
 			std::stringstream ss;
 			ss << storage_path_ << "/" << prefix << "_" << i;

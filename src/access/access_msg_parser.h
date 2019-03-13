@@ -62,6 +62,10 @@ private:
 
 	int 		create_file_dir(std::string type, std::string& path);
 	std::string gen_file_prefix(std::string type);
+
+
+	std::string gen_pic_file_prefix(std::string type, ins_picture_option& opt);
+	
 	int 		check_disk_space(unsigned int size, std::string path);
 	int 		hls_dir_prepare(std::string dir);
 	int32_t 	get_audio_type(bool stitch);

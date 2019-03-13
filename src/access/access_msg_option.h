@@ -113,6 +113,7 @@ struct ins_video_option {
 	ins_auto_connect 		auto_connect; // for living
 	std::string 			logo_file;
 	uint8_t 				type = 0; 	/* 0:preview; 1:rec; 2:live */
+	std::string 			name;		/* 区别是录像;还是直播 */
  };
 
 struct ins_video_file_option {

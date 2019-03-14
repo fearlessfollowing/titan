@@ -12,7 +12,7 @@
 #include "access_msg_center.h"
 #include "system_properties.h"
 
-#define MASTER_PID INS_CAM_NUM
+#define MASTER_PID INS_CAM_NUM		/* Master的PID */
 
 int cam_manager::nv_amba_delta_usec_ = 0;
 std::mutex cam_manager::mtx_;
@@ -84,6 +84,7 @@ cam_manager::cam_manager()
 
 	// if (pid_.size() < cam_num_) {
 	// 	LOGINFO("pid config invalid, use dafault");
+		
 		pid_.clear();
 		for (unsigned int i = 0; i < cam_num_; i++) {
 			pid_.push_back(cam_num_ - i);
@@ -199,7 +200,7 @@ void cam_manager::close_all_cam()
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 
-	for (auto& it : map_cam_) {
+	for (auto& it : map_cam_) {	/* 调用usb_camera的close方法 */
 		it.second->close();
 	}
 

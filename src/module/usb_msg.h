@@ -118,20 +118,18 @@
 #define AMBA_STATE_TIMELAPSE "timelapse"
 #define AMBA_STATE_ERROR "error"                        //系统出错 
 
-#pragma pack(1) //自定义1字节对齐
-struct amba_frame_info
-{ 
+#pragma pack(1) // 自定义1字节对齐
+struct amba_frame_info { 
 	int syncword;
 	unsigned int type;
 	unsigned int size;  
 	unsigned int sequence;  
 	long long timestamp;
-	int reserve1; //0:正常 1：正常結束 -2：卡滿結束
+	int reserve1; // 0:正常 1：正常結束 -2：卡滿結束
 	int reserve2;
 };
 
-struct amba_video_extra
-{
+struct amba_video_extra {
 	uint16_t type = 0;
 	uint16_t count = 0;
 };

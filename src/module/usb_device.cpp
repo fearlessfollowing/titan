@@ -4,10 +4,10 @@
 #include <unistd.h>
 
 struct dev_contex {
-    std::condition_variable cv;
-    std::mutex mtx;
-    bool stop = false;
-    libusb_transfer* transfer = nullptr;
+    std::condition_variable 	cv;
+    std::mutex 					mtx;
+    bool 						stop = false;
+    libusb_transfer* 			transfer = nullptr;
 };
 
 #define ENDPOINT_SEND_CMD  		(0x01)		/* 用于发命令的端点 */
@@ -32,6 +32,9 @@ int usb_device::hot_plug_cb_fn(libusb_context *ctx, libusb_device *device, libus
         return 0;
     }
 
+	/*
+	 * 设备断开
+	 */
 	if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
 		ret = libusb_get_device_descriptor(device, &desc);
 		if (ret < 0) {
@@ -57,19 +60,21 @@ int usb_device::hot_plug_cb_fn(libusb_context *ctx, libusb_device *device, libus
         }
         instance->mtx_.unlock();
 	} else if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) {
+		/* 有USB设备插入 */
 		// wait 100ms and get device descriptor, sometime device descriptor is not ready
 		usleep(100*1000);		
-		ret = libusb_get_device_descriptor(device, &desc);
+		ret = libusb_get_device_descriptor(device, &desc);	/* 获取设备的描述符 */
 		if (ret < 0) {
-			LOGERR("libusb_get_device_descriptor fail:%s",libusb_error_name(ret));
+			LOGERR("libusb_get_device_descriptor fail:%s", libusb_error_name(ret));
 			return 0;
 		}
 		
-		if (desc.idVendor != PRO_USB_VID) {
+		if (desc.idVendor != PRO_USB_VID) {	/* 检查设备的厂商ID */
             LOGERR("recv dev arrive event vid:0x%x != 0x%x", desc.idVendor, PRO_USB_VID);
             return 0;
         }
 
+		/* 打开该usb设备得到对应libusb_ */
         LOGINFO("usb device arrive pid:0x%x", desc.idProduct);
         auto handle = libusb_open_device_with_vid_pid(nullptr, desc.idVendor, desc.idProduct);
         if (handle == nullptr) {
@@ -86,6 +91,7 @@ int usb_device::hot_plug_cb_fn(libusb_context *ctx, libusb_device *device, libus
         }
 
         instance->mtx_.lock();
+		/* PID: 1 - 8 */
         auto it = instance->pid_.find(desc.idProduct);
         if (it == instance->pid_.end() || it->second) {
             LOGERR("pid:%x correct??????", desc.idProduct);
@@ -111,6 +117,7 @@ int usb_device::init()
 
     for (int i = 0; i < INS_CAM_NUM; i++) {
         pid_.insert(std::make_pair(i+1, nullptr));
+		
         auto ctx  = std::make_shared<dev_contex>();
         dev_ctx_.insert(std::make_pair(i+1, ctx));
     }
@@ -252,7 +259,7 @@ int usb_device::usb_transfer(int pid, int ep, unsigned char* data, int size, uns
     if (actual_size == size) {
         return LIBUSB_SUCCESS;
     } else {
-        LOGERR("pid:%d ep:0x%x bulk transfer size:%d != actual size:%d", pid, ep, size, actual_size);
+        LOGERR("usb_transfer: pid:%d ep:0x%x bulk transfer size:%d != actual size:%d", pid, ep, size, actual_size);
         return LIBUSB_ERROR_NOT_COMPLETE;
     }
 }
@@ -263,15 +270,19 @@ void usb_device::cancle_transfer(int32_t pid)
     if (it == dev_ctx_.end()) return;
 
     std::unique_lock<std::mutex> lock(it->second->mtx);
-    if (it->second->transfer) libusb_cancel_transfer(it->second->transfer);
-    it->second->transfer = nullptr;
+
+	if (it->second->transfer) 
+		libusb_cancel_transfer(it->second->transfer);
+
+	it->second->transfer = nullptr;
     it->second->stop = true;
 }
 
 static void LIBUSB_CALL async_transfer_cb(struct libusb_transfer *transfer)
 {
     dev_contex* ctx = (dev_contex*)transfer->user_data;
-    if (ctx != nullptr) ctx->cv.notify_all();
+    if (ctx != nullptr) 
+		ctx->cv.notify_all();
 }
  
 int32_t usb_device::usb_transfer_async(int pid, int ep, unsigned char* data, int size, unsigned timeout)

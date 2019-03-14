@@ -165,9 +165,9 @@ private:
 	std::shared_ptr<audio_dev_monitor> 		snd_monitor_;
 	std::shared_ptr<hdmi_monitor> 			hdmi_monitor_;
 	
-	access_msg_parser 		msg_parser_;					/* 消息解析器 */
+	access_msg_parser 		msg_parser_;						/* 消息解析器 */
 	access_state 			state_mgr_;
-	static uint32_t 		state_;
+	static uint32_t 		state_;								/* 系统的状态 */
 	bool 					b_need_stop_live_ = false;
 	bool 					b_stop_live_rec_ = false;
 	std::mutex 				camera_operation_stop_mtx_;

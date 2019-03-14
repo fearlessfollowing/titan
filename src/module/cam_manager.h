@@ -19,6 +19,7 @@ class cam_manager {
 public:
 	static int32_t 	power_on_all();
 	static int32_t 	power_off_all();
+	
 	static int32_t 	nv_amba_delta_usec() { return nv_amba_delta_usec_; };
 	static 			std::mutex mtx_;
 
@@ -110,9 +111,9 @@ private:
 
 	const uint32_t 	cam_num_ = INS_CAM_NUM;	/* 模组个数 */
 
-	int32_t 		master_index_ = 0;		/* Master的PID */
+	int32_t 		master_index_ = 0;		/* Master的PID - 8 */
 	
-	std::vector<uint32_t> pid_;
+	std::vector<uint32_t> pid_;				/* PID容器, 存放顺序为8 - 1 */
 
 	std::map<uint32_t, std::shared_ptr<usb_camera>, std::greater<uint32_t>> map_cam_;
 	

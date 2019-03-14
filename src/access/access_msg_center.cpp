@@ -2476,9 +2476,9 @@ int access_msg_center::open_camera(int index)
 	 */
 	camera_ = std::make_shared<cam_manager>();
 	int ret = INS_OK;
-	if (index == INS_CAM_ALL_INDEX) {
+	if (index == INS_CAM_ALL_INDEX) {	/* 打开的所有camera */
 		ret = camera_->open_all_cam();
-	} else if (index == INS_CAM_MASTER_INDEX) {
+	} else if (index == INS_CAM_MASTER_INDEX) {	/* 打开master */
 		std::vector<unsigned int> v_index;
 		v_index.push_back(camera_->master_index());
 		ret = camera_->open_cam(v_index);
@@ -2503,6 +2503,7 @@ int access_msg_center::open_camera(int index)
 *************************************************************************************************/
 void access_msg_center::close_camera()
 {
+	/* camera处于忙碌状态, 直接返回  */
 	if (state_ & CAM_STATE_RECORD 
 		|| state_ & CAM_STATE_LIVE 
 		|| state_ & CAM_STATE_PREVIEW

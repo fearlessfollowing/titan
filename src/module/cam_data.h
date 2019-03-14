@@ -5,8 +5,7 @@
 #include <string>
 #include "insbuff.h"
 
-struct cam_video_param
-{
+struct cam_video_param {
 	std::string mime = "h264"; //h264/h265
 	int32_t bitdepth = 8; //8/10
 	int32_t width = 0;
@@ -33,20 +32,21 @@ struct cam_video_param
 struct cam_photo_param {
 	std::string 	type = "photo";
 	std::string 	mime = "jpeg";
-	int32_t 		width = 0;
-	int32_t 		height = 0;
+	int32_t 		width = 0;				/* 照片的宽度 */
+	int32_t 		height = 0;				/* 照片的高度 */
 	bool 			b_usb_raw = false; 
 	bool 			b_usb_jpeg = false; 
 	bool 			b_file_raw = false;
 	bool 			b_file_jpeg = false;
+	
 	//bool b_file_stream = false;
-	std::string 	file_url;
+	std::string 	file_url;				/* 存照片的文件名 */
 
-	int32_t 		sequence = 0; 	// used in timelapse
-	int32_t 		interval = 0; 	// ms timelapse
-	int32_t 		count = 1; 		// burst/hdr
-	int32_t 		min_ev = 32; 	// used in hdr
-	int32_t 		max_ev = 32; 	// used in hdr
+	int32_t 		sequence = 0; 			/* 拍timelapse的序列 */
+	int32_t 		interval = 0; 			/* timelapse的间隔 */
+	int32_t 		count = 1; 				/* 一组照片的张数burst/hdr */
+	int32_t 		min_ev = 32; 			/* 最小ev */
+	int32_t 		max_ev = 32; 			/* 最大ev */
 };
 
 #define AMBA_INVALID_PROPERTY 0x0fffffff

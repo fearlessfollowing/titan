@@ -1142,6 +1142,7 @@ int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 void access_msg_center::take_picture(const char* msg, std::string cmd, int sequence)
 {
 	ins_picture_option opt;
+	
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
 	/*
@@ -1151,9 +1152,10 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 	BREAK_IF_NOT_OK(ret);
 
 	/*
-	 * 2.状态检查
+	 * 2.状态检查(空闲,预览状态下才可以拍照)
 	 */
 	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);
+
 
 	/* 
 	 * 3.如果已经处于预览状态(模组已经开启)
@@ -1167,11 +1169,12 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 
+
 	/*
 	 * 启动img_mgr进行拍照动作
 	 */
 	img_mgr_ = std::make_shared<image_mgr>();
-	ret = img_mgr_->start(camera_.get(), opt);
+	ret = img_mgr_->start(camera_.get(), opt);	/* 启动拍照线程(image_mgr::task) */
 	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
@@ -1180,8 +1183,11 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 
 	DO_WHILE_0_END
 
+	/* 设置ACCESS_CMD_PIC_FINISH_/ACCESS_CMD_PIC_ORIGIN_FINISH_对应的sequence */
 	sender_->set_ind_msg_sequece(ACCESS_CMD_PIC_FINISH_, sequence);
 	sender_->set_ind_msg_sequece(ACCESS_CMD_PIC_ORIGIN_FINISH_, sequence);
+
+	/* 给客户端发送一个接收到了拍照请求的响应 */
 	sender_->send_rsp_msg(sequence, ret, cmd);
 
 	/* 由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹 */
@@ -2462,7 +2468,9 @@ void access_msg_center::system_time_change(const char* msg, std::string cmd, int
 *************************************************************************************************/
 int access_msg_center::open_camera(int index)
 {
-	if (camera_ != nullptr) return INS_OK;	/* 模组处于打开状态,直接返回(如果上次打开一个模组,这次需要打开所有模组??) */
+	/* 模组处于打开状态,直接返回(如果上次打开一个模组,这次需要打开所有模组??) */
+	if (camera_ != nullptr) 
+		return INS_OK;	
 
 	/*
 	 * 对模组进行下电/上电操作
@@ -2475,6 +2483,7 @@ int access_msg_center::open_camera(int index)
 	 * 构造cam_manager并打开模组
 	 */
 	camera_ = std::make_shared<cam_manager>();
+
 	int ret = INS_OK;
 	if (index == INS_CAM_ALL_INDEX) {	/* 打开的所有camera */
 		ret = camera_->open_all_cam();

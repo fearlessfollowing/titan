@@ -401,7 +401,7 @@ int access_msg_parser::take_pic_option(const char* msg, ins_picture_option& opt)
 		opt.b_stabilization = false;
 		opt.b_thumbnail = false;
 	} else if (opt.prj_path != "") {
-		prj_file_mgr::create_pic_prj(opt, opt.prj_path);
+		prj_file_mgr::create_pic_prj(opt, opt.prj_path);	/* 创建工程文件 */
 		RETURN_IF_NOT_OK(ret);
 	}
 

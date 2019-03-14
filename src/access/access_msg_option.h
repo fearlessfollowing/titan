@@ -78,22 +78,24 @@ struct ins_audio_option {
 	bool 			fanless = false; //是否无风扇模式
 };
 
+
 struct ins_picture_option {
- 	ins_origin_option 		origin;
- 	bool 					b_stiching = false;
- 	ins_stiching_option 	stiching;
-	ins_burst_option 		burst;
-	ins_hdr_option 			hdr;
-	ins_hdr_option 			bracket;
-	ins_timelapse_option 	timelapse;
- 	unsigned int 			delay = 0;//second
-	std::string 			path;
-	std::string 			prj_path;
-	bool 					b_stabilization = false;
-	bool 					b_thumbnail = true;
-	std::string 			logo_file;
-	int index = -1;
- };
+ 	ins_origin_option 		origin;					/* origin字段参数 */
+ 	bool 					b_stiching = false;		/* 是否机内拼接 */
+ 	ins_stiching_option 	stiching;				/* 拼接参数 */
+	ins_burst_option 		burst;					/* burst参数 */
+	ins_hdr_option 			hdr;					/* hdr参数 */
+	ins_hdr_option 			bracket;				/* bracket参数 */
+	ins_timelapse_option 	timelapse;				/* timelapse参数 */
+ 	unsigned int 			delay = 0;				/* 是否需要倒计时 */
+	std::string 			path;					/* 原片的存储路径 */
+	std::string 			prj_path;				/* 工程文件的存储路径 */
+	bool 					b_stabilization = false;/* 是否需要防抖 */
+	bool 					b_thumbnail = true;		/* 是否需要缩略图 */
+	std::string 			logo_file;				/* logo文件 */
+	int 					index = -1;				/* 需要拍照片的组数 */
+};
+
 
 struct ins_video_option {
 	ins_timelapse_option 	timelapse;

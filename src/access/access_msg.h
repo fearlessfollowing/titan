@@ -4,8 +4,7 @@
 
 #include <string>
 
-struct access_msg_head
-{
+struct access_msg_head {
 	unsigned int sequece = 0;
 	unsigned int content_len = 0;
 };
@@ -130,9 +129,9 @@ struct access_msg_head
 //#define INTERNAL_CMD_S_TASK_STATS_       "internal_s.task_stats_"
 #define ACCESS_CMD_S_TASK_STATS_         "stitcher.task_stats_"
 
-#define ACCESS_MSG_NAME    				"name"
-#define ACCESS_MSG_PARAM   				"parameters"
-#define ACCESS_MSG_OPTION  				"options"
+#define ACCESS_MSG_NAME    				 "name"
+#define ACCESS_MSG_PARAM   				 "parameters"
+#define ACCESS_MSG_OPTION  				 "options"
 
 #define ACCESS_MSG_STATE                          "state"
 #define ACCESS_MSG_STATE_DONE                     "done"
@@ -250,16 +249,16 @@ struct access_msg_head
 #define ACCESS_MSG_OPT_SUPPORT_FUNCTION "supportedFunctions"
 #define ACCESS_MSG_OPT_STABLIZATION_CFG "stabilization_cfg"
 #define ACCESS_MSG_OPT_STABLIZATION_TYPE "stabilization_type"
-#define ACCESS_MSG_OPT_LOGO "logo"
-#define ACCESS_MSG_OPT_VIDEO_FRAGMENT "video_fragment"
+#define ACCESS_MSG_OPT_LOGO 				"logo"
+#define ACCESS_MSG_OPT_VIDEO_FRAGMENT 		"video_fragment"
 
-#define ACCESS_MSG_OPT_BITDEPTH "bitDepth"
-#define ACCESS_MSG_OPT_LOGMODE "logMode"
-#define ACCESS_MSG_OPT_HDR "hdr"
-#define ACCESS_MSG_OPT_BRACKET "bracket"
-#define ACCESS_MSG_OPT_LOGMODE_EFFECT "effect"
-#define ACCESS_MSG_OPT_LOGMODE_MODE "mode"
+#define ACCESS_MSG_OPT_BITDEPTH 			"bitDepth"
+#define ACCESS_MSG_OPT_LOGMODE 				"logMode"
+#define ACCESS_MSG_OPT_HDR 					"hdr"
+#define ACCESS_MSG_OPT_BRACKET 				"bracket"
+#define ACCESS_MSG_OPT_LOGMODE_EFFECT 		"effect"
+#define ACCESS_MSG_OPT_LOGMODE_MODE 		"mode"
 
-#define ACCESS_MSG_OPT_FILE_SIZE_KB "fileSizeKB"
+#define ACCESS_MSG_OPT_FILE_SIZE_KB 		"fileSizeKB"
 
 #endif

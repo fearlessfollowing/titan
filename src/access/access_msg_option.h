@@ -9,16 +9,16 @@
  * 参数的origin字段参数
  */
 struct ins_origin_option {
-	std::string 	mime;				/* mime: "h264"/"h265" */
-	int 			bitdepth = 8;		/* bitdepth: 8/10bit */
-	int 			width = 0;			/* width: 原片的宽度 */
-	int 			height = 0;			/* height: 原片的高度 */
-	int 			framerate = 0;		/* framerate:帧率 */
-	int 			bitrate = 0; 		/* bitrate: 码率kbits */
-	int 			logmode = 0;		/* logmode: 是否为log模式 */
-	bool 			hdr = false;		/* hdr: 是否为hdr */
-	//std::string url_prefix; 			//store in nvidia
-	std::string 	live_prefix; 		//live origin stream(rtmp/rtsp/hls )
+	std::string 	mime;				/* mime: 		"h264"/"h265" */
+	int 			bitdepth = 8;		/* bitdepth: 	8/10bit */
+	int 			width = 0;			/* width: 		原片的宽度 */
+	int 			height = 0;			/* height: 		原片的高度 */
+	int 			framerate = 0;		/* framerate:	帧率 */
+	int 			bitrate = 0; 		/* bitrate: 	码率kbits */
+	int 			logmode = 0;		/* logmode: 	是否为log模式 */
+	bool 			hdr = false;		/* hdr: 		是否为hdr */
+	//std::string url_prefix; 			/* store in nvidia */
+	std::string 	live_prefix; 		/* live origin stream(rtmp/rtsp/hls ) */
 	std::string 	module_url; 		/* module_url: 模组中存储的位置 store in module(amba) */
 	int 			storage_mode = -1;	/* 原始流的存储模式 */
 };
@@ -27,13 +27,13 @@ struct ins_stiching_option {
  	int 		mode = 0;
 	int 		algorithm = 0;
 	int 		map_type = 0;
- 	std::string mime;		//h264/h265/jpeg
+ 	std::string mime;				//h264/h265/jpeg
  	int 		width = 0;
 	int 		height = 0;
 	int 		framerate = 0;
-	int 		bitrate = 0; //kbits
+	int 		bitrate = 0; 		//kbits
  	std::string url;
-	std::string url_second; //file url for living
+	std::string url_second; 			//file url for living
 	bool 		hdmi_display = false;
 	std::string format;
  };
@@ -58,8 +58,8 @@ struct ins_hdr_option {
 };
 
 struct ins_timelapse_option {
-	bool enable = false;
-	int interval = 0;
+	bool enable = false;		/* timelapse使能 */
+	int interval = 0;			/* 拍timelapse的间隔 */
 };
 
 struct ins_auto_connect {
@@ -69,13 +69,13 @@ struct ins_auto_connect {
 };
 
 struct ins_audio_option {
-	std::string 	mime;//aac
-	std::string 	samplefmt = "s16"; //s16 f32 
-	std::string 	ch_layout = "stereo"; //mono stereo
+	std::string 	mime;					//aac
+	std::string 	samplefmt = "s16"; 		//s16 f32 
+	std::string 	ch_layout = "stereo"; 	//mono stereo
 	int 			samplerate = 0;
 	int 			bitrate = 0;
 	int 			type = 0;
-	bool 			fanless = false; //是否无风扇模式
+	bool 			fanless = false; 		//是否无风扇模式
 };
 
 struct ins_picture_option {
@@ -103,18 +103,19 @@ struct ins_video_option {
 	bool 					b_audio = false;
 	ins_audio_option 		audio;
 	int 					delay = 0;
-	int 					duration = -1;//second
-	int 					index = -1; //单镜头合焦HDMI预览
+	int 					duration = -1;		//second
+	int 					index = -1; 		/* 单镜头合焦HDMI预览 */
 	std::string 			path;
 	std::string 			prj_path;
-	bool 					b_override = false; //文件覆盖写
-	bool 					b_to_file = true; //不写文件只保存最后一帧
+	bool 					b_override = false; /* 文件覆盖写 */
+	bool 					b_to_file = true; 	/* 不写文件只保存最后一帧 */
 	bool 					b_stabilization = false;
-	ins_auto_connect 		auto_connect; // for living
+	ins_auto_connect 		auto_connect; 		/* for living */
 	std::string 			logo_file;
-	uint8_t 				type = 0; 	/* 0:preview; 1:rec; 2:live */
-	std::string 			name;		/* 区别是录像;还是直播 */
+	uint8_t 				type = 0; 			/* 0:preview; 1:rec; 2:live */
+	std::string 			name;				/* 区别是录像;还是直播 */
  };
+
 
 struct ins_video_file_option {
 	std::vector<std::string> 	url;

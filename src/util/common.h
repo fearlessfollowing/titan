@@ -65,10 +65,10 @@
 #define INS_STORAGE_MODE_AB 		2
 #define INS_STORAGE_MODE_DEFAULT 	3
 
-#define INS_PREVIEW   0
-#define INS_RECORD    1
-#define INS_LIVE      2
-#define INS_TAKE_PIC  3
+#define INS_PREVIEW     0
+#define INS_RECORD      1
+#define INS_LIVE        2
+#define INS_TAKE_PIC    3
 
 #define INS_AUDIO_FRAME_SIZE 1024
 // #define INS_AUDIO_ORIGIN 0x01

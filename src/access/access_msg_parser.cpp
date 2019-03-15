@@ -1,4 +1,3 @@
-
 #include "access_msg_parser.h"
 #include "xml_config.h"
 #include "inslog.h"
@@ -34,6 +33,7 @@ if (param_obj == nullptr) \
 	LOGINFO("key:%s not fond", ACCESS_MSG_PARAM); \
 	return INS_ERR_INVALID_MSG_FMT; \
 }
+
 
 int access_msg_parser::check_disk_space(unsigned int size, std::string path)
 { 
@@ -236,7 +236,7 @@ int access_msg_parser::record_option(const char* msg, ins_video_option& opt)
 #if 0
 	std::string file_prefix = gen_file_prefix(start_str);
 #else 
-
+	std::string file_prefix = gen_video_file_prefix(opt);
 #endif
 
 	if (opt.origin.storage_mode == INS_STORAGE_MODE_NV 
@@ -1203,15 +1203,36 @@ std::string access_msg_parser::gen_video_file_prefix(ins_video_option& opt)
 		if (opt.timelapse.enable) {	/* Raw和非Raw */
 			type = "PIC_TLP";
 		} else {	
-			/* 1.如果是街景  VID_GSV*/
+			if (opt.origin.framerate == 5) {		/* 1.如果是街景  VID_GSV*/
+				type = "VID_GSV";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 
-			/* 2.如果是10bit */
-
-			/* 3.如果是60fps */
-
-			/* 4.如果支持LOG模式 */
-
-			/* 5.如果支持HDR模式 */
+			} else if (opt.origin.bitdepth == 10) {	/* 2.如果是10bit */
+				if (opt.origin.framerate == 60) {
+					if (opt.origin.logmode == 1) {
+						type = "VID_10bit_60fps_LOG";
+					} else {
+						type = "VID_10bit_60fps";
+					}
+				} else {
+					if (opt.origin.logmode == 1) {
+						type = "VID_10bit_LOG";
+					} else {
+						type = "VID_10bit";
+					}					
+				}
+			} else if (opt.origin.framerate == 60) {/* 3.如果是60fps */
+				if (opt.origin.logmode == 1) {
+					type = "VID_60fps_LOG";
+				} else {
+					type = "VID_60fps";
+				}
+			} else if (opt.origin.logmode == 1) {		/* 4.如果支持LOG模式 */
+				type = "VID_LOG";
+			} else if (opt.origin.hdr) {	/* 5.如果支持HDR模式 */
+				type = "VID_HDR";
+			} else {
+				type = "VID";
+			}
 		}
 	} else if (opt.name == ACCESS_CMD_START_LIVE) {
 		type = "VID_LIV";
@@ -1500,3 +1521,4 @@ int access_msg_parser::check_audio_option(const ins_audio_option& option) const
 
 	return INS_OK;
 }
+

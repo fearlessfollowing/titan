@@ -152,7 +152,7 @@ int32_t usb_camera::start_still_capture(const cam_photo_param& param, std::share
 	pic_queue_.clear();
 
 	pic_type_ = param.type;
-	raw_seq_ = pic_seq_ = 1; // 非timelapse都发1
+	raw_seq_ = pic_seq_ = 1; /* 非timelapse都发1 */
 
 	if (param.type == INS_PIC_TYPE_HDR || param.type == INS_PIC_TYPE_BRACKET) {
 		pic_cnt_ = param.count;
@@ -169,7 +169,7 @@ int32_t usb_camera::start_still_capture(const cam_photo_param& param, std::share
 	root.set_int("sequence", pic_seq_);
 
 	if (param.mime == INS_RAW_JPEG_MIME && param.b_usb_jpeg && param.b_usb_raw) {
-		pic_cnt_ *= 2;	// 同时存jpeg raw
+		pic_cnt_ *= 2;	/* 同时存jpeg raw */
 	}
 
 	/* 拍完这些照片的总超时时间 */
@@ -179,9 +179,9 @@ int32_t usb_camera::start_still_capture(const cam_photo_param& param, std::share
 	auto ret = send_cmd(USB_CMD_STILL_CAPTURE, root.to_string());
 	RETURN_IF_NOT_OK(ret);
 
-	img_repo_ = img_repo;
+	img_repo_ = img_repo;	/* 将存储image的repo传递给8个采集模组数据的线程 */
 	
-	// needn't start read thread if b_usb_stream = false
+	/* needn't start read thread if b_usb_stream = false */
 	if (param.b_usb_jpeg || param.b_usb_raw)	/* 需要模组传jpeg或raw数据,启动数据读线程 */
 		start_data_read_task();
 
@@ -1195,11 +1195,13 @@ int32_t usb_camera::read_data_task()
 		if (ret == INS_OK || ret == INS_ERR_RETRY) {
 			ret = INS_OK;
 			continue;
-		} else if (ret == INS_ERR_OVER) {
+		} else if (ret == INS_ERR_OVER) {	/* 表示数据已经读完 */
 			ret = INS_OK;
 			break;
 		} else {
-			//只有录像的时候才发消息停止录像 record 不能用send_cmd_来标示，因为录像过程中对时会改变send_cmd_
+			/* 只有录像的时候才发消息停止录像 record 不能用send_cmd_来标示，
+			 * 因为录像过程中对时会改变send_cmd_ 
+			 */
 			if (b_record_) 
 				send_rec_over_msg(ret);
 			break;
@@ -1600,7 +1602,7 @@ int32_t usb_camera::send_buff_data(const uint8_t* data, uint32_t size, int32_t t
 }
 
 
-//六个摄像头必须同时升级
+/* 六个摄像头必须同时升级 */
 int32_t usb_camera::upgrade(std::string file_name, const std::string& md5)
 {
 	int32_t ret = send_cmd(USB_CMD_UPDATE_SYSTEM_START, "");

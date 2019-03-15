@@ -157,7 +157,7 @@ private:
 	std::shared_ptr<temp_monitor> 			t_monitor_;
 	std::shared_ptr<box_task_mgr> 			task_mgr_;
 	std::shared_ptr<video_mgr> 				video_mgr_;
-	std::shared_ptr<image_mgr> 				img_mgr_;
+	std::shared_ptr<image_mgr> 				img_mgr_;			/* 拍照管理器 */
 	std::shared_ptr<timelapse_mgr> 			timelapse_mgr_;		/* timelapse管理器 */
 	std::shared_ptr<singlen_mgr> 			singlen_mgr_;
 	std::shared_ptr<qr_scanner> 			qr_scanner_;
@@ -167,7 +167,9 @@ private:
 	
 	access_msg_parser 		msg_parser_;						/* 消息解析器 */
 	access_state 			state_mgr_;
+
 	static uint32_t 		state_;								/* 系统的状态 */
+
 	bool 					b_need_stop_live_ = false;
 	bool 					b_stop_live_rec_ = false;
 	std::mutex 				camera_operation_stop_mtx_;

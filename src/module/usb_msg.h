@@ -125,7 +125,7 @@ struct amba_frame_info {
 	unsigned int size;  
 	unsigned int sequence;  
 	long long timestamp;
-	int reserve1; // 0:正常 1：正常結束 -2：卡滿結束
+	int reserve1; 			// 0:正常 1：正常結束 -2：卡滿結束
 	int reserve2;
 };
 

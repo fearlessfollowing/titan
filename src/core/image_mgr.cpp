@@ -76,7 +76,8 @@ void image_mgr::task()
 
 	while (!quit_) {
 
-		if (cnt_cur >= cnt) break;	/* 当前完成的组数大于等于需求组数,退出 */
+		if (cnt_cur >= cnt) 
+			break;	/* 当前完成的组数大于等于需求组数,退出 */
 
         if (!future_got) {
             if (std::future_status::ready == future.wait_for(0s)) {
@@ -105,7 +106,8 @@ void image_mgr::task()
         }
 	}
 
-    if (ret == INS_OK && option_.b_stiching && (option_.hdr.enable || option_.bracket.enable)) {
+    if (ret == INS_OK && option_.b_stiching 
+		&& (option_.hdr.enable || option_.bracket.enable)) {
         ret = hdr_compose();
     }
 
@@ -156,12 +158,12 @@ int image_mgr::process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_f
         && option_.index == -1) //单镜头拍照不生成缩略图
     {
         ins_picture_option option; 
-        option.stiching.mode = INS_MODE_PANORAMA; 
-        option.stiching.map_type = INS_MAP_FLAT;
-        option.stiching.algorithm = INS_ALGORITHM_NORMAL;
-        option.stiching.width = INS_THUMBNAIL_WIDTH;
-        option.stiching.height = INS_THUMBNAIL_HEIGHT;
-        option.logo_file  = option_.logo_file;
+        option.stiching.mode 		= INS_MODE_PANORAMA; 
+        option.stiching.map_type 	= INS_MAP_FLAT;
+        option.stiching.algorithm 	= INS_ALGORITHM_NORMAL;
+        option.stiching.width 		= INS_THUMBNAIL_WIDTH;
+        option.stiching.height 		= INS_THUMBNAIL_HEIGHT;
+        option.logo_file 			= option_.logo_file;
         ret = compose(m_frame, option);
         RETURN_IF_NOT_OK(ret);
     }
@@ -192,20 +194,20 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
      *	3.拼接校准
      */
     if (option_.origin.storage_mode == INS_STORAGE_MODE_NV) {   /* jpg/raw都存nv */
-        param.b_usb_raw = true;
-        param.b_usb_jpeg = true;
-        param.b_file_raw = false;
-        param.b_file_jpeg = false;
+        param.b_usb_raw 	= true;
+        param.b_usb_jpeg 	= true;
+        param.b_file_raw 	= false;
+        param.b_file_jpeg 	= false;
     } else if (option_.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {   /* jpg存nv,raw存amba */
-        param.b_usb_raw = false;
-        param.b_usb_jpeg = true;
-        param.b_file_raw = true;
-        param.b_file_jpeg = false;
+        param.b_usb_raw 	= false;
+        param.b_usb_jpeg 	= true;
+        param.b_file_raw 	= true;
+        param.b_file_jpeg 	= false;
     } else {		
-        param.b_usb_raw = false;
-        param.b_usb_jpeg = false;
-        param.b_file_raw = true;
-        param.b_file_jpeg = true;
+        param.b_usb_raw 	= false;
+        param.b_usb_jpeg 	= false;
+        param.b_file_raw 	= true;
+        param.b_file_jpeg 	= true;
     }
 
     if (option_.b_stiching || b_calibration_) {
@@ -213,21 +215,21 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
     }
 	
 	if (option_.burst.enable) {				/* 拍照类型为burst */
-		param.type = INS_PIC_TYPE_BURST;
-		param.count = option_.burst.count;
-		cnt = option_.burst.count;
+		param.type	= INS_PIC_TYPE_BURST;
+		param.count	= option_.burst.count;
+		cnt 		= option_.burst.count;
 	} else if (option_.hdr.enable) {		/* 拍照类型为hdr */
-		param.type = INS_PIC_TYPE_HDR;
-		param.count = option_.hdr.count;
-		param.min_ev = option_.hdr.min_ev;
-		param.max_ev = option_.hdr.max_ev;
+		param.type 		= INS_PIC_TYPE_HDR;
+		param.count 	= option_.hdr.count;
+		param.min_ev 	= option_.hdr.min_ev;
+		param.max_ev 	= option_.hdr.max_ev;
 		cnt = option_.hdr.count;
 	} else if (option_.bracket.enable) {	/* 拍照类型为bracket */
-		param.type = INS_PIC_TYPE_BRACKET;
-		param.count = option_.bracket.count;
-		param.min_ev = option_.bracket.min_ev;
-		param.max_ev = option_.bracket.max_ev;
-		cnt = option_.bracket.count;
+		param.type 		= INS_PIC_TYPE_BRACKET;
+		param.count 	= option_.bracket.count;
+		param.min_ev 	= option_.bracket.min_ev;
+		param.max_ev 	= option_.bracket.max_ev;
+		cnt 			= option_.bracket.count;
 	} else {
         param.type = "jpeg";
 		cnt = 1;
@@ -256,6 +258,7 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
 	    img_repo_->add_gyro_sink(S);
     }
 
+	/* 把img_repo_传递给所有采集数据图片数据的线程 */
     return camera_->start_all_still_capture(param, img_repo_);
 }
 

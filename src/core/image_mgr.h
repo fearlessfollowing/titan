@@ -34,7 +34,7 @@ private:
     void                    print_option(const ins_picture_option& option) const;
 
     ins_picture_option              option_;
-    cam_manager*                    camera_ = nullptr;
+    cam_manager*                    camera_ = nullptr;		/* cam_manager管理所有的模组,由access_msg_center中传递过来 */
     std::shared_ptr<cam_img_repo>   img_repo_;
     std::shared_ptr<usb_sink>       usb_sink_;
     std::shared_ptr<stabilization>  stablz_;

@@ -563,6 +563,7 @@ int cam_manager::start_still_capture(unsigned int index, const cam_photo_param& 
 	auto it = map_cam_.find(index);
 	if (it == map_cam_.end()) return INS_ERR;
 
+	/* 设置本次拍照的参数, 并等待命令完成 */
 	ret = it->second->set_photo_param(param);
 	RETURN_IF_NOT_OK(ret);
 
@@ -570,6 +571,7 @@ int cam_manager::start_still_capture(unsigned int index, const cam_photo_param& 
 	ret = f.get();
 	RETURN_IF_NOT_OK(ret);
 
+	/* 发送拍照命令, 并等待命令完成 */
 	ret = it->second->start_still_capture(param);
 	RETURN_IF_NOT_OK(ret);
 
@@ -631,7 +633,9 @@ int32_t cam_manager::still_capture_task(const cam_photo_param& param, std::share
 
 	for (auto& it : map_f) {
 		auto r = it.second.get();
-		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
+		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) 
+			ret = r;
+
 		if (r == INS_ERR_M_UNSPEED_STORAGE) {
 			if (s_unspeed_pid != "") 
 				s_unspeed_pid += "_";

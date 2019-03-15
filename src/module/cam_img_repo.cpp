@@ -12,7 +12,7 @@ void cam_img_repo::queue_frame(uint32_t index, const std::shared_ptr<ins_frame>&
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    if (frame->metadata.raw) {   // raw/jpeg队列分开
+    if (frame->metadata.raw) {   /* raw/jpeg队列分开 */
         do_queue_frame(index, frame, single_queue_raw_);
     } else {
         do_queue_frame(index, frame, single_queue_);
@@ -24,8 +24,7 @@ void cam_img_repo::do_queue_frame(uint32_t index,
                                     std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>>& queue)
 {
     auto it = queue.find(index);
-    if (it == queue.end())
-    {
+    if (it == queue.end()) {
         std::map<uint32_t, std::shared_ptr<ins_frame>> q;  
         queue.insert(std::make_pair(index, q));
         it = queue.find(index);
@@ -34,24 +33,23 @@ void cam_img_repo::do_queue_frame(uint32_t index,
     it->second.insert(std::make_pair(frame->sequence, frame));
     if (queue.size() != INS_CAM_NUM) return;
 
-    while (1)
-    {
-        //每一个都是按sequence升序排列的，只要比较begin
+    while (1) {
+        /* 每一个都是按sequence升序排列的，只要比较begin */
         int32_t seq = -1;
-        for (auto& it : queue)
-        {
-            if (it.second.empty()) return;
-            if (seq == -1) 
-            {
+        for (auto& it : queue) {
+            if (it.second.empty()) 
+				return;
+            if (seq == -1) {
                 seq = it.second.begin()->second->sequence;
             }
-            if (seq != it.second.begin()->second->sequence) return;
+
+            if (seq != it.second.begin()->second->sequence) 
+				return;
         }
 
-        //取出第一个帧
+        /* 取出第一个帧 */
         std::map<uint32_t, std::shared_ptr<ins_frame>> sync_queue;
-        for (auto& it : queue)
-        {
+        for (auto& it : queue) {
             auto front_item = it.second.begin();
             sync_queue.insert(std::make_pair(it.first, front_item->second));
             it.second.erase(front_item);
@@ -65,12 +63,9 @@ void cam_img_repo::out_sync_queue(std::map<uint32_t, std::shared_ptr<ins_frame>>
 {
     acquire_gps_info(m_frame);
 
-    if (type_ == INS_PIC_TYPE_TIMELAPSE)
-    {
+    if (type_ == INS_PIC_TYPE_TIMELAPSE) {
         output(m_frame); //timelapse是主动推到sink
-    }
-    else
-    {
+    } else {
         queue_.push_back(m_frame); //非timelapse存储着，等调用者自己获取
     }
 }
@@ -112,20 +107,18 @@ void cam_img_repo::queue_gyro(const uint8_t* data, uint32_t size)
 {
     if (gyro_sinks_.empty()) return;
     std::shared_ptr<insbuff> buff;
-    if (size > 4096*4)
-    {
+    if (size > 4096*4) {
         buff = std::make_shared<insbuff>(size);
         LOGINFO("gyro buff size:%d !!!!!!!!!!!!!!!!!", size);
-    }
-    else
-    {
+    } else {
         buff = buff_pool_->pop();
-        if (!buff->data()) buff->alloc(4096*4);
+        if (!buff->data()) 
+			buff->alloc(4096*4);
     }
+	
     memcpy(buff->data(), data, size);
     buff->set_offset(size);
-    for (auto& it : gyro_sinks_)
-    {
+    for (auto& it : gyro_sinks_) {
         it->queue_gyro(buff, 0);
     }
 }

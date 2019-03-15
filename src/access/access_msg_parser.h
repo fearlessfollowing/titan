@@ -71,16 +71,16 @@ private:
 	int 		hls_dir_prepare(std::string dir);
 	int32_t 	get_audio_type(bool stitch);
 
-	bool b_fanless_ = false;
-	bool b_pano_audio_ = true;
+	bool b_fanless_ 		= false;
+	bool b_pano_audio_ 		= true;
 	bool b_audio_to_stitch_ = true;
-	bool b_stab_rt_ = false;
-	bool b_logo_on_ = false;
+	bool b_stab_rt_ 		= false;
+	bool b_logo_on_ 		= false;
 
-	std::string storage_path_;
-	std::string storage_path2_;
-	std::string preview_url_;
-	std::string live_url_;
+	std::string 			storage_path_;
+	std::string 			storage_path2_;
+	std::string 			preview_url_;
+	std::string 			live_url_;
 };
 
 #endif

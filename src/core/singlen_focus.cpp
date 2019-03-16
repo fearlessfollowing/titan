@@ -69,8 +69,8 @@ void singlen_focus::render_task(float x, float y)
 
 	int64_t pts;
 	NvBuffer* buff;
-	while (!quit_ || !dec_exit_)
-	{
+
+	while (!quit_ || !dec_exit_) {
         ret = dec_->dequeue_output_buff(buff, pts, 0);
 		BREAK_IF_NOT_OK(ret);
 
@@ -91,16 +91,12 @@ void singlen_focus::render_task(float x, float y)
 
 int32_t singlen_focus::dequeue_frame(NvBuffer* buff, int64_t& pts)
 {
-    while (!quit_)
-    {
+    while (!quit_) {
         auto frame = repo_->deque_frame();
-        if (frame == nullptr)
-        {
+        if (frame == nullptr) {
             usleep(5*1000);
             continue;
-        }
-        else
-        {
+        } else {
             memcpy(buff->planes[0].data, frame->page_buf->data(), frame->page_buf->offset());
             buff->planes[0].bytesused = frame->page_buf->offset();
             pts = frame->pts;
@@ -116,13 +112,11 @@ void singlen_focus::print_fps_info() const
 	static struct timeval start_time;
 	static struct timeval end_time;
 
-	if (cnt == -1)
-	{
+	if (cnt == -1) {
 		gettimeofday(&start_time, nullptr);
 	}
 
-	if (cnt++ > 60)
-	{
+	if (cnt++ > 60) {
 		gettimeofday(&end_time, nullptr);
 		double fps = 1000000.0*cnt/(double)(end_time.tv_sec*1000000 + end_time.tv_usec - start_time.tv_sec*1000000 - start_time.tv_usec);
 		start_time = end_time;

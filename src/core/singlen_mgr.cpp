@@ -47,14 +47,11 @@ int32_t singlen_mgr::start_focus(cam_manager* camera, const ins_video_option& op
 
 int32_t singlen_mgr::stop_focus()
 {
-	if (camera_)
-	{
+	if (camera_) {
 		auto ret = camera_->stop_all_video_rec();
 		camera_ = nullptr;
 		return ret;
-	}
-	else
-	{
+	} else {
 		return INS_OK;
 	}
 }
@@ -84,8 +81,7 @@ int32_t singlen_mgr::get_circle_pos(int32_t index, float& x, float& y)
     std::vector<int32_t> h;
     offset_tool.getWidthAndHeight(w, h);
 
-	if ((int32_t)c_x.size() <= index || (int32_t)w.size() <= index)
-	{
+	if ((int32_t)c_x.size() <= index || (int32_t)w.size() <= index) {
 		LOGERR("circle info size:%d < index:%d", c_x.size(), index);
 		return INS_ERR;
 	}

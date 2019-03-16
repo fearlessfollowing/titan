@@ -12,13 +12,11 @@ void print_fps_info()
 	static struct timeval start_time;
 	static struct timeval end_time;
 
-	if (cnt == -1)
-	{
+	if (cnt == -1) {
 		gettimeofday(&start_time, nullptr);
 	}
 
-	if (cnt++ > 30)
-	{
+	if (cnt++ > 30) {
 		gettimeofday(&end_time, nullptr);
 		double fps = 1000000.0*cnt/(double)(end_time.tv_sec*1000000 + end_time.tv_usec - start_time.tv_sec*1000000 - start_time.tv_usec);
 		start_time = end_time;
@@ -31,8 +29,7 @@ int main(int argc, char* argv[])
 {
 	ins_log::init("/sdcard", "log");
 
-	if (argc < 2)
-	{
+	if (argc < 2) {
 		LOGERR("please input mp4 file");
 		return -1;
 	}
@@ -40,8 +37,7 @@ int main(int argc, char* argv[])
 	ffutil::init();
 
 	ins_demux demux;
-	if (INS_OK != demux.open(argv[1]))
-	{
+	if (INS_OK != demux.open(argv[1])) {
 		return -1;
 	}	
 
@@ -58,33 +54,27 @@ int main(int argc, char* argv[])
 	dec_param.threads = 4;
 
 	ffh264dec decode;
-	if (INS_OK != decode.open(dec_param))
-	{
+	if (INS_OK != decode.open(dec_param)) {
 		return -1;
 	}
 
-	while (1)
-	{
+	while (1) {
 		std::shared_ptr<ins_demux_frame> frame;
-		if (INS_OK != demux.get_next_frame(frame))
-		{
+		if (INS_OK != demux.get_next_frame(frame)) {
 			LOGERR("demux over");
 			break;
 		}
 
-		if (frame == nullptr)
-		{
+		if (frame == nullptr) {
 			break;
 		}
 
-		if (frame->media_type != INS_MEDIA_VIDEO)
-		{
+		if (frame->media_type != INS_MEDIA_VIDEO) {
 			continue;
 		}
 
 		auto rgb = decode.decode(frame->data, frame->len, frame->pts, frame->dts);
-		if (rgb)
-		{
+		if (rgb) {
 			print_fps_info();
 		}
 	}

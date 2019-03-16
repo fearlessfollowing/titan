@@ -97,15 +97,15 @@ private:
     std::shared_ptr<all_cam_video_queue> repo_;
     std::map<uint32_t, compose_option> option_;
     std::map<uint32_t, int32_t> modes_;
-    int32_t rend_mode_ = 0;
+    int32_t 			rend_mode_ = 0;
     std::map<uint32_t, uint32_t> enc_intervals_;
-    Arational dec_fps_;
-    bool quit_ = false; 
-    uint32_t dec_exit_num_ = 0;
-    std::thread th_dec_[INS_CAM_NUM];
-    std::thread th_enc_;
-    std::mutex mtx_;
-    std::mutex mtx_stablz_;
+    Arational 			dec_fps_;
+    bool 				quit_ = false; 
+    uint32_t 			dec_exit_num_ = 0;
+    std::thread 		th_dec_[INS_CAM_NUM];
+    std::thread 		th_enc_;
+    std::mutex 			mtx_;
+    std::mutex 			mtx_stablz_;
     std::shared_ptr<ins_clock> clock_;
     int32_t cnt_ = -1;
     uint32_t sec_enc_interval_ = 1; //第二路编码流和第一路帧率不一样的时候，每个多少帧编码一次第二路流

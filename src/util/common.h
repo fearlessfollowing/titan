@@ -117,7 +117,7 @@
 
 #define INS_CAM_NUM 8
 
-#define INS_PREVIEW_FILE "preview.mp4"
+#define INS_PREVIEW_FILE 	"preview.mp4"
 #define INS_PREVIEW_WIDTH   1920
 #define INS_PREVIEW_HEIGHT  960
 #define INS_PREVIEW_BITRATE 3000 //Kbits
@@ -201,18 +201,23 @@
 #define INS_MC_KEY_CSD0                            "csd-0"
 #define INS_MC_KEY_CSD1                     	  "csd-1"
 
-#define SYS_PROPERTY_CPU_TEMP "sys.cpu_temp"
-#define SYS_PROPERTY_GPU_TEMP "sys.gpu_temp"
-#define SYS_PROPERTY_BATTERY_TEMP "sys.bat_temp"
-#define SYS_PROPERTY_BATTERY_EXIST "sys.bat_exist"
-#define SYS_PROPERTY_AUDIO_ON "sys.use_audio"
-#define SYS_PROPERTY_STAB_ON  "sys.stab_on"
+#define SYS_PROPERTY_CPU_TEMP               "sys.cpu_temp"
+#define SYS_PROPERTY_GPU_TEMP               "sys.gpu_temp"
+#define SYS_PROPERTY_BATTERY_TEMP           "sys.bat_temp"
+#define SYS_PROPERTY_BATTERY_EXIST          "sys.bat_exist"
+#define SYS_PROPERTY_AUDIO_ON               "sys.use_audio"
+#define SYS_PROPERTY_STAB_ON                "sys.stab_on"
 
 #define INS_PTS_NO_VALUE ((long long)0x8000000000000000)
 #define INS_MAX_INT64    ((long long)0x7fffffffffffffff)
 
 #define INS_ABS_MAX(a,b) (((abs(a)) > (abs(b))) ? (a) : (b))
 #define INS_ABS_MIN(a,b) (((abs(a)) < (abs(b))) ? (a) : (b))
+
+
+#define CONVNUMTOSTR(n) case n: return #n 
+
+
 
 #define RETURN_IF_NOT_OK(err) \
 if (INS_OK != err) \

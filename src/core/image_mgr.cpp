@@ -69,7 +69,8 @@ void image_mgr::task()
     int32_t cnt_cur = 0;
     int32_t ret = INS_OK;
 
-    if (option_.origin.storage_mode == INS_STORAGE_MODE_AB) open_usb_sink(option_.prj_path);
+    if (option_.origin.storage_mode == INS_STORAGE_MODE_AB) 
+		open_usb_sink(option_.prj_path);
 
 	auto future = open_camera_capture(cnt);     /* 打开模组,设置拍照参数,启动拍照 */
     bool future_got = false;
@@ -106,6 +107,7 @@ void image_mgr::task()
         }
 	}
 
+	/* 支持实时拼接,(HDR模式或bracket模式) */
     if (ret == INS_OK && option_.b_stiching 
 		&& (option_.hdr.enable || option_.bracket.enable)) {
         ret = hdr_compose();
@@ -149,14 +151,11 @@ int image_mgr::process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_f
         && !m_frame.begin()->second->metadata.raw) {
         ret = compose(m_frame, option_); 
         RETURN_IF_NOT_OK(ret);
-    }
-		
-    //非实时拼接也要拼接一张缩略图
-    else if (!option_.b_stiching
+    } else if (!option_.b_stiching
         && !m_frame.begin()->second->metadata.raw
         && jpeg_seq_ == 1 		//burst/bracket/hdr有多组，用第一组生成缩略图
         && option_.index == -1) //单镜头拍照不生成缩略图
-    {
+    {	/* 非实时拼接也要拼接一张缩略图 */
         ins_picture_option option; 
         option.stiching.mode 		= INS_MODE_PANORAMA; 
         option.stiching.map_type 	= INS_MAP_FLAT;
@@ -380,6 +379,7 @@ int32_t image_mgr::do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_
 int32_t image_mgr::hdr_compose()
 {
     int32_t count;
+	
     if (option_.hdr.enable) {				/* 使能HDR */
         count = option_.hdr.count;
     } else if (option_.bracket.enable) {	/* 使能bracket */

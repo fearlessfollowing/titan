@@ -73,6 +73,7 @@ void pic_seq_sink::task()
     }
 }
 
+
 void pic_seq_sink::write_frame(const std::shared_ptr<ins_frame>& frame)
 {
     if (is_key_sink_ && !(frame->sequence % 3)) {	/* 每3张,检测一次磁盘空间,不要检测太频繁 */

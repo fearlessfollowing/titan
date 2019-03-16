@@ -156,7 +156,7 @@ private:
 	std::shared_ptr<timelapse_mgr>	 		timelapse_;
 	std::shared_ptr<temp_monitor> 			t_monitor_;
 	std::shared_ptr<box_task_mgr> 			task_mgr_;
-	std::shared_ptr<video_mgr> 				video_mgr_;
+	std::shared_ptr<video_mgr> 				video_mgr_;			/* 视频管理器 */
 	std::shared_ptr<image_mgr> 				img_mgr_;			/* 拍照管理器 */
 	std::shared_ptr<timelapse_mgr> 			timelapse_mgr_;		/* timelapse管理器 */
 	std::shared_ptr<singlen_mgr> 			singlen_mgr_;

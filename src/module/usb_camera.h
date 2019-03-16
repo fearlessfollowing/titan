@@ -121,6 +121,8 @@ private:
 	void 		print_fps_info();
 	bool 		is_exception_cmd(int32_t cmd);
 
+    const char* get_cmd_str(unsigned int uCmd);
+
 	std::mutex 								mtx_send_; //发送数据锁
 	std::mutex 								mtx_pic_;
 	// std::thread 							th_data_read_;

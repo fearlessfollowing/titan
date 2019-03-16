@@ -35,6 +35,8 @@ if (param_obj == nullptr) \
 }
 
 
+
+
 int access_msg_parser::check_disk_space(unsigned int size, std::string path)
 { 
 	if (path != "") { 
@@ -435,6 +437,7 @@ int access_msg_parser::internal_pic_over(const char* msg, int& code, std::string
 	return INS_OK;
 }
 
+
 int access_msg_parser::power_mode_option(const char* msg, std::string& mode)
 {
 	PARSE_PARAM_OBJ(msg);
@@ -617,6 +620,7 @@ int access_msg_parser::systime_change_option(const char* msg, int64_t& timestamp
 	param_obj->get_string("source", source);
 	return INS_OK;
 }
+
 
 int access_msg_parser::storage_option(const char* msg, std::string& path)
 {
@@ -929,8 +933,7 @@ int access_msg_parser::parse_video_file_option(std::shared_ptr<json_obj> param_o
 	}
 
 	auto stiching_obj = param_obj->get_obj(ACCESS_MSG_OPT_STICHING);
-	if (stiching_obj == nullptr)
-	{
+	if (stiching_obj == nullptr) {
 		LOGINFO("key:stiching not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -944,8 +947,7 @@ int access_msg_parser::parse_video_file_option(std::shared_ptr<json_obj> param_o
 
 int access_msg_parser::parse_picture_file_option(std::shared_ptr<json_obj> param_obj, ins_picture_file_option& option) const 
 {
-	for (int i = 0; i < 6; i++)
-	{
+	for (int i = 0; i < 6; i++){
 		std::stringstream ss;
 		ss << "file" << i +1;
 		std::string url;
@@ -958,8 +960,7 @@ int access_msg_parser::parse_picture_file_option(std::shared_ptr<json_obj> param
 	}
 
 	auto stiching_obj = param_obj->get_obj(ACCESS_MSG_OPT_STICHING);
-	if (stiching_obj == nullptr)
-	{
+	if (stiching_obj == nullptr) {
 		LOGINFO("key:stiching not fond");
 		return INS_ERR_INVALID_MSG_FMT;
 	}
@@ -998,17 +999,11 @@ int access_msg_parser::parse_origin_option(std::shared_ptr<json_obj> origin_obj,
 		option.mime = INS_H265_MIME;
 	} else if (option.mime == ACCESS_MSG_OPT_MIME_JPEG) {
 		option.mime = INS_JPEG_MIME;
-	}
-	else if (option.mime == ACCESS_MSG_OPT_MIME_RAW)
-	{
+	} else if (option.mime == ACCESS_MSG_OPT_MIME_RAW) {
 		option.mime = INS_RAW_MIME;
-	}
-	else if (option.mime == ACCESS_MSG_OPT_MIME_RAW_JPEG)
-	{
+	} else if (option.mime == ACCESS_MSG_OPT_MIME_RAW_JPEG) {
 		option.mime = INS_RAW_JPEG_MIME;
-	}
-	else
-	{
+	} else {
 		LOGERR("origin mime:%s unsupport", option.mime.c_str());
 		return INS_ERR_INVALID_MSG_PARAM;
 	}
@@ -1027,23 +1022,17 @@ int access_msg_parser::parse_origin_option(std::shared_ptr<json_obj> origin_obj,
 int access_msg_parser::parse_stich_option(std::shared_ptr<json_obj> stiching_obj, ins_stiching_option& option) const
 {
 	stiching_obj->get_string(ACCESS_MSG_OPT_MIME, option.mime);
-	if (option.mime == ACCESS_MSG_OPT_MIME_H264)
-	{
+	if (option.mime == ACCESS_MSG_OPT_MIME_H264) {
 		option.mime = INS_H264_MIME;
-	}
-	else if (option.mime == ACCESS_MSG_OPT_MIME_H265)
-	{
+	} else if (option.mime == ACCESS_MSG_OPT_MIME_H265) {
 		option.mime = INS_H265_MIME;
-	}
-	else if (option.mime == ACCESS_MSG_OPT_MIME_JPEG)
-	{
+	} else if (option.mime == ACCESS_MSG_OPT_MIME_JPEG) {
 		option.mime = INS_JPEG_MIME;
-	}
-	else
-	{
+	} else {
 		LOGERR("invalid mime type:%s", option.mime.c_str());
 		return INS_ERR_INVALID_MSG_PARAM;
 	}
+
 	stiching_obj->get_int(ACCESS_MSG_OPT_FORMAT_WIDTH, option.width);
 	stiching_obj->get_int(ACCESS_MSG_OPT_FORMAT_HEIGHT, option.height);
 	stiching_obj->get_int(ACCESS_MSG_OPT_FORMAT_FRAMERATE, option.framerate);
@@ -1051,20 +1040,16 @@ int access_msg_parser::parse_stich_option(std::shared_ptr<json_obj> stiching_obj
 
 	std::string map_type;
 	stiching_obj->get_string(ACCESS_MSG_OPT_MAP, map_type);
-	if (map_type == "cube")
-	{
+	if (map_type == "cube") {
 		option.map_type = INS_MAP_CUBE;
 	}
 
 	std::string algorithm;
 	stiching_obj->get_string(ACCESS_MSG_OPT_ALGORITHM, algorithm);
-	if (algorithm == "opticalFlow")
-	{
+	if (algorithm == "opticalFlow") {
 		LOGINFO("opticalflow");
 		option.algorithm = INS_ALGORITHM_OPTICALFLOW;
-	}
-	else
-	{
+	} else {
 		option.algorithm = INS_ALGORITHM_NORMAL;
 	}
 
@@ -1077,14 +1062,14 @@ int access_msg_parser::parse_stich_option(std::shared_ptr<json_obj> stiching_obj
 
 	std::string live_url;
 	stiching_obj->get_string(ACCESS_MSG_OPT_LIVE_URL, live_url);
-	if (live_url != "")
-	{
+	if (live_url != "") {
 		option.url = live_url;
 	}
 
 	bool file_save = false; //just for living
 	stiching_obj->get_boolean("fileSave", file_save);
-	if (file_save) option.url_second = "fileSave"; //just mark here
+	if (file_save) 
+		option.url_second = "fileSave"; //just mark here
 
 	stiching_obj->get_string("format", option.format);
 
@@ -1095,24 +1080,16 @@ int access_msg_parser::parse_mode(std::shared_ptr<json_obj> obj, int& mode) cons
 {
 	std::string ss;
 	obj->get_string(ACCESS_MSG_OPT_VRMODE, ss);
-	if (ss == ACCESS_MSG_OPT_VRMODE_3D)
-	{
+
+	if (ss == ACCESS_MSG_OPT_VRMODE_3D) {
 		mode = INS_MODE_3D_TOP_LEFT;
-	}
-	else if (ss == ACCESS_MSG_OPT_VRMODE_3D_TOP_LEFT)
-	{
+	} else if (ss == ACCESS_MSG_OPT_VRMODE_3D_TOP_LEFT) {
 		mode = INS_MODE_3D_TOP_LEFT;
-	}
-	else if (ss == ACCESS_MSG_OPT_VRMODE_3D_TOP_RIGHT)
-	{
+	} else if (ss == ACCESS_MSG_OPT_VRMODE_3D_TOP_RIGHT) {
 		mode = INS_MODE_3D_TOP_RIGHT;
-	}
-	else if (ss == ACCESS_MSG_OPT_VRMODE_PANO)
-	{
+	} else if (ss == ACCESS_MSG_OPT_VRMODE_PANO) {
 		mode = INS_MODE_PANORAMA;
-	}
-	else
-	{
+	} else {
 		LOGERR("invalid mode:%s", ss.c_str());
 		return INS_ERR_INVALID_MSG_PARAM;
 	}
@@ -1129,7 +1106,7 @@ int access_msg_parser::parse_audio_option(std::shared_ptr<json_obj> audio_obj, i
 			LOGERR("invalid audio mime type:%s", option.mime.c_str());
 			return INS_ERR_INVALID_MSG_PARAM;
 		}
-	}else {	//default
+	} else {	//default
 		option.mime = INS_AAC_MIME;
 	}
 

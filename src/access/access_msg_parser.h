@@ -63,8 +63,6 @@ private:
 	int 		create_file_dir(std::string type, std::string& path);
 	std::string gen_file_prefix(std::string type);
 	std::string gen_video_file_prefix(ins_video_option& opt);
-
-
 	std::string gen_pic_file_prefix(std::string type, ins_picture_option& opt);
 	
 	int 		check_disk_space(unsigned int size, std::string path);

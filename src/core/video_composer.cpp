@@ -27,16 +27,17 @@
 bool video_composer::hdmi_change_ = false;
 bool video_composer::in_hdmi_ = false;
 
+
 video_composer::~video_composer()
 {
     LOGINFO("video_composer 1");
-    quit_  = true;
+    quit_ = true;
 	
-    for (int32_t i = 0; i < INS_CAM_NUM; i++) {
+    for (int32_t i = 0; i < INS_CAM_NUM; i++) {	/* 退出所有的解码器 */
         INS_THREAD_JOIN(th_dec_[i]);
     } 
 
-    INS_THREAD_JOIN(th_enc_);
+    INS_THREAD_JOIN(th_enc_);	/* 退出编码器 */
 
     LOGINFO("video_composer 2");
 
@@ -49,6 +50,7 @@ video_composer::~video_composer()
     LOGINFO("video composer destroy");
 }
 
+
 int32_t video_composer::open(const compose_option& option)
 {
     int32_t ret = 0;
@@ -57,16 +59,21 @@ int32_t video_composer::open(const compose_option& option)
         option_.insert(std::make_pair(option.index, option));
     }
  
-    render_ = std::make_shared<render>();
-    dec_fps_ = option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
-    rend_mode_ = option.mode;    		//渲染出来帧的模式
+    render_ 	= std::make_shared<render>();
+    dec_fps_ 	= option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
+    rend_mode_ 	= option.mode;    		//渲染出来帧的模式
 	render_->set_mode(option.mode);
 	render_->set_map_type(option.map);
     render_->set_offset_type(option.crop_flag, option.offset_type);
 	render_->set_input_resolution(option.in_w, option.in_h);
     render_->set_output_resolution(option.width, option.height);
-    if (option.logo_file != "") render_->set_logo(option.logo_file);
-    
+
+    if (option.logo_file != "") 
+		render_->set_logo(option.logo_file);
+
+	/*
+	 * 创建编码任务
+	 */
     th_enc_ = std::thread(&video_composer::enc_task, this);
 
     in_hdmi_ = option.hdmi_display;
@@ -130,6 +137,8 @@ void video_composer::screen_render_task()
     in_hdmi_ = false; 
 }
 
+
+
 void video_composer::dec_task(int32_t index)
 {
     int32_t ret = 0;
@@ -144,16 +153,21 @@ void video_composer::dec_task(int32_t index)
             break;
         } else {
             ret = dequeue_frame(buff, index, pts);
-            if (ret != INS_OK) buff->planes[0].bytesused = 0;
+            if (ret != INS_OK) 
+				buff->planes[0].bytesused = 0;
+
             dec_[index]->queue_input_buff(buff, pts);
-            if (ret != INS_OK) break;
+
+            if (ret != INS_OK) 
+				break;
         }
     }
 
     dec_exit_num_++;
 
-    LOGINFO("dec:%d task exit", index);
+    LOGINFO("dec:%d task exit, exit num = %d", index, dec_exit_num_);
 }
+
 
 void video_composer::enc_task()
 {
@@ -225,6 +239,7 @@ void video_composer::enc_task()
         dec_.push_back(dec);
     }
 
+	/* 为每个camera创建一个解码器 */
     for (uint32_t i = 0; i < dec_.size(); i++) {
         th_dec_[i] = std::thread(&video_composer::dec_task, this, i);
     }
@@ -271,33 +286,33 @@ void video_composer::enc_task()
         
         print_fps_info();
 
-        for (auto it = m_enc_buff.begin(); it != m_enc_buff.end(); it++)
-        {
-            if (jpeg_index_ == it->first) 
-            {
+        for (auto it = m_enc_buff.begin(); it != m_enc_buff.end(); it++) {
+            if (jpeg_index_ == it->first) {
                 ins_jpg_frame frame;
                 frame.buff = jpeg_enc_->encode(it->second);
                 frame.pts = pts;
                 if (frame.buff) jpeg_sink_->queue_image(frame);
             }
+			
             auto item = enc_.find(it->first);
             if (item == enc_.end()) continue; 
             ret = item->second->queue_intput_buff(it->second, pts); 
-            if (ret != INS_OK) 
-            {
+            if (ret != INS_OK) {
                 re_start_encoder(it->first);
             }
         }
     }
 
     mtx_.lock();
-    for (auto it = enc_.begin(); it != enc_.end(); it++) it->second->send_eos();
+    for (auto it = enc_.begin(); it != enc_.end(); it++) 
+		it->second->send_eos();
     mtx_.unlock();
 
     render_ = nullptr;
 
     LOGINFO("enc task exit");
 }
+
 
 void video_composer::re_start_encoder(uint32_t index)
 {
@@ -306,7 +321,8 @@ void video_composer::re_start_encoder(uint32_t index)
     enc_.erase(it);
 
     auto option = option_.find(index);
-    if (option == option_.end()) return;
+    if (option == option_.end()) 
+		return;
 
     usleep(20*1000);
 
@@ -317,10 +333,12 @@ void video_composer::re_start_encoder(uint32_t index)
     for (auto it = option->second.m_sink.begin(); it != option->second.m_sink.end(); it++) {
         enc->add_output(it->first, it->second);
     }
+	
     std::stringstream ss;
     ss << "enc-" << option->second.index;
     auto ret = enc->open(ss.str(), option->second.mime);
-    if (ret != INS_OK) return;
+    if (ret != INS_OK) 
+		return;
 
     enc_.insert(std::make_pair(index, enc));
 }
@@ -415,8 +433,7 @@ int32_t video_composer::add_encoder(const compose_option& option)
     enc->set_resolution(option.width, option.height);
     enc->set_bitrate(option.bitrate*1000);
     enc->set_framerate(option.framerate);
-    for (auto it = option.m_sink.begin(); it != option.m_sink.end(); it++)
-    {
+    for (auto it = option.m_sink.begin(); it != option.m_sink.end(); it++) {
         enc->add_output(it->first, it->second);
     }
     std::stringstream ss;
@@ -428,7 +445,7 @@ int32_t video_composer::add_encoder(const compose_option& option)
     option_.insert(std::make_pair(option.index, option));
     modes_.insert(std::make_pair(option.index, option.mode));
 
-    //编码帧率>解码帧率的时候,不插帧,将编码帧率=解码帧率
+    /* 编码帧率>解码帧率的时候,不插帧,将编码帧率=解码帧率 */
     uint32_t interval = std::max(dec_fps_.num*option.framerate.den/dec_fps_.den/option.framerate.num, 1);
     enc_intervals_.insert(std::make_pair(option.index, interval));
 
@@ -451,12 +468,15 @@ void video_composer::encoder_del_output(uint32_t enc_index, uint32_t sink_index)
     it->second->delete_output(sink_index);
 }
 
+
 void video_composer::encoder_add_output(uint32_t enc_index, uint32_t sink_index, std::shared_ptr<sink_interface> sink)
 {
     auto it = enc_.find(enc_index);
     if (it == enc_.end()) return;
     it->second->add_output(sink_index, sink);
 }
+
+
 
 void video_composer::print_fps_info() 
 {
@@ -472,18 +492,22 @@ void video_composer::print_fps_info()
 	}
 }
 
+
 int32_t video_composer::init_cuda()
 {
     static bool init = false;
-    if (init) return INS_OK;
+	
+    if (init) 
+		return INS_OK;
     init = true;
 
-    int32_t width = 3840;
-    int32_t height = 1920;
+    int32_t width 	= 3840;
+    int32_t height 	= 1920;
 
     ins_clock t;
     insegl egl;
     int32_t ret;
+	
     ret = egl.setup_pbuff(0, width, height);
     RETURN_IF_NOT_OK(ret);
 
@@ -508,17 +532,24 @@ int32_t video_composer::init_cuda()
 
         std::vector<bool> v_half;
         std::vector<EGLImageKHR> v_out_img; 
+		
         out_egl_img = NvEGLImageFromFd(egl.get_display(), fd);
         BREAK_IF_TRUE(out_egl_img == nullptr, "NvEGLImageFromFd");
-        v_out_img.push_back(out_egl_img);
+
+		v_out_img.push_back(out_egl_img);
         v_half.push_back(false);
 
         csp_transform::transform_scaling(in_egl_img, v_out_img, v_half);
     } while (0);
 
-    if (out_egl_img) NvDestroyEGLImage(egl.get_display(), out_egl_img);
-    if (fd >= 0) NvBufferDestroy(fd);
-    if (texture) glDeleteTextures(1, &texture);
+    if (out_egl_img) 
+		NvDestroyEGLImage(egl.get_display(), out_egl_img);
+
+    if (fd >= 0) 
+		NvBufferDestroy(fd);
+
+    if (texture) 
+		glDeleteTextures(1, &texture);
 
     LOGINFO("cuda init time:%lf", t.elapse());
 

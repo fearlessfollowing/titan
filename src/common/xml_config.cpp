@@ -34,12 +34,9 @@ int xml_config::load_file(XMLDocument& xml_doc, std::string filename)
 	//如果备份配置文件打开失败,使用代码写死配置
 	if (recreate_config_file(filename)) return -1;
 
-	if (XML_NO_ERROR == xml_doc.LoadFile(filename.c_str())) 
-	{
+	if (XML_NO_ERROR == xml_doc.LoadFile(filename.c_str())) {
 		return 0;
-	}
-	else
-	{
+	} else {
 		LOGERR("reload xml file:%s fail:%s", filename.c_str(), xml_doc.ErrorName()); 
 		return -1;
 	}
@@ -47,13 +44,10 @@ int xml_config::load_file(XMLDocument& xml_doc, std::string filename)
 
 int xml_config::save_file(XMLDocument& xml_doc, std::string filename)
 {
-	if (XML_NO_ERROR != xml_doc.SaveFile(filename.c_str())) 
-	{ 
+	if (XML_NO_ERROR != xml_doc.SaveFile(filename.c_str())) { 
 		LOGERR("save xml file fail:%s", filename.c_str(), xml_doc.ErrorName()); 
 		return -1; 
-	} 
-	else
-	{	
+	} else {	
 		return 0;
 	}
 }
@@ -94,41 +88,35 @@ int xml_config::recreate_config_file(std::string filename)
 
 XMLElement* xml_config::find_element(XMLDocument& xml_doc, const char* firstname, const char* secondname)
 {
-	if (!firstname || !secondname)
-	{
+	if (!firstname || !secondname) {
 		//std::cout << "xml: input param is null" << std::endl;
 		LOGERR("xml: input param is null");
 		return nullptr;
 	}
 	
 	XMLElement* element = xml_doc.RootElement();
-	if (!element)
-	{
+	if (!element) {
 		//std::cout << "xml: cann't find root element" << std::endl;
 		LOGERR("xml: cann't find root element");
 		return nullptr;
 	}
 	
 	element = element->FirstChildElement(firstname);  
-	if (!element)
-	{
+	if (!element) {
 		//std::cout << "xml: cann't find element " << firstname << std::endl;
 		LOGERR("xml: cann't find element:%s", firstname);
 		return nullptr;
 	}
 
 	auto f_element = element->FirstChildElement(secondname);  
-	if (!f_element)
-	{
+	if (!f_element) {
 		XMLElement* e = xml_doc.NewElement(secondname);  
 		element->LinkEndChild(e);
 
 		//std::cout << "xml: cann't find element " << secondname << std::endl;
 		//LOGERR("xml: cann't find element:%s insert elemet", secondname);
 		return e;
-	}
-	else
-	{
+	} else {
 		return f_element;
 	}
 }
@@ -145,13 +133,10 @@ int xml_config::get_value(const char* firstname, const char* secondname, int& va
 	if (element == nullptr) return -1;
 
 	int tmp;
-	if (XML_SUCCESS != element->QueryIntText(&tmp))
-	{
+	if (XML_SUCCESS != element->QueryIntText(&tmp)) {
 		//LOGERR("xml: fail to QueryIntText %s", secondname);
 		return -1;
-	}
-	else
-	{
+	} else {
 		value = tmp;
 		return 0;
 	}
@@ -169,13 +154,10 @@ int xml_config::get_value(const char* firstname, const char* secondname, float& 
 	if (element == nullptr) return -1;
 
 	float tmp;
-	if (XML_SUCCESS != element->QueryFloatText(&tmp))
-	{
+	if (XML_SUCCESS != element->QueryFloatText(&tmp)) {
 		//LOGERR("xml: fail to QueryFloatText %s", secondname);
 		return -1;
-	}
-	else
-	{
+	} else {
 		value = tmp;
 		return 0;
 	}
@@ -193,13 +175,10 @@ int xml_config::get_value(const char* firstname, const char* secondname, double&
 	if (element == nullptr) return -1;
 
 	double tmp;
-	if (XML_SUCCESS != element->QueryDoubleText(&tmp))
-	{
+	if (XML_SUCCESS != element->QueryDoubleText(&tmp)) {
 		//LOGERR("xml: fail to QueryFloatText %s", secondname);
 		return -1;
-	}
-	else
-	{
+	} else {
 		value = tmp;
 		return 0;
 	}
@@ -217,13 +196,10 @@ int xml_config::get_value(const char* firstname, const char* secondname, std::st
 	if (element == nullptr) return -1;
 
 	const char* value_c = element->GetText();
-	if (!value_c)
-	{
+	if (!value_c) {
 		//LOGERR("xml: fail to get string text %s", secondname);
 		return -1;
-	}
-	else
-	{
+	} else {
 		value = value_c;
 		return 0;
 	}
@@ -293,21 +269,17 @@ int xml_config::set_factory_offset(std::string& offset)
 {
 	XMLDocument xml_doc;
 	XMLElement* e_root;
-	if (XML_NO_ERROR != xml_doc.LoadFile(INS_FACTORY_SETING_XML))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(INS_FACTORY_SETING_XML)) {
 		auto dec = xml_doc.NewDeclaration();
 		e_root = xml_doc.NewElement("insta");
 		xml_doc.LinkEndChild(dec);
 		xml_doc.LinkEndChild(e_root);
-	}
-	else
-	{
+	} else {
 		e_root = xml_doc.RootElement();
 		if (!e_root) e_root = xml_doc.NewElement("insta");
 	}
 
-	if (offset != "")
-	{
+	if (offset != "") {
 		auto e_4_3 = e_root->FirstChildElement("offset_pano_4_3");
 		if (!e_4_3) e_4_3 = xml_doc.NewElement("offset_pano_4_3");
 		e_4_3->SetText(offset.c_str());
@@ -324,22 +296,19 @@ int xml_config::set_factory_offset(std::string& offset)
 std::string xml_config::get_factory_offset()
 {
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(INS_FACTORY_SETING_XML))
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(INS_FACTORY_SETING_XML)) {
 		LOGERR("xml:%s load fail", INS_FACTORY_SETING_XML);
 		return "";
 	}
 
 	auto e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("no root element");
 		return "";
 	}
 
 	auto e_offset_4 = e_root->FirstChildElement("offset_pano_4_3");
-	if (!e_offset_4)
-	{
+	if (!e_offset_4) {
 		LOGERR("no offset_pano_4_3");
 		return "";
 	}
@@ -373,22 +342,19 @@ int xml_config::set_accel_offset(double x, double y, double z)
 int xml_config::get_accel_offset(double& x, double& y, double& z)
 {
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_OFFSET_XML))  
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_OFFSET_XML)) {
 		LOGERR("load %s fail", INS_GYRO_OFFSET_XML);
 		return INS_ERR;
 	}
 
 	auto e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("cann't find root in %s", INS_GYRO_OFFSET_XML);
 		return INS_ERR;
 	}
 
 	auto e_acc = e_root->FirstChildElement("acc_offset");
-	if (!e_acc)
-	{
+	if (!e_acc) {
 		LOGERR("cann't find acc element in %s", INS_GYRO_OFFSET_XML);
 		return INS_ERR;
 	}
@@ -429,22 +395,19 @@ int xml_config::set_gyro_rotation(const std::vector<double>& quat)
 int xml_config::get_gyro_rotation(std::vector<double>& quat)
 {
 	XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_CALIBRATION_XML))  
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_CALIBRATION_XML)) {
 		LOGERR("load %s fail", INS_GYRO_CALIBRATION_XML);
 		return INS_ERR;
 	}
 
 	auto e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("cann't find root in %s", INS_GYRO_CALIBRATION_XML);
 		return INS_ERR;
 	}
 
 	auto e_rotation = e_root->FirstChildElement("imu_rotation");
-	if (!e_rotation)
-	{
+	if (!e_rotation) {
 		LOGERR("cann't find imu_rotation element in %s", INS_GYRO_CALIBRATION_XML);
 		return INS_ERR;
 	}
@@ -492,8 +455,7 @@ std::string xml_config::get_offset(int32_t crop_flag, int32_t type)
 
 int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, bool hdr)
 {
-    static std::unordered_map<std::string, int32_t> default_delay =
-    {
+    static std::unordered_map<std::string, int32_t> default_delay = {
         {"r_3840x2880_30", 115000},
         {"r_3840x2160_30", 113500},
         {"r_3840x2160_5", 614500},
@@ -511,36 +473,31 @@ int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, boo
 
     std::stringstream ss;
     ss << "r_" << w << "x" << h << "_" << framerate;
-	if (hdr) ss << "_hdr";
+	if (hdr) 
+		ss << "_hdr";
 
     int32_t delay;
     auto it = default_delay.find(ss.str());
-    if (it == default_delay.end())
-    {
+    if (it == default_delay.end()) {
         delay = 78000;
-    }
-    else
-    {
+    } else {
         delay = it->second;
     }
 
     XMLDocument xml_doc;
-	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_DELAY_XML))  
-	{
+	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_DELAY_XML)) {
 		LOGERR("load %s fail:%s", INS_GYRO_DELAY_XML, xml_doc.ErrorName());
 		return delay;
 	}
 
 	auto e_root = xml_doc.RootElement();
-	if (!e_root)
-	{
+	if (!e_root) {
 		LOGERR("cann't find root in %s", INS_GYRO_DELAY_XML);
 		return delay;
 	}
 
 	auto e_res = e_root->FirstChildElement(ss.str().c_str());
-	if (!e_res)
-	{
+	if (!e_res) {
 		LOGERR("cann't find %s element in %s", ss.str().c_str(), INS_GYRO_DELAY_XML);
 		return delay;
 	}

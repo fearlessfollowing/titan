@@ -121,28 +121,24 @@ NvV4l2ElementPlane::dqBuffer(struct v4l2_buffer &v4l2_buf, NvBuffer ** buffer,
 
     v4l2_buf.type = buf_type;
     v4l2_buf.memory = memory_type;
-    do
-    {
+    do {
         ret = v4l2_ioctl(fd, VIDIOC_DQBUF, &v4l2_buf);
-
-        if (ret == 0)
-        {
+        if (ret == 0) {
             pthread_mutex_lock(&plane_lock);
             if (buffer)
                 *buffer = buffers[v4l2_buf.index];
-            if (shared_buffer && memory_type == V4L2_MEMORY_DMABUF)
-            {
+
+            if (shared_buffer && memory_type == V4L2_MEMORY_DMABUF) {
                 *shared_buffer =
                     (NvBuffer *) buffers[v4l2_buf.index]->shared_buffer;
             }
-            for (uint32_t i = 0; i < buffers[v4l2_buf.index]->n_planes; i++)
-            {
+			
+            for (uint32_t i = 0; i < buffers[v4l2_buf.index]->n_planes; i++) {
                 buffers[v4l2_buf.index]->planes[i].bytesused =
                     v4l2_buf.m.planes[i].bytesused;
             }
 
-            if (buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-            {
+            if (buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
                 v4l2elem_profiler.finishProcessing(0, false);
             }
 
@@ -151,41 +147,33 @@ NvV4l2ElementPlane::dqBuffer(struct v4l2_buffer &v4l2_buf, NvBuffer ** buffer,
             pthread_cond_broadcast(&plane_cond);
             PLANE_DEBUG_MSG("DQed buffer " << v4l2_buf.index);
             pthread_mutex_unlock(&plane_lock);
-        }
-        else if (errno == EAGAIN)
-        {
+        } else if (errno == EAGAIN) {
             pthread_mutex_lock(&plane_lock);
-            if (v4l2_buf.flags & V4L2_BUF_FLAG_LAST)
-            {
+            if (v4l2_buf.flags & V4L2_BUF_FLAG_LAST) {
                 pthread_mutex_unlock(&plane_lock);
                 break;
             }
             pthread_mutex_unlock(&plane_lock);
 
-            if (!streamon)
-            {
+            if (!streamon) {
                 printf("dqBuffer but stream off\n");
                 ret = -1; break;
             }
 
-            if (num_retries-- == 0)
-            {
+            if (num_retries-- == 0) {
                 PLANE_WARN_MSG("Error while DQing buffer: Resource temporarily unavailable");
                 break;
             }
-            if (!blocking)
-            {
+			
+            if (!blocking) {
                 usleep(1000);
             }
-        }
-        else
-        {
+        } else {
             is_in_error = 1;
             PLANE_SYS_ERROR_MSG("Error while DQing buffer");
             break;
         }
-    }
-    while (ret && !is_in_error);
+    } while (ret && !is_in_error);
 
     return ret;
 }

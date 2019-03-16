@@ -125,10 +125,12 @@ int32_t usb_camera::start_video_rec(const std::shared_ptr<cam_video_buff_i>& que
 {
 	auto ret = send_cmd(USB_CMD_START_VIDEO_RECORD);
 	RETURN_IF_NOT_OK(ret);
+
 	clear_rec_context();
 	video_buff_ = queue;
 	return INS_OK;
 }
+
 
 int32_t usb_camera::stop_video_rec()
 {
@@ -232,7 +234,8 @@ int32_t usb_camera::set_video_param(const cam_video_param& param, const cam_vide
 
 		obj.set_obj("sec_stream", &sec_obj);
 
-		if (sec_param->b_usb_stream) fps_ = ins_util::to_real_fps(sec_param->framerate).to_double();
+		if (sec_param->b_usb_stream) 
+            fps_ = ins_util::to_real_fps(sec_param->framerate).to_double();
 	}
 
 	rec_seq_ = param.rec_seq;
@@ -268,7 +271,8 @@ int32_t usb_camera::get_video_param(cam_video_param& param, std::shared_ptr<cam_
 
 	param.bitrate *= 1000;
 
-	if (param.b_usb_stream) fps_ = ins_util::to_real_fps(param.framerate).to_double();
+	if (param.b_usb_stream) 
+        fps_ = ins_util::to_real_fps(param.framerate).to_double();
 
 	auto sec_obj = root.get_obj("sec_stream");
 	if (sec_obj) {
@@ -285,7 +289,8 @@ int32_t usb_camera::get_video_param(cam_video_param& param, std::shared_ptr<cam_
 		sec_obj->get_boolean("usb_stream", sec_param->b_usb_stream);
 		sec_obj->get_string("file_url", sec_param->file_url);
 		sec_param->bitrate *= 1000;
-		if (sec_param->b_usb_stream) fps_ = ins_util::to_real_fps(sec_param->framerate).to_double();
+		if (sec_param->b_usb_stream) 
+            fps_ = ins_util::to_real_fps(sec_param->framerate).to_double();
 	}	
 
 	return INS_OK;
@@ -332,7 +337,6 @@ int32_t usb_camera::set_photo_param(const cam_photo_param& param)
 			obj.set_string("jpeg_url", url.str());
 		obj.set_bool("usb_jpeg", param.b_usb_jpeg);
 	}
-
 	return send_cmd(USB_CMD_SET_PHOTO_PARAM, obj.to_string());
 }
 
@@ -500,7 +504,6 @@ int32_t usb_camera::get_version(std::string& version)
 
 	json_obj obj(cmd_result_.c_str());
 	obj.get_string("version", version);
-
 	return INS_OK;
 }
 
@@ -907,7 +910,7 @@ std::future<int32_t> usb_camera::wait_cmd_over()
 
 int32_t usb_camera::do_wait_cmd_over()
 {
-	// 表示发送命令失败或者没有发送命令，不用去等待响应
+	/* 表示发送命令失败或者没有发送命令，不用去等待响应 */
 	if (send_cmd_ == -1) return INS_OK;
 
 	int32_t timeout;
@@ -921,8 +924,8 @@ int32_t usb_camera::do_wait_cmd_over()
 
 	if (send_cmd_ == USB_CMD_STILL_CAPTURE) {
 		if (ret == INS_OK) {
-			// 模组可能在数据还没有传完的时候就回响应了,所以这里阻塞到数据读完
-			ret = stop_data_read_task(true); // 响应成功，有可能读数据出错
+			/* 模组可能在数据还没有传完的时候就回响应了,所以这里阻塞到数据读完 */
+			ret = stop_data_read_task(true); /* 响应成功，有可能读数据出错 */
 		} else {
 			// if (ret == INS_ERR_M_UNSPEED_STORAGE)
 			// {
@@ -930,19 +933,17 @@ int32_t usb_camera::do_wait_cmd_over()
 			// 	property_set("module.unspeed", s_pid);
 			// 	LOGINFO("pid:%d set module.unspeed = %s", pid_, s_pid.c_str());
 			// }
-			stop_data_read_task(false); // 马上停止读线程
+			stop_data_read_task(false); /* 马上停止读线程 */
 		}
 		img_repo_ = nullptr;
 	} else if (send_cmd_ == USB_CMD_STOP_VIDEO_RECORD) {
 		auto r = stop_data_read_task();
-		if (ret == INS_OK) ret = r; //卡速不足
+		if (ret == INS_OK) ret = r; /* 卡速不足 */
 		video_buff_ = nullptr;
 		b_record_ = false;
-	}
-	// 收到启动录像成功响应后再启动读数据线程
-	else if (send_cmd_ == USB_CMD_START_VIDEO_RECORD) {
+	} else if (send_cmd_ == USB_CMD_START_VIDEO_RECORD) { /* 收到启动录像成功响应后再启动读数据线程 */
 		if (ret == INS_OK) {
-			b_record_ = true; //record 不能用send_cmd_来标示，因为录像过程中对时会改变send_cmd_
+			b_record_ = true;   /* record 不能用send_cmd_来标示，因为录像过程中对时会改变send_cmd_ */
 			start_data_read_task();
 		}
 	} else if (send_cmd_ == USB_CMD_GET_LOG_FILE) {
@@ -991,7 +992,7 @@ int32_t usb_camera::read_cmd_rsp(int32_t timeout, int32_t cmd)
 
 	RETURN_IF_NOT_OK(exception_);
 
-	LOGERR("pid:%d read cmd:%x rsp timeout", pid_, rsp_cmd);
+	LOGERR("pid:%d read cmd:%s rsp timeout", pid_, get_cmd_str(rsp_cmd));
 	if (is_exception_cmd(rsp_cmd)) 
 		exception_ = INS_ERR_CAMERA_READ_CMD;
 
@@ -1115,6 +1116,75 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 }
 
 
+const char* usb_camera::get_cmd_str(unsigned int uCmd)
+{
+    switch (uCmd) {
+        CONVNUMTOSTR(USB_CMD_START_VIDEO_RECORD);
+        CONVNUMTOSTR(USB_CMD_STOP_VIDEO_RECORD);
+        CONVNUMTOSTR(USB_CMD_VIDEO_FRAGMENT);
+        CONVNUMTOSTR(USB_CMD_STILL_CAPTURE);
+        CONVNUMTOSTR(USB_CMD_GET_VIDEO_PARAM);
+        
+        CONVNUMTOSTR(USB_CMD_SET_VIDEO_PARAM);
+        CONVNUMTOSTR(USB_CMD_GET_PHOTO_PARAM);
+        CONVNUMTOSTR(USB_CMD_SET_PHOTO_PARAM);
+        CONVNUMTOSTR(USB_CMD_GET_IMAGE_PROPERTY);
+        CONVNUMTOSTR(USB_CMD_SET_IMAGE_PROPERTY);
+
+        CONVNUMTOSTR(USB_CMD_GET_SYSTEM_VERSION);
+        CONVNUMTOSTR(USB_CMD_UPDATE_SYSTEM_START);
+        CONVNUMTOSTR(USB_CMD_UPDATE_SYSTEM_COMPLETE);
+        CONVNUMTOSTR(USB_CMD_REBOOT);
+        CONVNUMTOSTR(USB_CMD_SET_SYSTEM_TIME);
+        
+        CONVNUMTOSTR(USB_CMD_GET_SYSTEM_TIME);
+        CONVNUMTOSTR(USB_CMD_RECEIVE_ERROR_CMD);
+        CONVNUMTOSTR(USB_CMD_ENCRYPT_FAIL);
+        CONVNUMTOSTR(USB_CMD_REQ_RETRANSMIT);
+        CONVNUMTOSTR(USB_CMD_SET_CAMERA_PARAM);
+
+        CONVNUMTOSTR(USB_CMD_GET_CAMERA_PARAM);
+        CONVNUMTOSTR(USB_CMD_FORMAT_FLASH);
+        CONVNUMTOSTR(USB_CMD_STORATE_SPEED_TEST_REQ);
+        CONVNUMTOSTR(USB_CMD_STORATE_SPEED_TEST_IND);
+        CONVNUMTOSTR(USB_CMD_STORAGE_STATE_IND);
+
+        CONVNUMTOSTR(USB_CMD_DELETE_FILE);
+        CONVNUMTOSTR(USB_CMD_SET_UUID);
+        CONVNUMTOSTR(USB_CMD_GET_UUID);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_AWB_REQ);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_AWB_IND);
+
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BP_REQ);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BP_IND);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BPC_REQ);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BPC_IND);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_CS_REQ);
+
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_CS_IND);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BLC_REQ);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BLC_IND);
+        CONVNUMTOSTR(USB_CMD_CALIBRATION_BLC_RESET);
+        CONVNUMTOSTR(USB_CMD_SEND_DATA_RESULT_IND);
+
+        CONVNUMTOSTR(USB_CMD_TEST_SPI);
+        CONVNUMTOSTR(USB_CMD_TEST_CONNECTION);
+        CONVNUMTOSTR(USB_CMD_GET_LOG_FILE);
+        CONVNUMTOSTR(USB_CMD_CHANGE_USB_MODE);
+        CONVNUMTOSTR(USB_CMD_GYRO_CALIBRATION_REQ);
+
+        CONVNUMTOSTR(USB_CMD_GYRO_CALIBRATION_IND);
+        CONVNUMTOSTR(USB_CMD_MAGMETER_CALIBRATION_REQ);
+        CONVNUMTOSTR(USB_CMD_MAGMETER_CALIBRATION_IND);
+        CONVNUMTOSTR(USB_CMD_MAGMETER_CALIBRATION_RES);
+        CONVNUMTOSTR(USB_CMD_VIG_MIN_VALUE_CHANGE);
+
+        CONVNUMTOSTR(USB_CMD_VIG_MIN_VALUE_GET);
+        CONVNUMTOSTR(USB_CMD_VIG_MIN_VALUE_SET);
+    }
+}
+
+
 
 /**********************************************************************************************
  * 函数名称: send_cmd
@@ -1140,8 +1210,9 @@ int32_t usb_camera::send_cmd(uint32_t cmd, std::string content)
 	}
 
 	if (cmd != USB_CMD_SET_SYSTEM_TIME && cmd != USB_CMD_GET_SYSTEM_TIME) {
-		LOGINFO("pid:%d send cmd:%x %s", pid_, cmd, buff);
+		LOGINFO("pid:%d send cmd:%s %s", pid_, get_cmd_str(cmd), buff);
 	}
+
 
 	send_cmd_ = cmd;
 	cmd_result_ = "";

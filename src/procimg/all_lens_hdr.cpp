@@ -8,12 +8,15 @@
 
 using namespace cv;
 
+#if 0
 std::vector<ins_img_frame> all_lens_hdr::process(const std::vector<std::vector<std::string>>& vv_file)
 {
     assert(vv_file.size() == INS_CAM_NUM);
 
     ins_clock t;
     std::future<ins_img_frame> f[INS_CAM_NUM];
+
+	
     for (uint32_t i = 0; i < vv_file.size(); i++) {
         f[i] = std::async(std::launch::async, &all_lens_hdr::single_group_process, this, vv_file[i]);
     }
@@ -29,6 +32,58 @@ std::vector<ins_img_frame> all_lens_hdr::process(const std::vector<std::vector<s
 
     return v_hdr_frame;
 }
+#else
+
+std::vector<ins_img_frame> all_lens_hdr::process(const std::vector<std::vector<std::string>>& vv_file)
+{
+    assert(vv_file.size() == INS_CAM_NUM);
+
+    ins_clock t;
+    std::future<ins_img_frame> f[INS_CAM_NUM];
+#define ARRAY_SIZE(x)   (sizeof(x) / sizeof(x[0]))
+
+#if 1
+	/* 4 - 4 */
+    std::vector<ins_img_frame> v_hdr_frame;
+	uint32_t deal_counts[2] = {4, 4};
+	for (uint32_t j = 0; j < ARRAY_SIZE(deal_counts); j++) {
+	    for (uint32_t i = 0; i < deal_counts[j]; i++) {
+	        f[j*4 + i] = std::async(std::launch::async, &all_lens_hdr::single_group_process, this, vv_file[j*4 + i]);
+	    }		
+
+		for (uint32_t i = 0; i < deal_counts[j]; i++) {
+			auto frame = f[j*4 + i].get();
+			if (frame.buff) 
+				v_hdr_frame.push_back(frame);
+		}
+		LOGINFO("HDR deal one group[%d], cusumer time:%lf", j, t.elapse());
+	}
+#else 
+	/* 3 - 3 - 2 */
+	std::vector<ins_img_frame> v_hdr_frame;
+	uint32_t deal_counts[3] = {3, 3, 2};
+
+	for (uint32_t j = 0; j < ARRAY_SIZE(deal_counts); j++) {
+		for (uint32_t i = 0; i < deal_counts[j]; i++) {
+			f[j*3 + i] = std::async(std::launch::async, &all_lens_hdr::single_group_process, this, vv_file[j*3 + i]);
+		}		
+
+		for (uint32_t i = 0; i < deal_counts[j]; i++) {
+			auto frame = f[j*3 + i].get();
+			if (frame.buff) 
+				v_hdr_frame.push_back(frame);
+		}
+		LOGINFO("HDR deal one group[%d], cusumer time:%lf", j, t.elapse());
+	}
+#endif
+
+    LOGINFO("HDR deal total time:%lf", t.elapse());
+
+    return v_hdr_frame;
+}
+
+#endif
+
 
 ins_img_frame all_lens_hdr::single_group_process(const std::vector<std::string>& v_file)
 {

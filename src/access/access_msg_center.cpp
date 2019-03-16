@@ -428,6 +428,7 @@ void access_msg_center::internal_first_frame_ts(const char* msg, std::string cmd
 	video_mgr_->set_first_frame_ts(rec_seq, ts);
 }
 
+
 void access_msg_center::internal_video_fragment(const char* msg, std::string cmd, int sequence)
 {
 	if (video_mgr_ == nullptr) 
@@ -438,6 +439,7 @@ void access_msg_center::internal_video_fragment(const char* msg, std::string cmd
 	root_obj.get_int("sequence", seq);
 	video_mgr_->notify_video_fragment(seq);
 }
+
 
 void access_msg_center::internal_vig_min_change(const char* msg, std::string cmd, int sequence)
 {
@@ -843,10 +845,10 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 		if (video_mgr_) {
 			ret = video_mgr_->start_preview(opt);
 			BREAK_IF_NOT_OK(ret);
-		} else {
-			OPEN_CAMERA_IF_ERR_BREAK(-1);
-			video_mgr_ = std::make_shared<video_mgr>();
-			ret = video_mgr_->start(camera_.get(), opt);
+		} else {	/* 未启动视频管理器 */
+			OPEN_CAMERA_IF_ERR_BREAK(-1);	/* open_camera - 打开模组 */
+			video_mgr_ = std::make_shared<video_mgr>();		
+			ret = video_mgr_->start(camera_.get(), opt);	/* 启动视频管理器 */
 			if (ret != INS_OK) {
 				do_camera_operation_stop(false); break;
 			}
@@ -860,7 +862,8 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 	DO_WHILE_0_END
 
 	sender_->set_ind_msg_sequece(ACCESS_CMD_PREVIEW_FINISH_, sequence);
-	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
+	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);	/* 回复预览请求完成响应 */
+	
 }
 
 void access_msg_center::stop_preview(const char* msg, std::string cmd, int sequence)

@@ -246,21 +246,18 @@ int32_t cam_manager::set_all_video_param(const cam_video_param& param, const cam
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto r = it.second->set_video_param(param, sec_param);
 		if (r != INS_OK) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
-	for (auto& it : map_cam_)
-	{
+	for (auto& it : map_cam_) {
 		auto f = it.second->wait_cmd_over();
 		v_f.push_back(std::move(f));
 	}
 
-	for (auto& it : v_f)
-	{
+	for (auto& it : v_f) {
 		auto r = it.get();
 		if (r != INS_OK) ret = r;
 	}
@@ -310,6 +307,7 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 
 	return INS_OK;
 }
+
 
 void cam_manager::time_sync_task(bool b_record)
 {
@@ -385,7 +383,7 @@ int cam_manager::stop_all_video_rec()
 	}
 
 	for (auto& it : map_f) {
-		auto r = it.second.get();s
+		auto r = it.second.get();
 		if (r != INS_OK) ret = r;
 		if (r == INS_ERR_M_UNSPEED_STORAGE) {
 			if (s_unspeed_pid != "") s_unspeed_pid += "_";

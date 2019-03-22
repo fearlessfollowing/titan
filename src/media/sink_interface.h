@@ -32,6 +32,7 @@ struct ins_video_param {
 	std::shared_ptr<insbuff> config;
 };
 
+
 class sink_interface : public gps_sink, public gyro_sink {
 public:
 	virtual 		~sink_interface() {};

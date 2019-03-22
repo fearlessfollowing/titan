@@ -191,6 +191,15 @@ int32_t usb_camera::start_still_capture(const cam_photo_param& param, std::share
 }
 
 
+
+/**********************************************************************************************
+ * 函数名称: set_video_param
+ * 功能秒数: 设置录像参数
+ * 参   数: 
+ *		param - 第一路流的视频参数
+ *		sec_param - 第二路流的视频参数
+ * 返 回 值: 成功返回INS_OK; 失败返回错误码(见inserr.h)
+ *********************************************************************************************/
 int32_t usb_camera::set_video_param(const cam_video_param& param, const cam_video_param* sec_param)
 {
 	std::stringstream url;
@@ -243,6 +252,16 @@ int32_t usb_camera::set_video_param(const cam_video_param& param, const cam_vide
 	return send_cmd(USB_CMD_SET_VIDEO_PARAM, obj.to_string());
 }
 
+
+
+/**********************************************************************************************
+ * 函数名称: get_video_param
+ * 功能秒数: 获取录像参数
+ * 参   数: 
+ *		param - 第一路流的视频参数
+ *		sec_param - 第二路流的视频参数
+ * 返 回 值: 成功返回INS_OK; 失败返回错误码(见inserr.h)
+ *********************************************************************************************/
 int32_t usb_camera::get_video_param(cam_video_param& param, std::shared_ptr<cam_video_param>& sec_param)
 {
 	auto ret = send_cmd(USB_CMD_GET_VIDEO_PARAM);
@@ -296,6 +315,16 @@ int32_t usb_camera::get_video_param(cam_video_param& param, std::shared_ptr<cam_
 	return INS_OK;
 }
 
+
+
+/**********************************************************************************************
+ * 函数名称: set_photo_param
+ * 功能秒数: 设置拍照参数
+ * 参   数: 
+ *		param - 第一路流的视频参数
+ *		sec_param - 第二路流的视频参数
+ * 返 回 值: 成功返回INS_OK; 失败返回错误码(见inserr.h)
+ *********************************************************************************************/
 int32_t usb_camera::set_photo_param(const cam_photo_param& param)
 {
 	std::stringstream url;
@@ -494,6 +523,15 @@ int32_t usb_camera::set_param(std::string property, int32_t value)
 	return send_cmd(USB_CMD_SET_CAMERA_PARAM, obj.to_string());
 }
 
+
+
+/**********************************************************************************************
+ * 函数名称: get_version
+ * 功能秒数: 获取模组的版本号
+ * 参   数: 
+ *		version - 存储模组的版本号信息
+ * 返 回 值: 成功返回INS_OK; 失败返回错误码(见inserr.h)
+ *********************************************************************************************/
 int32_t usb_camera::get_version(std::string& version)
 {
 	auto ret = send_cmd(USB_CMD_GET_SYSTEM_VERSION, "");
@@ -857,6 +895,7 @@ int32_t usb_camera::calibration_awb_req(int32_t x, int32_t y, int32_t r, std::st
 
 	return INS_OK;
 }
+
 
 int32_t usb_camera::calibration_bpc_req()
 {
@@ -1492,6 +1531,8 @@ int32_t usb_camera::read_data()
 	}
 }
 
+
+
 void usb_camera::queue_pic_raw(const std::shared_ptr<insbuff>& buff, int32_t sequece, bool b_end, int64_t timestamp)
 {
 	raw_buff_.push_back(buff);
@@ -1618,6 +1659,8 @@ void usb_camera::queue_video(const std::shared_ptr<page_buffer>& buff, uint8_t f
 	if (video_buff_) 
 		video_buff_->queue_frame(index_, frame);
 }
+
+
 
 int32_t usb_camera::send_data_by_ep_cmd(uint8_t* data, uint32_t size) //命令通道发送数据:老通道,以前没有用到数据通道
 {
@@ -1787,6 +1830,7 @@ void usb_camera::pre_process_timestamp(uint32_t sequence, int64_t timestamp)
 	}
 	sequence_cur_ = sequence; //record cur sequence_
 }
+
 
 void usb_camera::parse_nal_pos(const uint8_t* data, uint32_t data_size, uint8_t nal_type, int32_t& start_pos, int32_t& size)
 {

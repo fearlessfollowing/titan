@@ -92,12 +92,20 @@ void video_mgr::switch_stablz(bool enable)
 }
 
 
+
+/***********************************************************************************************
+** 函数名称: close_camera
+** 函数功能: 关闭模组
+** 入口参数:
+** 返 回 值: 无
+*************************************************************************************************/
 int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 {
     camera_ 	= camera;
 	audio_type_ = option.audio.type;
 	prj_path_ 	= option.prj_path;
-    
+
+	LOGINFO("------- video_mgr start, options as follow: -------");
     print_option(option);
 
 	video_composer::init_cuda();
@@ -140,6 +148,9 @@ int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 
 
 	if (prj_path_ != "" && option.origin.storage_mode != INS_STORAGE_MODE_NONE) {
+
+    	LOGINFO("prj_path_: %s, origin.storage_mode = %d", prj_path_.c_str(), option.origin.storage_mode);
+		
 		prj_file_mgr::updata_video_info(prj_path_, &video_param_);	/* 更新工程文件 */
 
 		if (aux_param_ && storage_aux) {
@@ -159,7 +170,7 @@ int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 			!storage_aux);
 	}
 
-    LOGINFO("video mgr start");
+    LOGINFO("------- video mgr start over -------");
 
 	return INS_OK;
 }
@@ -277,13 +288,14 @@ void video_mgr::stop_live_file()
 int32_t video_mgr::open_composer(const ins_video_option& option, bool preview) // 这个preview只用来区分offset使用哪个
 {
 	uint32_t ori_w, ori_h, ori_fps;
+	
 	if (aux_param_ && aux_param_->b_usb_stream) {
-		ori_w = aux_param_->width;
-		ori_h = aux_param_->height;
+		ori_w 	= aux_param_->width;
+		ori_h 	= aux_param_->height;
 		ori_fps = aux_param_->framerate;
 	} else {
-		ori_w = option.origin.width;
-		ori_h = option.origin.height;
+		ori_w 	= option.origin.width;
+		ori_h 	= option.origin.height;
 		ori_fps = option.origin.framerate;
 	}
 
@@ -383,6 +395,7 @@ int32_t video_mgr::open_composer(const ins_video_option& option, bool preview) /
 }
 
 
+
 void video_mgr::open_usb_sink(std::string prj_path)
 {
 	std::string filename = prj_path + "/" + INS_PROJECT_FILE;
@@ -439,7 +452,8 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 		v_index.push_back(i);
 	}
 	
-	std::string path = option.b_to_file ? option.path : ""; //老化不存文件，也不存陀螺仪数据
+	std::string path = option.b_to_file ? option.path : ""; /* 老化不存文件，也不存陀螺仪数据 */
+
 	video_buff_ = std::make_shared<all_cam_video_buff>(v_index, path);
 
 	std::map<int32_t,std::shared_ptr<cam_video_buff_i>> m_queue;
@@ -515,12 +529,20 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 	ret = camera_->get_video_param(video_param_, aux_param_); //设置的参数可能和实际设置的不一样，要获取一次
 	RETURN_IF_NOT_OK(ret);
 	
-	// rolling_shutter_time_ = param.rolling_shutter_time;
-	// gyro_delay_time_ = param.gyro_delay_time;
-	// gyro_orientation_ = param.gyro_orientation;
-	// crop_flag_ = param.crop_flag;
+	/*
+	 * width x height x framerate x bitdepth x hdr
+	 */
 
+#if 0
 	video_param_.gyro_delay_time = xml_config::get_gyro_delay_time(video_param_.width, video_param_.height, video_param_.framerate, video_param_.hdr);
+#else 
+	video_param_.gyro_delay_time = xml_config::get_gyro_delay_time(video_param_.width, 
+																	video_param_.height, 
+																	video_param_.framerate, 
+																	video_param_.bitdepth,
+																	video_param_.hdr);
+	LOGINFO("r_%dx%d_%d_%d, delay = %d", video_param_.width, video_param_.height, video_param_.framerate, video_param_.bitdepth, video_param_.hdr);
+#endif
 
 	if (local_sink_) {	// 存陀螺仪数据
 		auto sink = std::static_pointer_cast<gyro_sink>(local_sink_);
@@ -543,11 +565,12 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 	return INS_OK;
 }
 
+
 void video_mgr::open_origin_stream(const ins_video_option& option)
 {
 	ins_video_param video_param;
 	video_param.mime = INS_H264_MIME;  //now origin all be h264
-	if (aux_param_ && aux_param_->b_usb_stream) {	// 存辅码流
+	if (aux_param_ && aux_param_->b_usb_stream) {	/* 存辅码流 */
 		video_param.width = aux_param_->width;
 		video_param.height = aux_param_->height;
 		video_param.bitrate = aux_param_->bitrate;
@@ -560,6 +583,7 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 	}
 
 	std::map<uint32_t, std::shared_ptr<sink_interface>> map_sink;
+
 	for (uint32_t i = 0; i < INS_CAM_NUM; i++) {
 		std::stringstream ss;
 
@@ -574,18 +598,18 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 		auto sink = std::make_shared<stream_sink>(ss.str());
 		sink->set_video(true);
 		sink->set_fragment(b_frag_, true); 
-		if (option.origin.live_prefix != "") {	// 原始流直播
+		if (option.origin.live_prefix != "") {	/* 原始流直播 */
 			sink->set_live(true);
 		} else {
 			if (option.b_override) sink->set_override(true);
 			if (!option.b_to_file) sink->set_just_last_frame(true);
 		}
 		
-		if (option.index != -1 && camera_->get_pid(i) != option.index) { // 单镜头录像，其他镜头不存文件
+		if (option.index != -1 && camera_->get_pid(i) != option.index) { /* 单镜头录像，其他镜头不存文件 */
 			sink->set_just_last_frame(true);
 		}
 		
-		//单镜头录像的时候存在对应镜头，非单镜头录像存在6号镜头
+		/* 单镜头录像的时候存在对应镜头，非单镜头录像存在6号镜头 */
 		if ((option.index != -1 && camera_->get_pid(i) == option.index) 
 			|| (option.index == -1 && i == 0)) {
 			sink->set_origin_key(true);
@@ -604,6 +628,7 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 	std::shared_ptr<all_cam_queue_i> origin_stream = std::make_shared<all_cam_origin_stream>(map_sink, video_param);
 	video_buff_->add_output(VIDEO_BUFF_INDEX_ORIGIN, origin_stream);
 }
+
 
 
 void video_mgr::audio_vs_sink(std::shared_ptr<stream_sink>& sink, uint32_t index, bool is_origin)

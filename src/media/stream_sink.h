@@ -143,8 +143,7 @@ private:
 	void 		do_reconnect();
 	int 		do_mux_error(bool b_open);
 
-	int32_t camm_tracks()
-	{
+	int32_t camm_tracks() {
 		int32_t num = 0;
 		if (b_gyro_ || b_exp_) num++;
 		if (b_gps_) num++;

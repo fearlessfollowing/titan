@@ -69,6 +69,9 @@ public:
 	static int set_gyro_rotation(const std::vector<double>& quat);
 	static int get_gyro_rotation(std::vector<double>& quat);
 	static int get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, bool hdr = false);
+
+	static int get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, int32_t bit_depth = 8, bool hdr = false);
+
 	static int get_value(const char* firstname, const char* secondname, int& value);
 	static int get_value(const char* firstname, const char* secondname, float& value);
 	static int get_value(const char* firstname, const char* secondname, double& value);

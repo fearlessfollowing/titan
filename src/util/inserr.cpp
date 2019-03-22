@@ -3,8 +3,7 @@
 
 std::string inserr_to_str(int err)
 {
-    switch (err)
-    {
+    switch (err) {
         case INS_OK:
             return "success";
         case INS_ERR_INVALID_MSG_FMT:

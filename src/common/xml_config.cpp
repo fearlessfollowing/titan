@@ -452,6 +452,70 @@ std::string xml_config::get_offset(int32_t crop_flag, int32_t type)
 	return offset;
 }
 
+int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, int32_t bit_depth, bool hdr)
+{
+	LOGINFO("--- use new get_gyro_delay_time method update by skymixos");
+	
+    static std::unordered_map<std::string, int32_t> default_delay = {
+        {"r_5280x2972_30", 		-7041},			// 11K_30F
+        {"r_4800x3072_30", 		-5995},			// 10K_3D_30F
+        {"r_3840x2880_30_10", 	-8881},			// 8K_3D_30F_10bit
+        {"r_3840x2880_30", 		-8431},			// 8K_3D_30F
+        {"r_3840x2880_50", 		-3089},			// 8K_3D_50F
+        {"r_3840x2160_60", 		1599},			// 8K_60F
+		{"r_2624x1486_120", 	3126},			// 5.2K_120F
+		{"r_2560_1440_30", 		113500},
+        {"r_1920x1440_30", 		115000},
+        {"r_1920x1440_120", 	27000},
+		{"r_3840x2880_30_hdr", 	93000},
+		{"r_1920x1440_30_hdr", 	93000},
+		{"r_2560_1920_30_hdr", 	93000},
+    };
+
+    std::stringstream ss;
+    ss << "r_" << w << "x" << h << "_" << framerate;
+	
+	if (bit_depth == 10) ss << "_10";
+	
+	if (hdr) ss << "_hdr";
+
+    int32_t delay;
+    auto it = default_delay.find(ss.str());
+    if (it == default_delay.end()) {
+        delay = 78000;
+    } else {
+        delay = it->second;
+    }
+
+	/* 如果配置文件中有对应的项,使用配置文件中的延时值 */
+    XMLDocument xml_doc;
+	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_DELAY_XML)) {
+		LOGERR("load %s fail:%s", INS_GYRO_DELAY_XML, xml_doc.ErrorName());
+		return delay;
+	}
+
+	auto e_root = xml_doc.RootElement();
+	if (!e_root) {
+		LOGERR("cann't find root in %s", INS_GYRO_DELAY_XML);
+		return delay;
+	}
+
+	auto e_res = e_root->FirstChildElement(ss.str().c_str());
+	if (!e_res) {
+		LOGERR("cann't find %s element in %s", ss.str().c_str(), INS_GYRO_DELAY_XML);
+		return delay;
+	}
+
+	if (e_res->QueryAttribute("delay", &delay) == XML_NO_ERROR) {
+	    LOGINFO("------- from config file %s delay: %d", ss.str().c_str(), delay);
+	} else {
+	    LOGINFO("------- from default config %s delay: %d", ss.str().c_str(), delay);
+	}
+
+    return delay;
+}
+
+
 
 int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, bool hdr)
 {
@@ -484,6 +548,7 @@ int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, boo
         delay = it->second;
     }
 
+	/* 如果配置文件中有对应的项,使用配置文件中的延时值 */
     XMLDocument xml_doc;
 	if (XML_NO_ERROR != xml_doc.LoadFile(INS_GYRO_DELAY_XML)) {
 		LOGERR("load %s fail:%s", INS_GYRO_DELAY_XML, xml_doc.ErrorName());
@@ -502,9 +567,11 @@ int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, boo
 		return delay;
 	}
 
-	e_res->QueryAttribute("delay", &delay);
-
-    //LOGINFO("-------%s delay:%d", ss.str().c_str(), delay);
+	if (e_res->QueryAttribute("delay", &delay) == XML_NO_ERROR) {
+	    LOGINFO("------- from config file %s delay: %d", ss.str().c_str(), delay);
+	} else {
+	    LOGINFO("------- from default config %s delay: %d", ss.str().c_str(), delay);
+	}
 
     return delay;
 }

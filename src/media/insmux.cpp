@@ -8,38 +8,33 @@ void ins_mux::close()
 {	
 	if (ctx_ == nullptr) return;
 
-	if (b_head_write_)
-	{
+	if (b_head_write_) {
 		int ret = av_write_trailer(ctx_);
 		if (ret < 0) LOGINFO("write tail fail:%d %s", ret, FFERR2STR(ret));
 	}
 
-	if (video_stream_ && video_stream_->codec->extradata)
-	{
+	if (video_stream_ && video_stream_->codec->extradata) {
 		delete[] video_stream_->codec->extradata;
 		video_stream_->codec->extradata = nullptr;
 	}
 
-	if (audio_stream_ && audio_stream_->codec->extradata)
-	{
+	if (audio_stream_ && audio_stream_->codec->extradata) {
 		delete[] audio_stream_->codec->extradata;
 		audio_stream_->codec->extradata = nullptr;
 	}
 
-	if (ctx_->pb != nullptr) //rtsp hls没有pb
-	{
+	if (ctx_->pb != nullptr) {	//rtsp hls没有pb
 		LOGINFO("mux:%s pos:%lld", ctx_->filename, ctx_->pb->pos);
 	}
 
-	if (!(ctx_->oformat->flags & AVFMT_NOFILE)) avio_closep(&ctx_->pb);
+	if (!(ctx_->oformat->flags & AVFMT_NOFILE)) 
+		avio_closep(&ctx_->pb);
 
-	if (video_stream_ && video_stream_->codec)
-	{
+	if (video_stream_ && video_stream_->codec) {
 		avcodec_close(video_stream_->codec);
 	}
 
-	if (audio_stream_ && audio_stream_->codec)
-	{
+	if (audio_stream_ && audio_stream_->codec) {
 		avcodec_close(audio_stream_->codec);
 	}
 
@@ -54,14 +49,12 @@ int ins_mux::open(const ins_mux_param& param, const char* url)
 {
 	int ret = 0;
 
-	if (!url)
-	{
+	if (!url) {
 		LOGERR("mux url is null");
 		return INS_ERR;
 	}
 
-	if (!param.has_video && !param.has_audio && !param.camm_tracks)
-	{
+	if (!param.has_video && !param.has_audio && !param.camm_tracks) {
 		LOGERR("video audio camm no exist");
 		return INS_ERR;
 	}
@@ -73,53 +66,43 @@ int ins_mux::open(const ins_mux_param& param, const char* url)
 	bool flush_packet;
 	get_stream_info_from_url(url, format, protocal, flush_packet);
 	avformat_alloc_output_context2(&ctx_, nullptr, format.c_str(), url);
-	if (!ctx_)
-	{
+	if (!ctx_) {
 		LOGERR("Could not deduce output format from file extension");
 		return INS_ERR;
 	}
 
 	//private data
-	if (format == "hls")
-	{
+	if (format == "hls") {
 		av_opt_set(ctx_->priv_data,  "hls_list_size", "10", 0);
 		av_opt_set(ctx_->priv_data,  "hls_time", "2", 0);
 		av_opt_set(ctx_->priv_data,  "hls_wrap", "30", 0);
-	}
-	else if (format == "rtsp")
-	{
+	} else if (format == "rtsp") {
 		av_opt_set(ctx_->priv_data,  "rtsp_transport", "tcp", 0);
 		av_opt_set(ctx_->priv_data,  "stimeout", "3000000", 0); //io timeout
-	}
-	else if (format == "dash")
-	{
+	} else if (format == "dash") {
 		av_opt_set(ctx_->priv_data,  "window_size", "20", 0);
 		av_opt_set(ctx_->priv_data,  "min_seg_duration", "2000", 0); 
 		av_opt_set(ctx_->priv_data,  "remove_at_exit", "1", 0);
 	}
 
 	//add stream
-	if (param.has_video)
-	{
+	if (param.has_video) {
 		ret = init_video(param);
 		if (ret != INS_OK) return ret;
 	}
 
-	if (param.has_audio)
-	{
+	if (param.has_audio) {
 		ret = init_audio(param);
 		if (ret != INS_OK) return ret;
 	}
 
-	for (int32_t i = 0; i < param.camm_tracks; i++)
-	{
+	for (int32_t i = 0; i < param.camm_tracks; i++) {
 		ret = init_camm(param);
 		if (ret != INS_OK) return ret;
 	}
 
 	//set metadata
-	if (param.gps_metadata != "")
-	{
+	if (param.gps_metadata != "") {
 		av_dict_set(&ctx_->metadata, "xmp", param.gps_metadata.c_str(), 0);
 	}
 
@@ -136,11 +119,9 @@ int ins_mux::open(const ins_mux_param& param, const char* url)
 	av_dict_set(&ctx_->metadata, "description", sf.c_str(), 0);
 
 	//open file
-	if (!(ctx_->oformat->flags & AVFMT_NOFILE))
-	{
+	if (!(ctx_->oformat->flags & AVFMT_NOFILE)) {
 		AVDictionary* io_opts = nullptr;
-		for (auto it = param.io_options.begin(); it != param.io_options.end(); it++)
-		{
+		for (auto it = param.io_options.begin(); it != param.io_options.end(); it++) {
 			av_dict_set(&io_opts, it->first.c_str(), it->second.c_str(), 0);
 		}
 
@@ -354,22 +335,18 @@ int ins_mux::write(ins_mux_frame& frame)
 	pkt.dts = frame.dts;
 	pkt.duration = frame.duration;
 
-	if (frame.media_type == INS_MEDIA_AUDIO)
-	{
+	if (frame.media_type == INS_MEDIA_AUDIO) {
 		if (!audio_stream_) return INS_OK;
 		pkt.stream_index = audio_stream_->index;
 		av_packet_rescale_ts(&pkt, audio_src_ts_, audio_stream_->time_base);
 		//LOGINFO("write audio pts:%lld dts:%lld duration:%lld", frame.pts, frame.dts, frame.duration);
-	}
-	else if (frame.media_type == INS_MEDIA_VIDEO)
-	{
+	} else if (frame.media_type == INS_MEDIA_VIDEO) {
 		if (!video_stream_) return INS_OK;
 		pkt.stream_index = video_stream_->index;
 		if (frame.b_key_frame) pkt.flags |= AV_PKT_FLAG_KEY;
 		av_packet_rescale_ts(&pkt, video_src_ts_, video_stream_->time_base);
 		//LOGINFO("write video pts:%lld dts:%lld duration:%lld", frame.pts, frame.dts, frame.duration);
-	}
-	else if (frame.media_type == INS_MEDIA_CAMM_GPS) //GPS写在后一个camm track
+	} else if (frame.media_type == INS_MEDIA_CAMM_GPS) //GPS写在后一个camm track
 	{
 		if (v_camm_stream_.empty()) return INS_OK;
 		auto stream = v_camm_stream_.back();
@@ -408,9 +385,7 @@ int ins_mux::write(ins_mux_frame& frame)
 	{
 		LOGINFO("write media:%d pts:%lld last:%lld size:%d fail:%d %s", frame.media_type,frame.pts,last_camm_pts_,frame.size,ret, FFERR2STR(ret));
 		return INS_ERR;
-	}
-	else
-	{
+	} else {
 		if(ctx_->pb) frame.position = ctx_->pb->pos;
 		//if (frame_flush_ && ctx_->pb) avio_flush(ctx_->pb); //网络流要flush 保证低延时，文件流不能刷新，不然写性能下降
 		return INS_OK;
@@ -419,49 +394,37 @@ int ins_mux::write(ins_mux_frame& frame)
 
 void ins_mux::flush()
 {
-	if (ctx_->pb) avio_flush(ctx_->pb);
+	if (ctx_->pb) 
+		avio_flush(ctx_->pb);
 }
 
 void ins_mux::get_stream_info_from_url(std::string url, std::string& format, std::string& protocal, bool& flush_packet)
 {
-	if (std::string::npos != url.find("rtmp", 0))
-	{
+	if (std::string::npos != url.find("rtmp", 0)) {
 		format = "flv";
 		protocal = "rtmp";
 		flush_packet = true;
-	}
-	else if (std::string::npos != url.find("udp", 0))
-	{
+	} else if (std::string::npos != url.find("udp", 0)) {
 		format = "mpegts";
 		protocal = "udp";
 		flush_packet = true;
-	}
-	else if (std::string::npos != url.find("tcp", 0))
-	{
+	} else if (std::string::npos != url.find("tcp", 0)) {
 		format = "mpegts";
 		protocal = "tcp";
 		flush_packet = true;
-	}
-	else if (std::string::npos != url.find("m3u8", 0))
-	{
+	} else if (std::string::npos != url.find("m3u8", 0)) {
 		format = "hls"; //hls 不能每帧都flush
 		protocal = "http";
 		flush_packet = false;
-	}
-	else if (std::string::npos != url.find("rtsp", 0))
-	{
+	} else if (std::string::npos != url.find("rtsp", 0)) {
 		format = "rtsp";
 		protocal = "rtsp";
 		flush_packet = false;
-	}
-	else if (std::string::npos != url.find("mpd", 0))
-	{
+	} else if (std::string::npos != url.find("mpd", 0)) {
 		format = "dash";
 		protocal = "http";
 		flush_packet = false;
-	}
-	else
-	{
+	} else {
 		protocal = "file";
 		format = "mp4";
 		flush_packet = false;

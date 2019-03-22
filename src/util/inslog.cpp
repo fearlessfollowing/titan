@@ -23,8 +23,7 @@ ins_log::ins_log(std::string path, std::string name, bool stdout)
 	name_ = name;
 	stdout_ = stdout;
 
-	if (access(path_.c_str(), 0))
-	{
+	if (access(path_.c_str(), 0)) {
 		std::string cmd = "mkdir -p " + path_;
         system(cmd.c_str());
 	}
@@ -32,16 +31,14 @@ ins_log::ins_log(std::string path, std::string name, bool stdout)
 	std::string file_name = path_ +  "/" + name_;
 	
 	fp_ = fopen(file_name.c_str(), "a+");
-	if (!fp_)
-	{
+	if (!fp_) {
 		printf("open log file fail\n");
 	}
 }
 
 ins_log::~ins_log()
 {	
-	if (fp_)
-	{
+	if (fp_) {
 		fclose(fp_);
 		fp_ = nullptr;
 	}
@@ -53,8 +50,7 @@ void ins_log::log(unsigned char level, const char* file, int line, const char* f
 {	
 	static char LogLevelString[][10] = {"ERROR", "INFO ", "DEBUG"};
 
-	if (level > level_)
-	{
+	if (level > level_) {
 		return;
 	}
 
@@ -67,9 +63,8 @@ void ins_log::log(unsigned char level, const char* file, int line, const char* f
 	gettimeofday(&tv, nullptr);
 	struct tm *tmt = localtime(&tv.tv_sec);
 
-	if (stdout_)
-	{
-		printf("%04d-%02d-%02d %02d:%02d:%02d:%06ld %s ", 
+	if (stdout_) {
+		printf("%04d-%02d-%02d %02d:%02d:%02d:%06ld %s [%s: %d]", 
 			tmt->tm_year + 1900,
 			tmt->tm_mon + 1,
 			tmt->tm_mday,
@@ -77,19 +72,20 @@ void ins_log::log(unsigned char level, const char* file, int line, const char* f
 			tmt->tm_min,
 			tmt->tm_sec,
 			tv.tv_usec,
-			LogLevelString[level]);
+			LogLevelString[level],
+			file,
+			line);
 
 		va_start(arg, fmt);	
 		vprintf(fmt, arg);
 		va_end(arg);
 		
-		printf(" %s:%d\n", file, line);
+		printf("\n");
 	}
 
 	/* to log file */
-	if (fp_)
-	{
-		fprintf(fp_, "%04d-%02d-%02d %02d:%02d:%02d:%06ld %s ",
+	if (fp_) {
+		fprintf(fp_, "%04d-%02d-%02d %02d:%02d:%02d:%06ld %s [%s:%d]",
 			tmt->tm_year + 1900,
 			tmt->tm_mon + 1,
 			tmt->tm_mday,
@@ -97,7 +93,9 @@ void ins_log::log(unsigned char level, const char* file, int line, const char* f
 			tmt->tm_min,
 			tmt->tm_sec,
 			tv.tv_usec,
-			LogLevelString[level]);
+			LogLevelString[level],
+			file,
+			line);
 
 		/* log content */
 		va_start(arg, fmt);
@@ -105,7 +103,7 @@ void ins_log::log(unsigned char level, const char* file, int line, const char* f
 		va_end(arg);
 
 		/* log file */
-		fprintf(fp_, " %s:%d\n", file, line);
+		fprintf(fp_, "\n");
 
 		fflush(fp_);
 
@@ -118,13 +116,11 @@ void ins_log::log_file_change()
 	std::string origfile = path_ + "/" + name_;
 
 	struct stat statbuff;  
-	if (stat(origfile.c_str(), &statbuff) < 0)
-	{  
+	if (stat(origfile.c_str(), &statbuff) < 0) {  
 		return;  
 	}
 
-	if (statbuff.st_size  < (int)file_size_)
-	{
+	if (statbuff.st_size  < (int)file_size_) {
 		return;
 	}
 
@@ -149,8 +145,7 @@ void ins_log::log_file_change()
 	rename(origfile.c_str(), newfile.str().c_str());
 
 	fp_ = fopen(origfile.c_str(), "a+");
-	if (!fp_)
-	{
+	if (!fp_) {
 		printf("open log file fail\n");
 	}
 
@@ -162,8 +157,7 @@ void ins_log::erase_log_file()
 	if (disk_available_size(path_.c_str()) > 1024) return;
 
 	DIR* dir = opendir(path_.c_str());
-	if (dir == nullptr)
-	{
+	if (dir == nullptr) {
 		printf("open dir fail\n");
 		return;
 	}
@@ -171,11 +165,9 @@ void ins_log::erase_log_file()
 	std::string prefix = name_ + "_";
 	std::vector<std::string> v_e;
 	struct dirent *ptr = nullptr;
-	while ((ptr = readdir(dir)) != nullptr)
-	{
+	while ((ptr = readdir(dir)) != nullptr) {
 		std::string e = ptr->d_name;
-		if (e.find(prefix, 0) == 0)
-		{
+		if (e.find(prefix, 0) == 0) {
 			v_e.push_back(e);
 		}
 	}
@@ -186,8 +178,7 @@ void ins_log::erase_log_file()
 
 	sort(v_e.begin(), v_e.end());
 
-	for (unsigned int i = 0; (i < v_e.size())&&(i < 2); i++)
-	{
+	for (unsigned int i = 0; (i < v_e.size())&&(i < 2); i++) {
 		std::string file_name = path_ + "/" + v_e[i];
 		remove(file_name.c_str());
 		printf("remove log file:%s\n", file_name.c_str());
@@ -197,8 +188,7 @@ void ins_log::erase_log_file()
 unsigned int ins_log::disk_available_size(const char* path)
 {
 	struct statfs diskInfo;  
-    if (statfs(path, &diskInfo))
-    {
+    if (statfs(path, &diskInfo)) {
         LOGERR("statfs fail");
         return 0;
     }  

@@ -43,6 +43,7 @@ std::shared_ptr<access_msg_receiver> access_msg_center::receiver_ = nullptr;
 std::shared_ptr<access_msg_sender> access_msg_center::sender_ = nullptr; 
 uint32_t access_msg_center::state_ = 0;
 
+
 #define INS_REG_ACCESS_MSG(msg, func) handler_[msg] = std::bind(func, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
 
@@ -105,41 +106,41 @@ void access_msg_center::register_all_msg()
 	 * stitching box消息
 	 */
 	#if 0
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_BOX, &access_msg_center::s_start_box)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_BOX, &access_msg_center::s_stop_box)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_QUERY_TASK_LIST, &access_msg_center::s_query_task_list)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_TASK_LIST, &access_msg_center::s_start_task_list)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_TASK_LIST, &access_msg_center::s_stop_task_list)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_ADD_TASK, &access_msg_center::s_add_task)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_DELETE_TASK, &access_msg_center::s_delete_task)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_TASK, &access_msg_center::s_start_task)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_TASK, &access_msg_center::s_stop_task)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_UPDATE_TASK, &access_msg_center::s_update_task)
-	INS_REG_ACCESS_MSG(ACCESS_CMD_S_QUERY_TASK, &access_msg_center::s_query_task)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_BOX, 				&access_msg_center::s_start_box)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_BOX, 				&access_msg_center::s_stop_box)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_QUERY_TASK_LIST, 		&access_msg_center::s_query_task_list)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_TASK_LIST, 		&access_msg_center::s_start_task_list)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_TASK_LIST, 		&access_msg_center::s_stop_task_list)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_ADD_TASK, 				&access_msg_center::s_add_task)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_DELETE_TASK, 			&access_msg_center::s_delete_task)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_START_TASK, 			&access_msg_center::s_start_task)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_STOP_TASK, 				&access_msg_center::s_stop_task)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_UPDATE_TASK, 			&access_msg_center::s_update_task)
+	INS_REG_ACCESS_MSG(ACCESS_CMD_S_QUERY_TASK, 			&access_msg_center::s_query_task)
 	#endif
 	
 	/*
 	 * 进程内部消息
 	 */
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_FIFO_CLOSE, &access_msg_center::internal_fifo_close)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_SINK_FINISH, &access_msg_center::internal_sink_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_PIC_FINISH, &access_msg_center::internal_pic_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_QR_SCAN_FINISH, &access_msg_center::internal_qr_scan_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_PIC_ORIGIN_F, &access_msg_center::internal_pic_origin_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_STORAGE_ST_F, &access_msg_center::internal_storage_st_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_FIFO_CLOSE, 		&access_msg_center::internal_fifo_close)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_SINK_FINISH, 		&access_msg_center::internal_sink_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_PIC_FINISH, 		&access_msg_center::internal_pic_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_QR_SCAN_FINISH, 	&access_msg_center::internal_qr_scan_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_PIC_ORIGIN_F, 		&access_msg_center::internal_pic_origin_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_STORAGE_ST_F, 		&access_msg_center::internal_storage_st_finish)
 	INS_REG_ACCESS_MSG(INTERNAL_CMD_GYRO_CALIBRATION_F, &access_msg_center::internal_gyro_calibration_finish)
 	INS_REG_ACCESS_MSG(INTERNAL_CMD_MAGMETER_CALIBRATION_F, &access_msg_center::internal_magmeter_calibration_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_CAPTURE_AUDIO_F, &access_msg_center::internal_capture_audio_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_STOP_REC_F, &access_msg_center::internal_stop_rec_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_STOP_LIVE_F, &access_msg_center::internal_stop_live_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_RESET, &access_msg_center::internal_reset)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_BLC_CAL_F, &access_msg_center::internal_blc_calibration_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_BPC_CAL_F, &access_msg_center::internal_bpc_calibration_finish)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_SND_DEV_CHANGE, &access_msg_center::internal_snd_dev_change)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_FIRST_FRAME_TS, &access_msg_center::internal_first_frame_ts)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_VIDEO_FRAGMENT, &access_msg_center::internal_video_fragment)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_VIG_MIN_CHANGE, &access_msg_center::internal_vig_min_change)
-	INS_REG_ACCESS_MSG(INTERNAL_CMD_DEL_FILE_F, &access_msg_center::internal_delete_file_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_CAPTURE_AUDIO_F, 	&access_msg_center::internal_capture_audio_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_STOP_REC_F, 		&access_msg_center::internal_stop_rec_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_STOP_LIVE_F, 		&access_msg_center::internal_stop_live_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_RESET, 				&access_msg_center::internal_reset)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_BLC_CAL_F, 			&access_msg_center::internal_blc_calibration_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_BPC_CAL_F, 			&access_msg_center::internal_bpc_calibration_finish)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_SND_DEV_CHANGE, 	&access_msg_center::internal_snd_dev_change)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_FIRST_FRAME_TS, 	&access_msg_center::internal_first_frame_ts)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_VIDEO_FRAGMENT, 	&access_msg_center::internal_video_fragment)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_VIG_MIN_CHANGE, 	&access_msg_center::internal_vig_min_change)
+	INS_REG_ACCESS_MSG(INTERNAL_CMD_DEL_FILE_F, 		&access_msg_center::internal_delete_file_finish)
 }
 
 
@@ -301,6 +302,7 @@ void access_msg_center::internal_stop_rec_finish(const char* msg, std::string cm
 	state_ &= ~CAM_STATE_STOP_RECORD;
 }
 
+
 void access_msg_center::internal_stop_live_finish(const char* msg, std::string cmd, int sequence)
 {
 	INS_THREAD_JOIN(th_);
@@ -324,6 +326,8 @@ void access_msg_center::internal_stop_live_finish(const char* msg, std::string c
 		LOGERR("revc internal_stop_live_finish but not in stop live state");
 	}
 }
+
+
 
 void access_msg_center::internal_sink_finish(const char* msg, std::string cmd, int sequence)
 {
@@ -496,6 +500,8 @@ void access_msg_center::internal_pic_finish(const char* msg, std::string cmd, in
 	}
 }
 
+
+
 void access_msg_center::get_option(const char* msg, std::string cmd, int sequence)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -603,6 +609,8 @@ void access_msg_center::get_option(const char* msg, std::string cmd, int sequenc
 
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 }
+
+
 
 int access_msg_center::set_one_option(std::string property, int value, const std::string& value2)
 {
@@ -716,6 +724,8 @@ int access_msg_center::set_one_option(std::string property, int value, const std
 	return ret;
 }
 
+
+
 void access_msg_center::set_option(const char* msg, std::string cmd, int sequence)
 {
 	std::map<std::string, int> opt;
@@ -768,6 +778,8 @@ void access_msg_center::set_option(const char* msg, std::string cmd, int sequenc
 	}
 }
 
+
+
 int access_msg_center::set_depth_map(const std::string& depth_map)
 {
 	if (depth_map.length() <= 0) {
@@ -787,6 +799,8 @@ int access_msg_center::set_depth_map(const std::string& depth_map)
 	}
 }
 
+
+
 void access_msg_center::restart_preview(const char* msg, std::string cmd, int sequence)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -801,8 +815,8 @@ void access_msg_center::restart_preview(const char* msg, std::string cmd, int se
 
 	state_mgr_.preview_opt_ = opt;
 
-	do_camera_operation_stop(false); //停止预览
-	do_camera_operation_stop(true);  //开启预览
+	do_camera_operation_stop(false); 	/* 停止预览 */
+	do_camera_operation_stop(true);  	/* 开启预览 */
 
 	res_obj.set_string(ACCESS_MSG_OPT_PREVIEW_URL, opt.stiching.url);
 
@@ -832,7 +846,7 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 	ret = msg_parser_.preview_option(msg, opt);
 	BREAK_IF_NOT_OK(ret);
 
-	if (opt.index != -1) {	/* 单镜头合焦HDMI预览(相机需处于IDLE状态) */
+	if (opt.index != -1) {		/* 单镜头合焦HDMI预览(相机需处于IDLE状态) */
 		BREAK_NOT_IN_IDLE();			/* 1.状态检查 */
 		OPEN_CAMERA_IF_ERR_BREAK(-1);	/* 2.打开模组 */
 		singlen_mgr_ = std::make_shared<singlen_mgr>();
@@ -845,7 +859,7 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 		if (video_mgr_) {
 			ret = video_mgr_->start_preview(opt);
 			BREAK_IF_NOT_OK(ret);
-		} else {	/* 未启动视频管理器 */
+		} else {				/* 未启动视频管理器 */
 			OPEN_CAMERA_IF_ERR_BREAK(-1);	/* open_camera - 打开模组 */
 			video_mgr_ = std::make_shared<video_mgr>();		
 			ret = video_mgr_->start(camera_.get(), opt);	/* 启动视频管理器 */
@@ -900,7 +914,7 @@ int access_msg_center::do_stop_preview()
 		state_ &= ~CAM_STATE_PREVIEW; //只标记状态
 	} else {
 		state_ &= ~CAM_STATE_PREVIEW;
-		do_camera_operation_stop(true); //这个函数失败也返回ok,因为预览已经停了
+		do_camera_operation_stop(true);	 /* 这个函数失败也返回ok,因为预览已经停了 */
 	}
 
 	return INS_OK;
@@ -1023,6 +1037,7 @@ int access_msg_center::do_stop_record(int ret)
 	return INS_OK;
 }
 
+
 void access_msg_center::start_live(const char* msg, std::string cmd, int sequence)
 {
 	ins_video_option opt;
@@ -1070,11 +1085,12 @@ void access_msg_center::start_live(const char* msg, std::string cmd, int sequenc
 	sender_->set_ind_msg_sequece(ACCESS_CMD_LIVE_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 
-	if (ret != INS_OK && opt.path != "") {	//由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹
+	if (ret != INS_OK && opt.path != "") {	/* 由于文件夹是先创建的,所以如果失败删除文件夹,避免出现空文件夹 */
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
 }
+
 
 void access_msg_center::stop_live(const char* msg, std::string cmd, int sequence)
 {
@@ -1083,12 +1099,14 @@ void access_msg_center::stop_live(const char* msg, std::string cmd, int sequence
 
 	if (state_ & CAM_STATE_LIVE) {
 		long long elapse = state_mgr_.get_elapse_usec();
-		if (elapse < 2000000) usleep(2000000 - elapse); //开始录像后马上停止编码器会概率卡死，所以至少跑2s
+		if (elapse < 2000000) 
+			usleep(2000000 - elapse); /* 开始录像后马上停止编码器会概率卡死，所以至少跑2s */
 		do_stop_live(INS_OK, false);
 	} else if (!(state_ & CAM_STATE_STOP_LIVE)) {
 		sender_->send_ind_msg(ACCESS_CMD_LIVE_FINISH_, INS_OK);
 	}
 }
+
 
 int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 {
@@ -1118,7 +1136,8 @@ int access_msg_center::do_stop_live(int ret, bool b_stop_rec)
 			do_camera_operation_stop(true);
 		}
 
-		if (state_mgr_.b_live_rec_) usleep(1000*1000); //等待文件存储完成
+		if (state_mgr_.b_live_rec_) 
+			usleep(1000*1000); 	/* 等待文件存储完成 */
 
 		state_mgr_.b_live_rec_ = false;
 
@@ -2557,7 +2576,7 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 		if (state_ & CAM_STATE_PREVIEW) {
 			if (state_mgr_.preview_opt_.index == -1) {
 				video_mgr_ = std::make_shared<video_mgr>();
-				ret = video_mgr_->start(camera_.get(), state_mgr_.preview_opt_);
+				ret = video_mgr_->start(camera_.get(), state_mgr_.preview_opt_);	/* 重新启动预览 */
 			} else {	/* 单镜头合焦预览 */
 				singlen_mgr_ = std::make_shared<singlen_mgr>();
 				ret = singlen_mgr_->start_focus(camera_.get(), state_mgr_.preview_opt_);

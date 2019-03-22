@@ -37,6 +37,8 @@ video_composer::~video_composer()
         INS_THREAD_JOIN(th_dec_[i]);
     } 
 
+    LOGINFO("++++++ video_composer all dec task exit suc. ++++++");
+
     INS_THREAD_JOIN(th_enc_);	/* 退出编码器 */
 
     LOGINFO("video_composer 2");

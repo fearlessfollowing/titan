@@ -9,6 +9,16 @@
 
 using namespace std::chrono;
 
+
+
+/***********************************************************************************************
+** 函数名称: set_first_frame_ts
+** 函数功能: 设置第一帧的时间戳
+** 入口参数:	
+**		pid - 模块的PID
+**		timestamp - 时间戳
+** 返 回 值: 无
+*************************************************************************************************/
 all_cam_video_buff::all_cam_video_buff(const std::vector<unsigned int>& index, std::string path)
 {
     INS_ASSERT(index.size() > 0);
@@ -59,14 +69,18 @@ void all_cam_video_buff::queue_frame(unsigned int index, std::shared_ptr<ins_fra
 
 	std::lock_guard<std::mutex> lock(mtx_);
 
+	/* 1.找到index对应的queue(it->second) */
     auto it = queue_.find(index);
     if (it == queue_.end()) return;
+
+	/* 2.将数据放入queue */
     it->second.push(frame);
 
-    if (it->second.size() > 135) {
+	/* 3.检查是否需要进行丢帧处理 */
+    if (it->second.size() > 135) {	/* 队列中的数据帧大于135帧 */
         uint32_t discard_cnt = 0;
-        while (!it->second.empty()) {
-            if (it->second.front()->is_key_frame && discard_cnt > 25) break;
+        while (!it->second.empty()) {	/* 队列不为空 */
+            if (it->second.front()->is_key_frame && discard_cnt > 25) break;	/* 丢最少25帧 */
             it->second.pop();
             discard_cnt++;
         }
@@ -79,11 +93,12 @@ void all_cam_video_buff::queue_frame(unsigned int index, std::shared_ptr<ins_fra
     }
 }
 
+
 void all_cam_video_buff::sync_frame()
 {
     if (quit_) return;
 
-    //计时，如果不同步时间超过10s,作为异常退出
+    /* 计时，如果不同步时间超过10s,作为异常退出 */
     if (sync_point_.time_since_epoch().count() == 0) {
         sync_point_ = system_clock::now();
     } else {
@@ -100,6 +115,7 @@ void all_cam_video_buff::sync_frame()
     }
 
     int loop_cnt = 10;
+	
 	while (loop_cnt--) {
 		if (b_wait_idr_) {
             for (auto it = queue_.begin(); it != queue_.end(); it++) {   
@@ -129,7 +145,9 @@ void all_cam_video_buff::sync_frame()
 		bool b_sync = true;
         it++;
 		for (; it != queue_.end(); it++) {
-			if (it->second.front()->pts > pts + 30000 || it->second.front()->pts < pts - 30000) b_sync = false;
+			if (it->second.front()->pts > pts + 30000 || it->second.front()->pts < pts - 30000) 
+				b_sync = false;
+
 			if (it->second.front()->pts < min_pts) {
 				min_pts = it->second.front()->pts;
 			}
@@ -151,18 +169,21 @@ void all_cam_video_buff::sync_frame()
             for (auto it = queue_.begin(); it != queue_.end(); it++) {
                 auto& f =  it->second.front();
                 LOGINFO("pid:%d iskey:%d pts:%lld size:%lu", f->pid, f->is_key_frame, f->pts, it->second.size());
-                if (min_pts == f->pts) it->second.pop();
+                if (min_pts == f->pts) 
+					it->second.pop();
             }
 			b_wait_idr_ = true;
 		}
 	}
 }
 
+
+
 void all_cam_video_buff::output(const std::map<unsigned int, std::shared_ptr<ins_frame>>& frame)
 {
     std::lock_guard<std::mutex> lock(mtx_out_);
 
-    auto b_key_frame = frame.begin()->second->is_key_frame;
+    auto b_key_frame = frame.begin()->second->is_key_frame;		/* 判断是否为关键帧 */
 
     for (auto it = out_.begin(); it != out_.end(); it++) {   
         if (!it->second->is_sps_pps_set()) {
@@ -176,6 +197,15 @@ void all_cam_video_buff::output(const std::map<unsigned int, std::shared_ptr<ins
     }
 }
 
+
+/***********************************************************************************************
+** 函数名称: set_first_frame_ts
+** 函数功能: 设置第一帧的时间戳
+** 入口参数:	
+**		pid - 模块的PID
+**		timestamp - 时间戳
+** 返 回 值: 无
+*************************************************************************************************/
 void all_cam_video_buff::set_first_frame_ts(uint32_t pid, int64_t timestamp)
 {
     if (path_ == "") return;
@@ -184,10 +214,12 @@ void all_cam_video_buff::set_first_frame_ts(uint32_t pid, int64_t timestamp)
     first_frame_ts_.insert(std::make_pair(pid, timestamp));
     mtx_.unlock();
 
-    if (first_frame_ts_.size() == INS_CAM_NUM) {
+	/* 收集齐了所有模组的第一帧时间戳, 将时间戳写入工程文件中 */
+    if (first_frame_ts_.size() == INS_CAM_NUM) {	
         prj_file_mgr::add_first_frame_ts(path_, first_frame_ts_);
     }
 }
+
 
 void all_cam_video_buff::queue_expouse(uint32_t pid, uint32_t seq, uint64_t ts, uint64_t exposure_ns)
 {
@@ -216,6 +248,7 @@ void all_cam_video_buff::queue_expouse(uint32_t pid, uint32_t seq, uint64_t ts, 
         exp_queue_.erase(it);
         //LOGINFO("pid:%d exp queue:%ld  2", pid, exp_queue_.size());
     }
+	
 }
 
 void all_cam_video_buff::queue_gyro(const uint8_t* data, uint32_t size, uint64_t delta_ts)
@@ -250,3 +283,5 @@ void all_cam_video_buff::queue_gyro(const uint8_t* data, uint32_t size, uint64_t
         it->queue_gyro(buff, delta_ts);
     }
 }
+
+

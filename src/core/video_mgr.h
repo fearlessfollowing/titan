@@ -15,7 +15,7 @@ class usb_sink;
 class cam_video_param;
 class stabilization;
 
-class video_mgr   {
+class video_mgr     {
 public:
     			~video_mgr();   
     int32_t 	start(cam_manager* camera, const ins_video_option& option);
@@ -42,11 +42,11 @@ private:
     void 		print_option(const ins_video_option& option) const;
 	
     cam_manager* 						camera_ = nullptr;
-    std::shared_ptr<audio_mgr> 			audio_;
-    std::shared_ptr<video_composer> 	composer_;
-    std::shared_ptr<all_cam_video_buff> video_buff_;
-    std::shared_ptr<cam_video_param> 	aux_param_;
-    cam_video_param 					video_param_;
+    std::shared_ptr<audio_mgr> 			audio_;					/* 音频管理 */
+    std::shared_ptr<video_composer> 	composer_;				/* 视频合成 */
+    std::shared_ptr<all_cam_video_buff> video_buff_;			/* 接收所有模块的视频流数据 */
+    std::shared_ptr<cam_video_param> 	aux_param_;				/* 第二路的视频流参数 */
+    cam_video_param 					video_param_;			/* 第一路的视频流参数 */
     bool 								b_frag_ = false;        /* 视频是否分段 */
     int32_t 							audio_type_ = 0;        /* 音频设备的类型 */
     std::string 						prj_path_;              /* 工程文件的路径 */

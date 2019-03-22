@@ -3,11 +3,10 @@
 
 #include "metadata.h"
 
-class gps_sink
-{
+class gps_sink {
 public:
-    virtual ~gps_sink(){};
-    virtual void queue_gps(std::shared_ptr<ins_gps_data>& gps) = 0;
+    virtual 		~gps_sink(){};
+    virtual void 	queue_gps(std::shared_ptr<ins_gps_data>& gps) = 0;
 };
 
 #endif

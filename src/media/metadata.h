@@ -30,9 +30,8 @@ struct ins_g_a_data
     float gyro_z = 0.0;
 };
 
-struct gps_sv_info
-{ 
-    size_t size = 0;
+struct gps_sv_info { 
+    size_t 	size = 0;
     int32_t prn = 0;         /** Pseudo-random number for the SV. */ 
     float   snr = 0;         /** Signal to noise ratio. */
     float   elevation = 0;   /** Elevation of SV in degrees. */
@@ -49,18 +48,18 @@ struct gps_sv_status {
 class ins_gps_data : public pool_obj<ins_gps_data>
 {
 public:
-    int64_t pts = 0; //us
-    int fix_type  = 0;  // -1: poll failed 0/1: 未定位, 2: 二维定位, 3: 三维定位
-    double latitude = 0.0;
-    double longitude = 0.0; 
-    float altitude = 0.0;
-    float h_accuracy = 0.0;
-    float v_accuracy = 0.0;
-    float velocity_east = 0.0;
-    float velocity_north = 0.0;
-    float velocity_up = 0.0;
-    float speed_accuracy = 0.0;
-    gps_sv_status sv_status;
+    int64_t 		pts = 0; //us
+    int 			fix_type  = 0;  // -1: poll failed 0/1: 未定位, 2: 二维定位, 3: 三维定位
+    double 			latitude = 0.0;
+    double 			longitude = 0.0; 
+    float 			altitude = 0.0;
+    float 			h_accuracy = 0.0;
+    float 			v_accuracy = 0.0;
+    float 			velocity_east = 0.0;
+    float 			velocity_north = 0.0;
+    float 			velocity_up = 0.0;
+    float 			speed_accuracy = 0.0;
+    gps_sv_status 	sv_status;
 };
 
 #pragma pack(1) //自定义1字节对齐

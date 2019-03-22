@@ -5,6 +5,9 @@
 #include <string>
 #include "insbuff.h"
 
+/*
+ * cam_video_param - 模块的视频流参数
+ */
 struct cam_video_param {
 	std::string 	mime = "h264"; 				// h264/h265
 	int32_t 		bitdepth = 8; 				// 8/10
@@ -50,6 +53,7 @@ struct cam_photo_param {
 };
 
 #define AMBA_INVALID_PROPERTY 0x0fffffff
+
 
 struct cam_image_property {
 	std::string property;

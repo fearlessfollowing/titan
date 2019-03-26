@@ -21,13 +21,16 @@ enum class AEC_QUEUE {
     CNT,
 };
 
+
+/*
+ * 音频的回声消除处理类
+ */
 class audio_ace {
 public:
             ~audio_ace();
     int32_t setup(int32_t samplerate);
     
     void    queue_mic_frame(const ins_pcm_frame& frame) { queue_frame(frame, AEC_QUEUE::MIC); }
-
     void    queue_spk_frame(const ins_pcm_frame& frame) { queue_frame(frame, AEC_QUEUE::SPK); }
     
     // bool dequeue_aec_frame(ins_pcm_frame& frame) { return dequeue_frame(frame, AEC_QUEUE::AEC);}

@@ -22,6 +22,7 @@
 std::atomic_llong usb_camera::base_ref_pts_(INS_PTS_NO_VALUE);
 
 
+
 /**********************************************************************************************
  * 函数名称: close
  * 功能描述: 停止与模组间的传输 
@@ -34,6 +35,7 @@ void usb_camera::close()
 	usb_device::get()->cancle_transfer(pid_);
 	INS_THREAD_JOIN(th_cmd_read_);		/* 停止读命令线程 */
 }
+
 
 
 /**********************************************************************************************
@@ -69,6 +71,7 @@ int32_t usb_camera::set_camera_time()
 	}
 	return ret;
 }
+
 
 
 /**********************************************************************************************
@@ -1102,16 +1105,16 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 			std::string data;
 			root_obj.get_string("data", data);
 			send_storage_state(data);
-			return INS_OK; 		// 不用设置cmd_rsp_map_，因为这个不是请求消息
-		} else if (USB_CMD_VIDEO_FRAGMENT == rsp_cmd) {	/* 启动新的视频段指示 */
+			return INS_OK; 		/* 不用设置cmd_rsp_map_，因为这个不是请求消息 */
+		} else if (USB_CMD_VIDEO_FRAGMENT == rsp_cmd) {			/* 启动新的视频段指示 */
 			if (pid_ != INS_CAM_NUM) 
-				return INS_OK; 	// 只处理master
+				return INS_OK; 	/* 只处理master */
 			auto obj_data = root_obj.get_obj("data");
 			int32_t sequence = -1;
 			obj_data->get_int("sequence", sequence);
 			if (sequence > 0) 
 				send_video_fragment_msg(sequence);
-			return INS_OK; 		// 不用设置cmd_rsp_map_，因为这个不是请求消息
+			return INS_OK; 		/* 不用设置cmd_rsp_map_，因为这个不是请求消息 */
 		} else if (USB_CMD_VIG_MIN_VALUE_CHANGE == rsp_cmd) {	/* 视频分段最小值改变指示 */
 			send_vig_min_value_change_msg();
 		} else if (rsp_cmd == USB_CMD_SET_PHOTO_PARAM) {		/* USB_CMD_SET_PHOTO_PARAM的响应 */
@@ -1126,16 +1129,16 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 			root_obj.get_string("what", state);
 			if (state == "doing") {
 				if (pid_ == INS_CAM_NUM && pic_type_ != INS_PIC_TYPE_TIMELAPSE) {
-					send_pic_origin_over();		/* 发送拍照完成 */
+					send_pic_origin_over();						/* 发送拍照完成 */
 				}
-				return INS_OK; // 这里要return,不能设置cmd_rsp_值
+				return INS_OK; 									/* 这里要return,不能设置cmd_rsp_值 */
 			} else if (state == "done") {
 				if (pid_ == INS_CAM_NUM && pic_type_ == INS_PIC_TYPE_TIMELAPSE) {	/* 如果是拍timelapse */
 					send_timelapse_pic_take(pic_seq_);
 				}
 			}
 		} else if (rsp_cmd == USB_CMD_GET_SYSTEM_TIME || rsp_cmd == USB_CMD_SET_SYSTEM_TIME) {	/* 设置/获取模组时间 */
-			gettimeofday(&tm_module_end_, nullptr);		/* 获取/设置系统时间接收响应的时间 */
+			gettimeofday(&tm_module_end_, nullptr);				/* 获取/设置系统时间接收响应的时间 */
 		} else if (rsp_cmd == USB_CMD_START_VIDEO_RECORD) {		/* 启动视频录像 */
 			auto data_obj = root_obj.get_obj("data");
 			if (data_obj) 

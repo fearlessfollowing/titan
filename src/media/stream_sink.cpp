@@ -36,9 +36,10 @@ stream_sink::stream_sink(std::string url) : url_(url)
 {
 	path_ = url_;
 	int pos = path_.rfind("/", path_.length());
-	path_.erase(pos+1, path_.length()-pos-1);
+	path_.erase(pos + 1, path_.length() - pos - 1);
 	//LOGINFO("sink:%s open", url_.c_str());
 }
+
 
 void stream_sink::set_fragment(bool frag, bool manu)
 {
@@ -88,6 +89,7 @@ void stream_sink::set_video_param(const ins_video_param& param)
 	}
 }
 
+
 void stream_sink::task()
 {
 	if (open_mux()) {
@@ -107,20 +109,20 @@ void stream_sink::task()
 			usleep(10*1000);
 		}
 
-		// auto v_frame = dequeue_frame();
-		// if (v_frame.empty())
-		// {
-		// 	usleep(10*1000);
-		// }
-		// else
-		// {
-		// 	for (uint32_t i = 0; i < v_frame.size(); i++)
-		// 	{
-		// 		if (INS_OK != write_mux(v_frame[i])) return;
-		// 	}
-		// }
+	#if 0
+		auto v_frame = dequeue_frame();
+		if (v_frame.empty()) {
+			usleep(10*1000);
+		} else {
+			for (uint32_t i = 0; i < v_frame.size(); i++) {
+				if (INS_OK != write_mux(v_frame[i])) return;
+			}
+		}
+	#endif
 	}
 }
+
+
 
 bool stream_sink::open_mux()
 {
@@ -165,13 +167,13 @@ bool stream_sink::open_mux()
 		param.b_spatial_audio = audio_param_->b_spatial;
 	}
 
-	//直播和预览流文件不用写camm track
+	/* 直播和预览流文件不用写camm track */
 	param.camm_tracks = camm_tracks();
 
 	mux_ = std::make_shared<ins_mux>();
 	if (INS_OK != mux_->open(param, url_.c_str())) {
 		mux_ = nullptr;
-		b_start_ = false;  //重连的时候需要将这个值为false
+		b_start_ = false;  /* 连的时候需要将这个值为false */
 		LOGERR("mux open fail:%s", url_.c_str());
 		do_mux_error(true);
 		return false;
@@ -182,11 +184,14 @@ bool stream_sink::open_mux()
 	return true;
 }
 
+
+
 int stream_sink::write_mux(const ins_frame* frame)
 {
-	if (mux_ == nullptr) return INS_OK;
+	if (mux_ == nullptr) 
+		return INS_OK;
 
-	//camm gyro 要从视频开始前就存
+	/* camm gyro 要从视频开始前就存 */
 	if ((frame->pts < start_pts_ || start_pts_ == INS_PTS_NO_VALUE) 
 		&& frame->media_type != INS_MEDIA_CAMM_GPS 
 		&& frame->media_type != INS_MEDIA_CAMM_GYRO 
@@ -218,18 +223,19 @@ int stream_sink::write_mux(const ins_frame* frame)
 	mux_frame.media_type = frame->media_type;
 	mux_frame.b_key_frame = frame->is_key_frame;
 
-	if (INS_OK!=  mux_->write(mux_frame)) {
+	if (INS_OK !=  mux_->write(mux_frame)) {
 		mux_ = nullptr;
-		b_start_ = false; //重连的时候需要将这个值为false
+		b_start_ = false; 		/* 重连的时候需要将这个值为false */
 		LOGERR("mux write fail:%s", url_.c_str());
 		return do_mux_error(false);
 	}
 
 	file_pos_ = mux_frame.position;
 
-	if (frame->media_type == INS_MEDIA_VIDEO) check_fragment(frame);
+	if (frame->media_type == INS_MEDIA_VIDEO) 
+		check_fragment(frame);
 
-	//每100M检测一次， 检测剩余空间调用statfs，对于某些sd卡极慢，所以不要每一帧都检测
+	/* 每100M检测一次， 检测剩余空间调用statfs，对于某些sd卡极慢，所以不要每一帧都检测 */
 	if (!b_live_ && file_pos_ > next_check_size_) {
 		next_check_size_ += 25*1024*1024;
 		check_disk_space(frame->pts);
@@ -237,6 +243,7 @@ int stream_sink::write_mux(const ins_frame* frame)
 
 	return INS_OK;
 }
+
 
 void stream_sink::check_fragment(const ins_frame* frame)
 {	
@@ -258,6 +265,8 @@ void stream_sink::check_fragment(const ins_frame* frame)
 
 	if (b_origin_key_) prj_file_mgr::add_origin_frag_file(path_, url_sequence_-1);
 }
+
+
 
 void stream_sink::check_disk_space(long long pts)
 {
@@ -337,6 +346,7 @@ bool stream_sink::av_sync()
 	}
 }
 
+
 void stream_sink::queue_gps(std::shared_ptr<ins_gps_data>& gps)
 {
 	if (!b_gps_) return;
@@ -347,7 +357,8 @@ void stream_sink::queue_gps(std::shared_ptr<ins_gps_data>& gps)
 	std::lock_guard<std::mutex> lock(mtx_);
 	if (gps_queue_.size() > 100) {
 		LOGERR("%s discard 50 gps data", url_.c_str());
-		for (int i = 0; i < 50; i++) gps_queue_.pop();
+		for (int i = 0; i < 50; i++) 
+			gps_queue_.pop();
 		return;
 	} else {
 		gps_queue_.push(gps);
@@ -416,9 +427,11 @@ void stream_sink::queue_frame(const std::shared_ptr<ins_frame>& frame)
 
 	if (frame->media_type == INS_MEDIA_VIDEO) {
 		do_discard_frame(frame->is_key_frame);
-		if (b_video_) video_queue_.push(frame);
+		if (b_video_) 
+			video_queue_.push(frame);
 	} else if (frame->media_type == INS_MEDIA_AUDIO) {
-		if (b_audio_) audio_queue_.push(frame);
+		if (b_audio_) 
+			audio_queue_.push(frame);
 	}
 }
 
@@ -456,6 +469,7 @@ std::shared_ptr<ins_frame> stream_sink::dequeue_av_frame()
 	return nullptr;
 }
 
+
 int32_t stream_sink::dequeue_and_write()
 {
 	if (!av_sync()) return 0;
@@ -467,7 +481,7 @@ int32_t stream_sink::dequeue_and_write()
 		RETURN_IF_NOT_OK(ret);
 	}
 	
-	//gyro/gps/exposure可能来的比较早，所以等音视频同步确定开始时间后再写
+	/* gyro/gps/exposure可能来的比较早，所以等音视频同步确定开始时间后再写 */
 	if (start_pts_ == INS_PTS_NO_VALUE) return ret;
 
 	if (b_gps_) {
@@ -572,9 +586,7 @@ int32_t stream_sink::dequeue_and_write()
 				RETURN_IF_NOT_OK(ret);
 			}
 		}
-	}
-	else if (b_gyro_) 
-	{	/* 只有gyro,拍照的是只存gyro数据 */
+	} else if (b_gyro_)  {	/* 只有gyro,拍照的是只存gyro数据 */
 		auto d = deque_gyro_data();
 		if (!d) return ret;
 
@@ -592,6 +604,8 @@ int32_t stream_sink::dequeue_and_write()
 	return ret;
 }
 
+
+#if 0
 // std::vector<std::shared_ptr<ins_frame>> stream_sink::dequeue_frame()
 // {
 // 	std::lock_guard<std::mutex> lock(mtx_);
@@ -668,6 +682,7 @@ int32_t stream_sink::dequeue_and_write()
 
 // 	return v_frame;
 // }
+#endif
 
 void stream_sink::do_discard_frame(bool b_keyframe)
 {
@@ -675,12 +690,15 @@ void stream_sink::do_discard_frame(bool b_keyframe)
 
 	int32_t threshold = 0; 
 	int32_t discard_cnt = 0;
+	
 	if (b_live_) {
-		threshold = 2*std::max((int32_t)fps_, 30); //最大缓存2s数据，超过开始丢帧
-		if (video_queue_.size() > threshold) discard_cnt = video_queue_.size() - threshold;
+		threshold = 2 * std::max((int32_t)fps_, 30); //最大缓存2s数据，超过开始丢帧
+		if (video_queue_.size() > threshold) 
+			discard_cnt = video_queue_.size() - threshold;
 	} else {
-		threshold = 5*std::max((int32_t)fps_, 30); //最大缓存5s数据，超过开始丢帧
-		if (video_queue_.size() > threshold) discard_cnt = video_queue_.size() - threshold;
+		threshold = 5 * std::max((int32_t)fps_, 30); //最大缓存5s数据，超过开始丢帧
+		if (video_queue_.size() > threshold) 
+			discard_cnt = video_queue_.size() - threshold;
 	}
 
 	if (video_queue_.size() < threshold || discard_cnt <= 0)  return;
@@ -689,25 +707,28 @@ void stream_sink::do_discard_frame(bool b_keyframe)
 
 	LOGINFO("%s discard %d frames, left frames:%lu", url_.c_str(), discard_cnt, video_queue_.size());
 
+
+#if 0
 	// 只丢视频帧不丢音频帧
-	// long long video_pts = video_queue_.front()->pts;
+	long long video_pts = video_queue_.front()->pts;
 
-	// while (!audio_queue_.empty())
-	// {
-	// 	auto frame = audio_queue_.back();
-	// 	if (frame->pts <= video_pts) break;
-	// 	audio_queue_.pop_back();
-	// }
+	while (!audio_queue_.empty()) {
+		auto frame = audio_queue_.back();
+		if (frame->pts <= video_pts) break;
+		audio_queue_.pop_back();
+	}
 
-	// if (!b_live_) //丢帧不停止录像PRO2
-	// {
-	// 	if (++discard_frame_cnt_ > MAX_DISCARD_CNT)
-	// 	{
-	// 		LOGERR("%s discard frame times:%d, so stop record", url_.c_str(), discard_frame_cnt_);
-	// 		send_rec_over_msg(INS_ERR_UNSPEED_STORAGE);
-	// 	}
-	// }
+	if (!b_live_) {	//丢帧不停止录像PRO2
+		if (++discard_frame_cnt_ > MAX_DISCARD_CNT) {
+			LOGERR("%s discard frame times:%d, so stop record", url_.c_str(), discard_frame_cnt_);
+			send_rec_over_msg(INS_ERR_UNSPEED_STORAGE);
+		}
+	}
+#endif
+
 }
+
+
 
 void stream_sink::create_new_url()
 {
@@ -731,6 +752,7 @@ void stream_sink::create_new_url()
 
 	LOGINFO("new url:%s start_pts:%lld", url_.c_str(), start_pts_);
 }
+
 
 void stream_sink::do_net_disconnect()
 {

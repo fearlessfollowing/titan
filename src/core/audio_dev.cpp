@@ -8,14 +8,12 @@
 
 audio_dev::~audio_dev()
 {
-    if (params_)
-    {
+    if (params_) {
         snd_pcm_hw_params_free(params_);
         params_ = nullptr;
     }
 
-    if (handle_)
-    {
+    if (handle_) {
         snd_pcm_close(handle_);
         handle_ = nullptr;
     }
@@ -28,8 +26,7 @@ int32_t audio_dev::open(uint32_t card, uint32_t dev)
     ss << "hw:" << card << "," << dev;
     hw_name_ = ss.str();
     auto ret = snd_pcm_open(&handle_, hw_name_.c_str(), SND_PCM_STREAM_CAPTURE, 0);
-    if (ret < 0) 
-    {
+    if (ret < 0)  {
         LOGERR("%s open fail:%d %s", hw_name_.c_str(), ret, snd_strerror(ret));
         return INS_ERR;
     }
@@ -140,6 +137,7 @@ bool audio_dev::is_spatial()
     char* name = nullptr;
     snd_card_get_name(card_, &name);
     std::string s_name = name;
+	
     if (s_name != INS_H2N_AUDIO_DEV_NAME && s_name != INS_H3VR_AUDIO_DEV_NAME) {
         LOGINFO("-----name:%s not spatial audio dev", name);
         return false;
@@ -174,8 +172,7 @@ bool audio_dev::is_spatial()
     uint32_t channel;
     snd_pcm_format_t fmt;
     auto ret = get_param(samplerate, channel, fmt);
-    if (ret != INS_OK || samplerate != 48000 || channel != 4 || fmt != SND_PCM_FORMAT_S24_3LE)
-    {
+    if (ret != INS_OK || samplerate != 48000 || channel != 4 || fmt != SND_PCM_FORMAT_S24_3LE) {
         LOGINFO("snd:%s samplerate:%u channle:%u not spatial", name, samplerate, channel);
         return false;
     }
@@ -213,3 +210,4 @@ bool audio_dev::is_channel_3_silence()
 
     return true;
 }
+

@@ -53,11 +53,11 @@
 #define INS_H2N_AUDIO_DEV_NAME 		"H2n"
 #define INS_H3VR_AUDIO_DEV_NAME 	"H3-VR"
 
-#define INS_AUDIO_N_N  0 //原始没有 + 拼接没有
-#define INS_AUDIO_N_C  1 //原始没有 + 拼接普通
-#define INS_AUDIO_Y_N  2 //原始有 + 拼接没有
-#define INS_AUDIO_Y_C  3 //原始有 + 拼接普通
-#define INS_AUDIO_Y_S  4 //原始有 + 拼接全景声
+#define INS_AUDIO_N_N  0 			// 原始没有 + 拼接没有
+#define INS_AUDIO_N_C  1 			// 原始没有 + 拼接普通
+#define INS_AUDIO_Y_N  2 			// 原始有 + 拼接没有
+#define INS_AUDIO_Y_C  3 			// 原始有 + 拼接普通
+#define INS_AUDIO_Y_S  4 			// 原始有 + 拼接全景声
 
 #define INS_STORAGE_MODE_NONE 		-1
 #define INS_STORAGE_MODE_NV 		0
@@ -133,10 +133,10 @@
 
 #define INS_DEFAULT_AUDIO_GAIN 64
 
-#define INS_GPS_STATE_NONE 0
-#define INS_GPS_STATE_UNLOCATED 1
-#define INS_GPS_STATE_2D 2
-#define INS_GPS_STATE_3D 3
+#define INS_GPS_STATE_NONE 		0			/* 0:表示无GPS设备 */
+#define INS_GPS_STATE_UNLOCATED 1			/* 1:表示有GPS设备,但无法定位 */
+#define INS_GPS_STATE_2D 		2			/* 2,3:表示有GPS设备并且正常定位 */
+#define INS_GPS_STATE_3D 		3
 
 #define INS_GYRO_ORIENTATION_VERTICAL 0
 #define INS_GYRO_ORIENTATION_HORIZON  1

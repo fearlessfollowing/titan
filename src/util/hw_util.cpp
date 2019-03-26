@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <system_properties.h>
 
+
 bool hw_util::check_35mm_mic_on()
 {
     std::string cmd = "amixer cget -c 1 name=\"Jack-state\" | grep \"values=\" | grep -v items | cut -d \"=\" -f 2";

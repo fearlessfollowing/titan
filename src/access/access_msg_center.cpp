@@ -419,6 +419,16 @@ void access_msg_center::internal_snd_dev_change(const char* msg, std::string cmd
 	}
 }
 
+
+/***********************************************************************************************
+** 函数名称: internal_first_frame_ts
+** 函数功能: 处理设置第一帧的时间戳(内部消息)
+** 入口参数:
+**		msg 	 - 消息数据
+**		cmd		 - 拍照命令"camera._takePicture"
+**		sequence - 通信序列值
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::internal_first_frame_ts(const char* msg, std::string cmd, int sequence)
 {
 	if (video_mgr_ == nullptr) 
@@ -479,13 +489,22 @@ void access_msg_center::internal_pic_finish(const char* msg, std::string cmd, in
 	root_obj->get_int("code", ret);
 	root_obj->get_string("path", path);
 
-	bool b_calibration = (state_ & CAM_STATE_CALIBRATION)?true:false;
+	bool b_calibration = (state_ & CAM_STATE_CALIBRATION) ? true : false;
 
 	state_ &= ~CAM_STATE_PIC_SHOOT;
 	state_ &= ~CAM_STATE_PIC_PROCESS;
 	state_ &= ~CAM_STATE_CALIBRATION;
 
+	if (ret != INS_OK) {	/* 拍照出错,如果文件夹已经创建,删除该文件夹 */
+		if (access(path.c_str(), F_OK) == 0) {
+			LOGINFO("take picture finish error, clean tmp dir: %s", path.c_str());
+			std::string cmd = "rm -rf " + path;
+			system(cmd.c_str());			
+		}
+	}
+	
 	do_camera_operation_stop(true);
+
 
 	/* 等所有操作完成后再回响应，避免客户端快速进行其他操作容易造成模组异常 */
 	if (b_calibration) {

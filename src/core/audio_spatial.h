@@ -7,6 +7,7 @@
 #include "insbuff.h"
 
 class audio_spatial {
+
 public:
             ~audio_spatial();
     int32_t open(uint32_t samplerate, uint32_t channel, bool fanless);
@@ -19,15 +20,15 @@ private:
     std::shared_ptr<insbuff>    get_noise_sample(bool fanless, int index);
     int32_t                     get_ansdb_by_volume(uint32_t volume);
     
-    void*               tl_cap_ = nullptr;
-    std::vector<void*>  tl_ans_;
-    std::vector<std::shared_ptr<insbuff>> ans_in_buff_;
-    std::vector<std::shared_ptr<insbuff>> ans_out_buff_;
-    std::shared_ptr<insbuff> cap_in_buff_;
-    std::shared_ptr<insbuff> cap_out_buff_;
-    uint32_t    frame_size_ = 0;
-    bool        fanless_ = false;
-    int32_t     cur_dn_vol_ = 0;
+    void*               					tl_cap_ = nullptr;
+    std::vector<void*>  					tl_ans_;
+    std::vector<std::shared_ptr<insbuff>> 	ans_in_buff_;
+    std::vector<std::shared_ptr<insbuff>> 	ans_out_buff_;
+    std::shared_ptr<insbuff> 				cap_in_buff_;
+    std::shared_ptr<insbuff> 				cap_out_buff_;
+    uint32_t    							frame_size_ = 0;
+    bool        							fanless_ = false;	/* 是否为无风扇模式 */
+    int32_t     							cur_dn_vol_ = 0;	/* 当前的降噪音量 */
 };
 
 #endif

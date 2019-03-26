@@ -38,6 +38,8 @@
 
 int32_t video_mgr::rec_seq_ = 0;
 
+
+
 video_mgr::~video_mgr()
 {
     camera_->stop_all_video_rec(); 
@@ -48,6 +50,8 @@ video_mgr::~video_mgr()
     LOGINFO("video mgr stop");
 }
 
+
+
 int32_t video_mgr::get_snd_type()
 {
 	if (audio_) {
@@ -57,6 +61,16 @@ int32_t video_mgr::get_snd_type()
 	}
 }
 
+
+/***********************************************************************************************
+** 函数名称: set_first_frame_ts
+** 函数功能: 处理设置第一帧的时间戳(内部消息)
+** 入口参数:
+**		msg 	 - 消息数据
+**		cmd		 - 拍照命令"camera._takePicture"
+**		sequence - 通信序列值
+** 返 回 值: 无
+*************************************************************************************************/
 void video_mgr::set_first_frame_ts(int32_t rec_seq, int64_t ts)
 {
 	if (rec_seq != rec_seq_) {
@@ -64,12 +78,14 @@ void video_mgr::set_first_frame_ts(int32_t rec_seq, int64_t ts)
 		return;
 	}
 	
-	if (prj_path_ != "") 
+	if (prj_path_ != "") 	/* 工程文件中添加时间戳 */
 		prj_file_mgr::add_first_frame_ts(prj_path_, ts);
 	
 	if (local_sink_) 
 		local_sink_->start(ts);
 }
+
+
 
 void video_mgr::notify_video_fragment(int32_t sequence)
 {
@@ -601,8 +617,10 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 		if (option.origin.live_prefix != "") {	/* 原始流直播 */
 			sink->set_live(true);
 		} else {
-			if (option.b_override) sink->set_override(true);
-			if (!option.b_to_file) sink->set_just_last_frame(true);
+			if (option.b_override) 
+				sink->set_override(true);
+			if (!option.b_to_file) 
+				sink->set_just_last_frame(true);
 		}
 		
 		if (option.index != -1 && camera_->get_pid(i) != option.index) { /* 单镜头录像，其他镜头不存文件 */
@@ -610,11 +628,11 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 		}
 		
 		/* 单镜头录像的时候存在对应镜头，非单镜头录像存在6号镜头 */
-		if ((option.index != -1 && camera_->get_pid(i) == option.index) 
-			|| (option.index == -1 && i == 0)) {
+		if ((option.index != -1 && camera_->get_pid(i) == option.index) || (option.index == -1 && i == 0)) {
 			sink->set_origin_key(true);
-			audio_vs_sink(sink, AUDIO_INDEX_ORIGIN, true);
+			//audio_vs_sink(sink, AUDIO_INDEX_ORIGIN, true);
 			if (option.origin.live_prefix == "") {	/* 非直播原始流，也就是文件流 */
+				audio_vs_sink(sink, AUDIO_INDEX_ORIGIN, true);
 				sink->set_gyro(true);
 				auto S = std::static_pointer_cast<gyro_sink>(sink);
 				video_buff_->add_gyro_sink(S);
@@ -627,6 +645,16 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 
 	std::shared_ptr<all_cam_queue_i> origin_stream = std::make_shared<all_cam_origin_stream>(map_sink, video_param);
 	video_buff_->add_output(VIDEO_BUFF_INDEX_ORIGIN, origin_stream);
+
+
+	/* 原始流直播,音频单独一路流 */
+	if (option.origin.live_prefix != "") {
+		std::stringstream ss;
+		ss << option.origin.live_prefix << "/audio";
+		auto sink = std::make_shared<stream_sink>(ss.str());
+		sink->set_live(true);
+		audio_vs_sink(sink, AUDIO_INDEX_ORIGIN, true);
+	}	
 }
 
 
@@ -673,6 +701,8 @@ void video_mgr::setup_stablz()
 	auto S = std::static_pointer_cast<gyro_sink>(stablz_);
 	video_buff_->add_gyro_sink(S);
 }
+
+
 
 void video_mgr::send_snd_state_msg(int type, std::string name, bool b_spatial)
 {

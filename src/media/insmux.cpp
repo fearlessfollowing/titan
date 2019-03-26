@@ -343,7 +343,8 @@ int ins_mux::write(ins_mux_frame& frame)
 	} else if (frame.media_type == INS_MEDIA_VIDEO) {
 		if (!video_stream_) return INS_OK;
 		pkt.stream_index = video_stream_->index;
-		if (frame.b_key_frame) pkt.flags |= AV_PKT_FLAG_KEY;
+		if (frame.b_key_frame) 
+			pkt.flags |= AV_PKT_FLAG_KEY;
 		av_packet_rescale_ts(&pkt, video_src_ts_, video_stream_->time_base);
 		//LOGINFO("write video pts:%lld dts:%lld duration:%lld", frame.pts, frame.dts, frame.duration);
 	} else if (frame.media_type == INS_MEDIA_CAMM_GPS) //GPS写在后一个camm track

@@ -99,6 +99,8 @@ int32_t audio_mgr::open(const audio_param& param)
     return INS_OK;
 }
 
+
+
 int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
 {   
     dev_type_ = INS_SND_TYPE_INNER;
@@ -120,7 +122,8 @@ int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
     RETURN_IF_NOT_OK(ret);
 
     if (type != INS_AUDIO_N_C) {	// 也就是在预览的时候用到
-        spatial_ = true;
+
+		spatial_ = true;
 
         std::deque<ins_pcm_frame> one;
         queue_.push_back(one);
@@ -129,6 +132,7 @@ int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
         //card=1 device=1
         dev = std::make_shared<audio_reader>();
         dev->set_frame_cb(1, [this](uint32_t index, ins_pcm_frame& frame){ on_pcm_data(index, frame); });
+
         ret = dev->open(1, 1, dev_type_);
         RETURN_IF_NOT_OK(ret);
         dev_.push_back(dev);
@@ -152,7 +156,8 @@ int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
 
         th_ = std::thread(&audio_mgr::process_task, this);
     } else {
-        //enc 启动后在启动dev,因为on_pcm_data会调用enc
+
+        /* enc 启动后在启动dev,因为on_pcm_data会调用enc */
         if (type == INS_AUDIO_N_C || type == INS_AUDIO_Y_C) {
             ret = open_audio_enc(samplerate_, channel_, BITRATE_1CH*channel_);
             RETURN_IF_NOT_OK(ret);
@@ -160,7 +165,8 @@ int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
 
         if (hdmi_audio) {
             play_ = std::make_shared<audio_play>();
-            if (play_->open(samplerate_, channel_) != INS_OK) play_ = nullptr;
+            if (play_->open(samplerate_, channel_) != INS_OK) 
+				play_ = nullptr;
         }
 
         dev_[0]->set_offset(0);
@@ -197,6 +203,7 @@ int32_t audio_mgr::open_outer_35mm_mic(bool hdmi_audio)
     return INS_OK;
 }
 
+
 int32_t audio_mgr::open_outer_usb_mic(bool hdmi_audio)
 {
     dev_type_ = INS_SND_TYPE_USB;
@@ -226,6 +233,8 @@ int32_t audio_mgr::open_outer_usb_mic(bool hdmi_audio)
     return INS_OK;
 }
 
+
+
 int32_t audio_mgr::open_audio_enc(uint32_t samplerate, uint32_t channel, uint32_t bitrate)
 {
     ffaacenc_param param;
@@ -247,7 +256,9 @@ int32_t audio_mgr::open_audio_enc(uint32_t samplerate, uint32_t channel, uint32_
 
 void audio_mgr::on_pcm_data(uint32_t index, ins_pcm_frame& frame)
 {
-    if (dev_type_ == INS_SND_TYPE_USB) {
+
+	struct timeval start_time, end_time;
+    if (dev_type_ == INS_SND_TYPE_USB) {	/* USB接口的音频设备 */
         if (fmt_size_ == 3) { 
             auto buff_s16 = pool_->pop();
             if (!buff_s16->data()) 
@@ -264,7 +275,7 @@ void audio_mgr::on_pcm_data(uint32_t index, ins_pcm_frame& frame)
         enc_[0]->encode(frame);
         if (play_) 
             play_->queue_frame(frame);
-    } else if (dev_type_ == INS_SND_TYPE_35MM) {
+    } else if (dev_type_ == INS_SND_TYPE_35MM) {	/* 3.5MM外置MIC */
         if (enc_.size() <= 0) { 
             LOGERR("----------------------------35mm on_pcm_data,but audio enc deinit");
         }
@@ -272,51 +283,58 @@ void audio_mgr::on_pcm_data(uint32_t index, ins_pcm_frame& frame)
         enc_[0]->encode(frame);
         if (play_) 
             play_->queue_frame(frame);
-    } else if (dev_.size() == 1) {
-        if (enc_.size() <= 0) { 
-            LOGERR("----------------------------inner on_pcm_data,but audio enc deinit");
-        }
-        auto dn_buff = spatial_handle_->denoise(frame.buff);
-        f32_to_s16(dn_buff, frame.buff);
-        enc_[0]->encode(frame);
-        if (play_) 
-            play_->queue_frame(frame);
-    } else {
-        queue_pcm_frame(index, frame);
-    }
+    } else if (dev_type_ == INS_SND_TYPE_INNER) {
+		if (dev_.size() == 1) {	/* 内置MIC: 只有一路音频 */
+	        if (enc_.size() <= 0) { 
+	            LOGERR("----------------------------inner on_pcm_data,but audio enc deinit");
+	        }
+
+			gettimeofday(&start_time, nullptr);			
+	        auto dn_buff = spatial_handle_->denoise(frame.buff);	/* 全景声降噪 */
+			gettimeofday(&end_time, nullptr);
+
+			double fps = (double)(end_time.tv_sec*1000000 + end_time.tv_usec - start_time.tv_sec*1000000 - start_time.tv_usec);
+			LOGINFO("time consumer: [%lf]", fps);
+
+	        f32_to_s16(dn_buff, frame.buff);
+	        enc_[0]->encode(frame);
+			
+	        if (play_) 	/* 如果需要播放 */
+	            play_->queue_frame(frame);	/* 将该帧数据丢入播放队列中 */
+			
+    	} else {	/* 两路的时候有专门的线程process_task去处理 */	
+        	queue_pcm_frame(index, frame);
+    	}
+	}
 }
+
 
 void audio_mgr::process_task()
 {   
     if (align_first_frame() != INS_OK) return; 
 
     ins_pcm_frame frame;
-    while (!quit_)
-    {
+    while (!quit_) {
         std::vector<ins_pcm_frame> v_frame;
-        for (uint32_t i = 0; i < 2; i++)
-        {
-            while (!quit_)
-            {
-                if (deque_pcm_frame(i, frame))
-                {
+        for (uint32_t i = 0; i < 2; i++) {
+            while (!quit_) {
+                if (deque_pcm_frame(i, frame)) {
                     v_frame.push_back(frame);
                     break;
-                }
-                else
-                {
+                } else {
                     usleep(10*1000);
                 }
             }
         }
 
         if (v_frame.size() != 2) break;
-
         process(v_frame);
     }
 
     LOGINFO("audio sync taks exit");
 }
+
+
 
 int32_t audio_mgr::align_first_frame()
 {
@@ -371,10 +389,13 @@ int32_t audio_mgr::align_first_frame()
     return INS_OK;
 }
 
+
+
 void audio_mgr::process(std::vector<ins_pcm_frame>& v_frame)
 {
     std::vector<std::shared_ptr<insbuff>> v_buff;
-    for (auto& it : v_frame) v_buff.push_back(it.buff);
+    for (auto& it : v_frame) 
+		v_buff.push_back(it.buff);
 
     //denoise, output is float
     auto v_dn_buff = spatial_handle_->denoise(v_buff);
@@ -442,3 +463,5 @@ void audio_mgr::del_output(uint32_t index)
         it->del_output(index);
     }
 }
+
+

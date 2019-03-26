@@ -441,6 +441,8 @@ int cam_manager::start_all_timelapse_ex(const cam_photo_param& param, const std:
 	return INS_OK;
 }
 
+
+
 void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<cam_img_repo>& img_repo)
 {
 	int ret;
@@ -479,6 +481,8 @@ void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<ca
 	LOGINFO("timelapse task finish");
 }
 
+
+
 int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::shared_ptr<cam_img_repo>& img_repo)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
@@ -505,7 +509,8 @@ int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::sha
 		auto r = it.second.get();
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
 		if (r == INS_ERR_M_UNSPEED_STORAGE) {
-			if (s_unspeed_pid != "") s_unspeed_pid += "_";
+			if (s_unspeed_pid != "") 
+				s_unspeed_pid += "_";
 			s_unspeed_pid += std::to_string(pid_[it.first]);
 		}
 	}
@@ -522,7 +527,7 @@ int cam_manager::stop_all_timelapse_ex()
 {
 	//std::lock_guard<std::mutex> lock(mtx_); /* 不锁，不然会和timelapse_take_pic里的锁形成死锁 */
 
-	timelapse_quit_ = true;
+	timelapse_quit_ = true;		/* cam_manager::timelapse_task退出, 不给Module发照片命令 */
 	cv_.notify_all();
 	INS_THREAD_JOIN(th_timelapse_);
 

@@ -44,7 +44,9 @@ void pic_seq_sink::queue_frame(const std::shared_ptr<ins_frame>& frame)
 std::shared_ptr<ins_frame> pic_seq_sink::deque_frame()
 {
     std::lock_guard<std::mutex> lock(mtx_);
-    if (queue_.empty()) return nullptr;
+    if (queue_.empty()) 
+		return nullptr;
+
     auto frame = queue_.front();
     queue_.pop_front();
     return frame;
@@ -59,17 +61,20 @@ void pic_seq_sink::task()
             usleep(30*1000);
             continue;
         }
- 
+
+		LOGINFO("pid [%d] write timeplase seq: %d", frame->pid, frame->sequence);
         write_frame(frame);
 
         /* 同步各个镜头,保证一组照片存完后再存下一组 */
+
         std::unique_lock<std::mutex> lock(mtx_s_);
-        if (++cnt_ >= INS_CAM_NUM) {
+        if (++cnt_ >= INS_CAM_NUM) {	/* Master */
             cnt_ = 0;
             cv_.notify_all();
         } else {
             cv_.wait(lock);
         }
+		LOGINFO("wakeup: pic_seq_sink::task");
     }
 }
 
@@ -89,8 +94,10 @@ void pic_seq_sink::write_frame(const std::shared_ptr<ins_frame>& frame)
 
     std::stringstream ss;
     ss << url_ << "/origin_" << frame->sequence << "_" << frame->pid;
-    if (frame->metadata.raw) ss << INS_RAW_EXT;
-    else ss << INS_JPEG_EXT;
+    if (frame->metadata.raw) 
+		ss << INS_RAW_EXT;
+    else 
+		ss << INS_JPEG_EXT;
 
     jpeg_muxer muxer;
     muxer.create(ss.str(), frame->page_buf->data(), frame->page_buf->size(), &frame->metadata);

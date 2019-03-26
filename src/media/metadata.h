@@ -63,11 +63,11 @@ public:
 };
 
 #pragma pack(1) //自定义1字节对齐
-struct amba_gyro_data
-{
-	uint64_t pts = 0; //us
+struct amba_gyro_data {
+	uint64_t pts = 0; 	/* 陀螺仪数据的时间戳(单位为us) */
 	double accel[3];
 	double gyro[3];
+	
 #ifdef GYRO_EXT
     double position[3];
 #endif

@@ -6,8 +6,7 @@
 #include "insbuff.h"
 #include "metadata.h"
 
-class camm_util
-{
+class camm_util {
 public:
     static int32_t gen_camm_packet(const ins_camm_data& camm, std::shared_ptr<insbuff>& buff);
     static int32_t gen_camm_gyro_packet(const ins_gyro_data& gyro, std::shared_ptr<insbuff>& buff);

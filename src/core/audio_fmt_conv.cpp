@@ -10,8 +10,7 @@ void stereo_to_mono_s16(const std::shared_ptr<insbuff>& in, std::shared_ptr<insb
 	int j = 0;
 	if (!b_first_channle) j = 1;
 
-	for (int i = 0; i < size/2; i++)
-	{
+	for (int i = 0; i < size/2; i++) {
 		out_data[i] = in_data[2*i+j];
 	}
 }
@@ -23,8 +22,7 @@ void mono_to_stereo_s16(const std::shared_ptr<insbuff>& in, std::shared_ptr<insb
 	short* in_data = (short*)in->data();
 	short* out_data = (short*)out->data();
 
-	for (int32_t i = 0; i < samples; i++)
-	{
+	for (int32_t i = 0; i < samples; i++) {
 		out_data[2*i] = in_data[i];
         out_data[2*i+1] = in_data[i];
 	}
@@ -37,8 +35,7 @@ void ch4_to_stereo_s16(const std::shared_ptr<insbuff>& in, std::shared_ptr<insbu
 	short* in_data = (short*)in->data();
 	short* out_data = (short*)out->data();
 
-	for (int32_t i = 0; i < samples; i++)
-	{
+	for (int32_t i = 0; i < samples; i++) {
 		out_data[2*i] = in_data[4*i];
         out_data[2*i+1] = in_data[4*i+1];
 	}
@@ -51,8 +48,7 @@ void ch4_to_mono_s16(const std::shared_ptr<insbuff>& in, std::shared_ptr<insbuff
 	short* in_data = (short*)in->data();
 	short* out_data = (short*)out->data();
 
-	for (int i = 0; i < samples; i++)
-	{
+	for (int i = 0; i < samples; i++) {
 		out_data[i] = in_data[4*i];
 	}
 }
@@ -126,8 +122,7 @@ void s16_to_f32(const std::shared_ptr<insbuff>& in, std::shared_ptr<insbuff>& ou
     short* in_data = (short*)in->data();
     float* out_data = (float*)out->data();
     
-    for (int i = 0; i < sample_cnt; i++)
-    {
+    for (int i = 0; i < sample_cnt; i++) {
         out_data[i] = (float)in_data[i]/32768.0;
     }
 }
@@ -139,8 +134,7 @@ void s16_2ch_to_f32_1ch(const std::shared_ptr<insbuff>& in, std::shared_ptr<insb
     short* in_data = (short*)in->data();
     float* out_data = (float*)out->data();
     
-    for (int i = 0; i < sample_cnt; i++)
-    {
+    for (int i = 0; i < sample_cnt; i++) {
         out_data[i] = (float)in_data[2*i]/32768.0;
     }
 }

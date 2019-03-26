@@ -18,6 +18,8 @@ timelapse_mgr::~timelapse_mgr()
 	LOGINFO("timelapse mgr destroy");
 }
 
+
+
 int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 {
     camera_ = camera;
@@ -74,6 +76,7 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 			auto sink = std::make_shared<pic_seq_sink>(option.path, key_sink);
 			sinks.insert(std::make_pair(i, sink));
 		}
+
 		cam_repo_->set_sink(sinks);
 
 		std::string gyro_name = option.path + "/gyro.mp4";
@@ -135,6 +138,7 @@ int32_t timelapse_mgr::open_composer(std::string path, uint32_t interval)
 
 	return composer_->open(option);
 }
+
 
 void timelapse_mgr::print_option(const ins_video_option& option) const
 {

@@ -127,6 +127,43 @@ void s16_to_f32(const std::shared_ptr<insbuff>& in, std::shared_ptr<insbuff>& ou
     }
 }
 
+
+void f32_to_s16(int16_t *pOut, const float *pIn, size_t sampleCount) 
+{
+    if (pOut == NULL || pIn == NULL) {
+        return;
+    }
+
+#if 0	
+    for (size_t i = 0; i < sampleCount; ++i) {
+        *pOut++ = (short) pIn[i];
+    }
+#else 
+    for (int i = 0; i < sampleCount; i++) {
+        pOut[i] = (float)pIn[i]*32768.0;
+    }
+#endif
+	
+}
+
+void s16_to_f32(float *pOut, const int16_t *pIn, size_t sampleCount) 
+{
+    if (pOut == NULL || pIn == NULL) {
+        return;
+    }
+
+#if 0	
+    for (size_t i = 0; i < sampleCount; ++i) {
+        *pOut++ = pIn[i];
+    }
+#else 
+    for (int i = 0; i < sampleCount; i++) {
+        pOut[i] = (float)pIn[i]/32768.0;
+    }
+#endif
+}
+
+
 void s16_2ch_to_f32_1ch(const std::shared_ptr<insbuff>& in, std::shared_ptr<insbuff>& out)
 {
     int sample_cnt = in->size()/sizeof(short)/2;

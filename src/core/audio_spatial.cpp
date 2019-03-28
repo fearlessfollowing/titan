@@ -9,56 +9,92 @@
 
 audio_spatial::~audio_spatial()
 {
-    for (auto it : tl_ans_) {
-        ansRelease(it);
-    }
 
-    tl_ans_.clear();
+	if (denoise_mode_ == DENOISE_MODE_TL) {
+		for (auto it : tl_ans_) {
+			ansRelease(it);
+		}
+		
+		tl_ans_.clear();
+		
+		if (tl_cap_) {
+			captureRelease(tl_cap_);
+			tl_cap_ = nullptr;
+		}
+	} else {	/* RNNOISE */
+		if (rnnoise_st_) rnnoise_destroy(rnnoise_st_);
+		rnnoise_st_ = NULL;
+	}
 
-    if (tl_cap_) {
-        captureRelease(tl_cap_);
-        tl_cap_ = nullptr;
-    }
 }
 
 int32_t audio_spatial::open(uint32_t samplerate, uint32_t channel, bool fanless)
 {
     fanless_ = fanless;
-    frame_size_ = 1024*sizeof(float);
 
-    cur_dn_vol_ = camera_info::get_volume();
-    int32_t dn_db = get_ansdb_by_volume(cur_dn_vol_);
+	if (denoise_mode_ == DENOISE_MODE_TL) {
 
-    for (int i = 0; i < 2; i++) {
-        if (!fanless_) {
-            auto tl_ans = ansInit(512, channel, samplerate, dn_db, true);  //-20 -- -6
-            RETURN_IF_TRUE(!tl_ans, "ansInit fail", INS_ERR);
+	    frame_size_ = 1024*sizeof(float);
 
-            auto noise_buff = get_noise_sample(fanless_, i);
-            if (noise_buff) 
-				ansSetNoiseSample(tl_ans, (float*)noise_buff->data(), noise_buff->size()/sizeof(float), 2.0);
+	    cur_dn_vol_ = camera_info::get_volume();
+	    int32_t dn_db = get_ansdb_by_volume(cur_dn_vol_);
 
-            tl_ans_.push_back(tl_ans);
-        }
+	    for (int i = 0; i < 2; i++) {
+	        if (!fanless_) {
+	            auto tl_ans = ansInit(512, channel, samplerate, dn_db, true);  //-20 -- -6
+	            RETURN_IF_TRUE(!tl_ans, "ansInit fail", INS_ERR);
 
-        auto in_buff = std::make_shared<insbuff>(frame_size_*channel);
-        ans_in_buff_.push_back(in_buff);
+	            auto noise_buff = get_noise_sample(fanless_, i);
+	            if (noise_buff) 
+					ansSetNoiseSample(tl_ans, (float*)noise_buff->data(), noise_buff->size()/sizeof(float), 2.0);
 
-        auto out_buff = std::make_shared<insbuff>(frame_size_*channel);
-        ans_out_buff_.push_back(out_buff);
-    }
+	            tl_ans_.push_back(tl_ans);
+	        }
 
-    tl_cap_ = captureInit(channel*2, 512, channel*2, samplerate, true);
-    RETURN_IF_TRUE(!tl_cap_, "captureInit fail", INS_ERR);
-    captureSet(tl_cap_, true, 1.0);
+	        auto in_buff = std::make_shared<insbuff>(frame_size_*channel);
+	        ans_in_buff_.push_back(in_buff);
 
-    cap_in_buff_ = std::make_shared<insbuff>(frame_size_*channel*2);
-    cap_out_buff_ = std::make_shared<insbuff>(frame_size_*channel*2);
+	        auto out_buff = std::make_shared<insbuff>(frame_size_*channel);
+	        ans_out_buff_.push_back(out_buff);
+	    }
 
-    LOGINFO("spatial audio handle open vol:%d denoise db:%d", cur_dn_vol_, dn_db);
+	    tl_cap_ = captureInit(channel*2, 512, channel*2, samplerate, true);
+	    RETURN_IF_TRUE(!tl_cap_, "captureInit fail", INS_ERR);
+	    captureSet(tl_cap_, true, 1.0);
+
+	    cap_in_buff_ = std::make_shared<insbuff>(frame_size_*channel*2);
+	    cap_out_buff_ = std::make_shared<insbuff>(frame_size_*channel*2);
+
+	    LOGINFO("spatial audio handle open vol:%d denoise db:%d", cur_dn_vol_, dn_db);
+
+	}else {
+
+		LOGINFO("audio_spatial::open samplerate: %u, channel: %u", samplerate, channel);		
+
+	    frame_size_ = 1024*sizeof(float);	/* 采集音频的设备传递的每帧数据大小4096字节(1024次采样) */
+
+		auto in_buff = std::make_shared<insbuff>(frame_size_ * channel);
+		ans_in_buff_.push_back(in_buff);
+		
+		auto out_buff = std::make_shared<insbuff>(frame_size_ * channel);
+		ans_out_buff_.push_back(out_buff);
+
+		rnnoise_st_ = rnnoise_create();
+		if (rnnoise_st_ == NULL) {
+			LOGINFO("rnnoise_create failed!");
+			return INS_ERR_NO_MEM;
+		} else {
+			LOGINFO("rnnoise_create succ!");
+		}
+	}
+
 
     return INS_OK;
 }
+
+
+
+#ifdef ENABLE_DENOISE_MODE_TL
 
 
 std::vector<std::shared_ptr<insbuff>> audio_spatial::denoise(const std::vector<std::shared_ptr<insbuff>>& v_in)
@@ -88,6 +124,8 @@ std::vector<std::shared_ptr<insbuff>> audio_spatial::denoise(const std::vector<s
     }
 }
 
+
+
 std::shared_ptr<insbuff> audio_spatial::denoise(const std::shared_ptr<insbuff> in)
 {
     int32_t dn_db = 0;
@@ -114,6 +152,50 @@ std::shared_ptr<insbuff> audio_spatial::denoise(const std::shared_ptr<insbuff> i
     }
 }
 
+#endif
+
+
+#if 0
+
+
+#endif
+std::shared_ptr<insbuff> audio_spatial::rnnoise_denoise(const std::shared_ptr<insbuff> in)
+{
+    const int frame_size = 480;
+//	float patch_buffer[frame_size];
+	auto patch_buffer = std::make_shared<insbuff>(frame_size * sizeof(float));
+
+	
+    //s16_to_f32(in, ans_in_buff_[0]);	/* 首先将S16的数据转换为f32格式 */
+	
+	if (!fanless_) {
+		/* 计算出需要调用rnnoise_process_frame的次数 */
+		uint32_t frames = in->size() / frame_size;
+		uint32_t lastFrame = in->size() % frame_size;
+
+		for (int i = 0; i < frames; ++i) {
+            s16_to_f32(patch_buffer, in->data() + (i*frame_size), frame_size);
+            rnnoise_process_frame(rnnoise_st_, patch_buffer, patch_buffer);		/* 处理完成之后就是f32数据,直接拷贝到输出缓冲区 */
+			memcpy((uint8_t*)(ans_out_buff_[0]->data() + (i*frame_size* sizeof(float))), (uint8_t*)patch_buffer, sizeof(patch_buffer));	
+        }
+        
+		if (lastFrame != 0) {	/* 处理最后一帧 */
+            memset(patch_buffer, 0, frame_size * sizeof(float));
+            s16_to_f32(patch_buffer, in->data() + (frames*frame_size), lastFrame);
+            rnnoise_process_frame(rnnoise_st_, patch_buffer, patch_buffer);
+            f32_to_s16(buffer, patch_buffer, lastFrame);
+			memcpy((uint8_t*)(ans_out_buff_[0]->data() + (frames*frame_size* sizeof(float))), (uint8_t*)patch_buffer, lastFrame);				
+        }
+	}
+
+    if (fanless_)  { //不降噪
+        return ans_in_buff_[0];
+    } else {	//降噪
+        return ans_out_buff_[0];
+    }
+
+}
+
 
 
 int32_t audio_spatial::compose(const std::vector<std::shared_ptr<insbuff>>& v_in, std::shared_ptr<insbuff>& out)
@@ -131,6 +213,8 @@ int32_t audio_spatial::compose(const std::vector<std::shared_ptr<insbuff>>& v_in
 }
 
 
+
+#ifdef ENABLE_DENOISE_MODE_TL
 
 
 /***********************************************************************************************
@@ -192,14 +276,16 @@ std::shared_ptr<insbuff> audio_spatial::get_noise_sample(bool fanless, int index
 int32_t audio_spatial::get_ansdb_by_volume(uint32_t volume)
 {
     int32_t db_64 = -16, db_96 = -18;
-    // if (b_fanless) {
-    //     db_64 = -13;
-    //     db_96 = -15;
-    // } else
-    // {
-    //     db_64 = -16;
-    //     db_96 = -18;
-    // }
+
+#if 0	
+	if (b_fanless) {
+		db_64 = -13;
+		db_96 = -15;
+	} else {
+		db_64 = -16;
+		db_96 = -18;
+	}
+#endif
 
     if (db_64 == db_96) return db_64;
 
@@ -208,4 +294,5 @@ int32_t audio_spatial::get_ansdb_by_volume(uint32_t volume)
     return db;
 }
 
+#endif
 

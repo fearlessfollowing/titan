@@ -337,9 +337,9 @@ void access_msg_center::internal_sink_finish(const char* msg, std::string cmd, i
 	root_obj->get_int("code", ret);
 	root_obj->get_boolean("preview", b_preview);
 
-	if (b_preview) {
+	if (b_preview) {	/* 如果是在预览状态 */
 		if (state_ & CAM_STATE_PREVIEW) {
-			do_stop_preview(); //暂时同步处理,后续修改为异步处理
+			do_stop_preview(); /* 暂时同步处理,后续修改为异步处理 */
 			sender_->send_ind_msg(ACCESS_CMD_PREVIEW_FINISH_, ret);
 		}
 	} else {
@@ -347,13 +347,14 @@ void access_msg_center::internal_sink_finish(const char* msg, std::string cmd, i
 			do_stop_record(ret);
 		} else if (state_ & CAM_STATE_LIVE) {
 			bool b_stop_rec = false;
-			if (ret == INS_ERR_NO_STORAGE_SPACE || ret == INS_ERR_UNSPEED_STORAGE) b_stop_rec = true;
+			if (ret == INS_ERR_NO_STORAGE_SPACE || ret == INS_ERR_UNSPEED_STORAGE) 
+				b_stop_rec = true;
 			do_stop_live(ret, b_stop_rec);
 		} else if (state_ == CAM_STATE_PREVIEW) {
 			if (ret == INS_ERR_MICPHONE_EXCEPTION) {
 				bool dev_gone = false;
 				root_obj->get_boolean("dev_gone", dev_gone);
-				if (dev_gone) return; //如果是设备不见了，那么会收到设备更改消息，在那里处理这里不用处理
+				if (dev_gone) return; /* 如果是设备不见了，那么会收到设备更改消息，在那里处理这里不用处理 */
 			}
 
 			do_stop_preview();

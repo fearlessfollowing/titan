@@ -17,6 +17,7 @@
 int cam_manager::nv_amba_delta_usec_ = 0;
 std::mutex cam_manager::mtx_;
 
+
 int32_t cam_manager::exception()
 {
 	for (auto& it : map_cam_) {
@@ -71,25 +72,11 @@ void cam_manager::stop_sync_time()
 }
 
 cam_manager::cam_manager()
-{
-	//if (INS_CAM_NUM < 6) load_config_from_storage(path);
-
-	// std::string pid_str;
-	// xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_PID, pid_str);
-	// auto pid = strtok((char*)pid_str.c_str(), "_");
-	// while (pid) {
-	// 	pid_.push_back(atoi(pid));
-	// 	pid = strtok(nullptr, "_");
-	// }
-
-	// if (pid_.size() < cam_num_) {
-	// 	LOGINFO("pid config invalid, use dafault");
-		
-		pid_.clear();
-		for (unsigned int i = 0; i < cam_num_; i++) {
-			pid_.push_back(cam_num_ - i);
-		}
-	//}
+{		
+	pid_.clear();
+	for (unsigned int i = 0; i < cam_num_; i++) {
+		pid_.push_back(cam_num_ - i);
+	}
 
 	for (unsigned int i = 0; i < pid_.size(); i++) {
 		if (pid_[i] == MASTER_PID) {
@@ -97,8 +84,6 @@ cam_manager::cam_manager()
 			break;
 		}
 	}
-
-	//LOGINFO("cam_manager pid:%x %x %x %x %x %x master index:%d", pid_[0], pid_[1],pid_[2],pid_[3],pid_[4],pid_[5], master_index_);
 }
 
 
@@ -174,6 +159,9 @@ int cam_manager::do_open_cam(std::vector<unsigned int>& index)
 
 	usleep(1000*1000); // wait A12 init ...
 
+	/*
+	 * 为每个模组创建一个usb_camera对象,加入到map_cam_ map中
+	 */
 	for (unsigned int i = 0; i < index.size(); i++) {
 		auto cam = std::make_shared<usb_camera>(pid_[index[i]], index[i]);
 		map_cam_.insert(std::make_pair(index[i], cam));
@@ -206,6 +194,8 @@ void cam_manager::close_all_cam()
 
 	map_cam_.clear();
 }
+
+
 
 int cam_manager::start_video_rec(
 						unsigned int index, 
@@ -241,6 +231,8 @@ int cam_manager::start_video_rec(
 	return INS_OK;
 }
 
+
+
 int32_t cam_manager::set_all_video_param(const cam_video_param& param, const cam_video_param* sec_param)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
@@ -264,6 +256,8 @@ int32_t cam_manager::set_all_video_param(const cam_video_param& param, const cam
 
 	return ret;
 }
+
+
 
 int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_video_buff_i>>& queue)
 {
@@ -417,7 +411,7 @@ int cam_manager::start_all_timelapse_ex(const cam_photo_param& param, const std:
 	std::lock_guard<std::mutex> lock(mtx_);
 
 	int ret = INS_OK;
-	for (auto& it : map_cam_) {
+	for (auto& it : map_cam_) {		/* 给模组设置拍照参数 */
 		auto r = it.second->set_photo_param(param);
 		if (r != INS_OK) ret = r;
 	}
@@ -435,6 +429,7 @@ int cam_manager::start_all_timelapse_ex(const cam_photo_param& param, const std:
 
 	RETURN_IF_NOT_OK(ret);
 
+	/* 启动拍照线程 */
 	timelapse_quit_ = false;
 	th_timelapse_ = std::thread(&cam_manager::timelapse_task, this, param, img_repo);
 
@@ -452,10 +447,12 @@ void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<ca
 	gettimeofday(&tm_start, nullptr);
 
 	while (!timelapse_quit_) {	
+		
 		struct timeval tm;
 		gettimeofday(&tm, nullptr);
-		long long past = tm.tv_sec*1000*1000 + tm.tv_usec - tm_start.tv_sec*1000*1000 - tm_start.tv_usec;
-		long long wait = (long long)sequence*1000*param.interval;
+		long long past = tm.tv_sec * 1000 * 1000 + tm.tv_usec - tm_start.tv_sec * 1000 * 1000 - tm_start.tv_usec;
+		long long wait = (long long)sequence * 1000 * param.interval;
+
 		if (past <= wait) {
 			long long delta = wait - past;
 			std::unique_lock<std::mutex> lock(mtx_cv_);
@@ -468,7 +465,7 @@ void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<ca
 
 		sequence++;
 		param.sequence = sequence;
-		ret = timelapse_take_pic(param, img_repo);
+		ret = timelapse_take_pic(param, img_repo);	/* 发送拍timelapse命名 */
 		if (ret != INS_OK) {	
 			json_obj obj;
 			obj.set_string("name", INTERNAL_CMD_SINK_FINISH);
@@ -488,14 +485,19 @@ int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::sha
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
+	LOGINFO("take timelapse url: %s", tmp_param.file_url.c_str());
+
+	/* 给模组设置时间 */
 	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 		ret = it->second->set_camera_time();
 		RETURN_IF_NOT_OK(ret);
 	}
 
-	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
+	/* 发送拍照命令 */	
+	for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {	 	
 		auto r = it->second->start_still_capture(param, img_repo);
-		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
+		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) 
+			ret = r;
 	}
 
 	std::string s_unspeed_pid;
@@ -507,8 +509,10 @@ int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::sha
 
 	for (auto& it : map_f) {
 		auto r = it.second.get();
-		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
-		if (r == INS_ERR_M_UNSPEED_STORAGE) {
+		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) 
+			ret = r;
+
+		if (r == INS_ERR_M_UNSPEED_STORAGE) {	/* 存储速度不足 */
 			if (s_unspeed_pid != "") 
 				s_unspeed_pid += "_";
 			s_unspeed_pid += std::to_string(pid_[it.first]);
@@ -523,6 +527,7 @@ int cam_manager::timelapse_take_pic(const cam_photo_param& param, const std::sha
 	return ret;
 }
 
+
 int cam_manager::stop_all_timelapse_ex()
 {
 	//std::lock_guard<std::mutex> lock(mtx_); /* 不锁，不然会和timelapse_take_pic里的锁形成死锁 */
@@ -533,6 +538,7 @@ int cam_manager::stop_all_timelapse_ex()
 
 	return INS_OK;
 }
+
 
 int32_t cam_manager::set_all_capture_mode(uint32_t mode)
 {

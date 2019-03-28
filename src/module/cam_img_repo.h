@@ -20,9 +20,10 @@ class gyro_sink;
 class cam_img_repo {
 public:
             cam_img_repo() {};
-            cam_img_repo(std::string type) : type_(type) {};
+            cam_img_repo(std::string type) : type_(type) {};		
 			
     void    queue_frame(uint32_t index, const std::shared_ptr<ins_frame>& frame);
+
     void    queue_gyro(const uint8_t* data, uint32_t size);
 	
     std::map<uint32_t, std::shared_ptr<ins_frame>> dequeue_frame();
@@ -36,20 +37,24 @@ public:
 
 private:
     void    output(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
+
     void    acquire_gps_info(std::map<uint32_t, std::shared_ptr<ins_frame>>& group);
+
     void    out_sync_queue(std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
-    void    do_queue_frame(uint32_t index, const std::shared_ptr<ins_frame>& frame, 
-                            std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>>& queue);
+
+    void    do_queue_frame(uint32_t index, 
+								const std::shared_ptr<ins_frame>& frame, 
+                            	std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>>& queue);
 
     std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>> single_queue_;			/* 用于存放jpeg数据 */
     std::map<uint32_t, std::map<uint32_t, std::shared_ptr<ins_frame>>> single_queue_raw_;		/* 用于存放raw数据 */
 	
-    std::deque<std::map<uint32_t, std::shared_ptr<ins_frame>>> queue_; //non timelapse 
+    std::deque<std::map<uint32_t, std::shared_ptr<ins_frame>>> 			queue_; 				/* 同步后的一组照片数据帧(非timelapse模式) */
 
-	std::map<uint32_t, std::shared_ptr<pic_seq_sink>> sink_; //timelapse
+	std::map<uint32_t, std::shared_ptr<pic_seq_sink>> 					sink_; //timelapse
 
     std::mutex 								mtx_;
-    std::string 							type_ = INS_PIC_TYPE_PHOTO;		/* type_: 表示repo的类型 */
+    std::string 							type_ = INS_PIC_TYPE_PHOTO;		/* type_: 本次拍照的类型(构建repo对象时设置) */
 
     std::shared_ptr<obj_pool<insbuff>> 		buff_pool_;	
     std::vector<std::shared_ptr<gyro_sink>> gyro_sinks_;

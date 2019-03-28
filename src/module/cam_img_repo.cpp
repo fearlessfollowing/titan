@@ -31,9 +31,11 @@ void cam_img_repo::do_queue_frame(uint32_t index,
     }
 
     it->second.insert(std::make_pair(frame->sequence, frame));
+	
     if (queue.size() != INS_CAM_NUM) return;
 
     while (1) {
+		
         /* 每一个都是按sequence升序排列的，只要比较begin */
         int32_t seq = -1;
         for (auto& it : queue) {
@@ -61,14 +63,15 @@ void cam_img_repo::do_queue_frame(uint32_t index,
 
 void cam_img_repo::out_sync_queue(std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame)
 {
-    acquire_gps_info(m_frame);
+    acquire_gps_info(m_frame);		/* 获取该组照片(时间戳)对应的GPS数据 */
 
     if (type_ == INS_PIC_TYPE_TIMELAPSE) {
-        output(m_frame); //timelapse是主动推到sink
+        output(m_frame); 			/* timelapse是主动推到sink */
     } else {
-        queue_.push_back(m_frame); //非timelapse存储着，等调用者自己获取
+        queue_.push_back(m_frame); 	/* 非timelapse存储着，等调用者自己获取 */
     }
 }
+
 
 std::map<uint32_t, std::shared_ptr<ins_frame>> cam_img_repo::dequeue_frame()
 {
@@ -81,6 +84,7 @@ std::map<uint32_t, std::shared_ptr<ins_frame>> cam_img_repo::dequeue_frame()
     }
     return group;
 }
+
 
 void cam_img_repo::output(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame)
 {
@@ -105,8 +109,11 @@ void cam_img_repo::acquire_gps_info(std::map<uint32_t, std::shared_ptr<ins_frame
 
 void cam_img_repo::queue_gyro(const uint8_t* data, uint32_t size)
 {
-    if (gyro_sinks_.empty()) return;
+    if (gyro_sinks_.empty()) 
+		return;
+
     std::shared_ptr<insbuff> buff;
+
     if (size > 4096*4) {
         buff = std::make_shared<insbuff>(size);
         LOGINFO("gyro buff size:%d !!!!!!!!!!!!!!!!!", size);
@@ -118,7 +125,9 @@ void cam_img_repo::queue_gyro(const uint8_t* data, uint32_t size)
 	
     memcpy(buff->data(), data, size);
     buff->set_offset(size);
+	
     for (auto& it : gyro_sinks_) {
         it->queue_gyro(buff, 0);
     }
 }
+

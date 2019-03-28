@@ -14,6 +14,7 @@ timelapse_mgr::~timelapse_mgr()
 	composer_ = nullptr;
 	camera_->stop_all_timelapse_ex();
 	cam_repo_ = nullptr;
+	
 	gps_mgr::get()->del_all_output();
 	LOGINFO("timelapse mgr destroy");
 }
@@ -29,6 +30,8 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
     cam_repo_ = std::make_shared<cam_img_repo>(INS_PIC_TYPE_TIMELAPSE);
 
 	cam_photo_param param;
+
+
 	param.type = INS_PIC_TYPE_TIMELAPSE;
 	param.width = option.origin.width;
 	param.height = option.origin.height;
@@ -43,11 +46,13 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 		param.b_file_jpeg = false;
 		param.b_file_raw = false;
 
-		// if (param.mime != INS_RAW_MIME)
-		// {
-		// 	auto ret = open_composer(option.path, option.timelapse.interval);
-		// 	RETURN_IF_NOT_OK(ret);
-		// }
+		#if 0
+		if (param.mime != INS_RAW_MIME) {
+			auto ret = open_composer(option.path, option.timelapse.interval);
+			RETURN_IF_NOT_OK(ret);
+		}
+		#endif
+		
     } else if (option.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {	// jpeg存大卡 raw存小卡
 		if (param.mime == INS_RAW_MIME || param.mime == INS_RAW_JPEG_MIME) {
 			param.b_usb_raw = false;
@@ -59,16 +64,16 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 			param.b_file_jpeg = false;
 		}
 	} else {	// 全存小卡
-        param.b_usb_jpeg = false;
+        param.b_usb_jpeg = false;`
 		param.b_usb_raw = false;
 		param.b_file_jpeg = true;
-		param.b_file_raw = true;
-		open_usb_sink(option.prj_path);
+		param.b_file_raw = false;			// true -> false
+		//open_usb_sink(option.prj_path);
     }
 
-	if (param.b_usb_jpeg || param.b_usb_raw) {
-		std::map<uint32_t,std::shared_ptr<pic_seq_sink>> sinks;
-		
+	if (param.b_usb_jpeg || param.b_usb_raw) {	/* 需要存timelapse的jpeg或raw数据 */
+
+		std::map<uint32_t,std::shared_ptr<pic_seq_sink>> sinks;		
 		for (int32_t i = 0; i < INS_CAM_NUM; i++) {
 			bool key_sink = (camera_->master_index() == i) ? true : false;
 			
@@ -85,39 +90,43 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
 		
 		auto S = std::static_pointer_cast<gyro_sink>(sink);
 		cam_repo_->add_gyro_sink(S);
+		
 		sink->start(0);
 	}
 
-	int ret = camera_->start_all_timelapse_ex(param, cam_repo_);
+	int ret = camera_->start_all_timelapse_ex(param, cam_repo_);	/* 调用cam_manager的start_all_timelapse_ex来启动timelapse的拍摄 */
 	RETURN_IF_NOT_OK(ret);
 
 	LOGINFO("timalapse mgr start");
-
 	return INS_OK;
 }
+
 
 void timelapse_mgr::open_usb_sink(std::string path)
 {
 	std::string filename = path + "/" + INS_PROJECT_FILE;
 	usb_sink_ = std::make_shared<usb_sink>();
+	
 	usb_sink_->open(camera_);
 	usb_sink_->set_gps(true);
 	gps_mgr::get()->add_output(usb_sink_);
+
 	usb_sink_->set_prj_file(filename);
 }
+
 
 int32_t timelapse_mgr::open_composer(std::string path, uint32_t interval)
 {
 	compose_option option;
-	option.in_w = 4000;
-	option.in_h = 3000;
-	option.mime = INS_H264_MIME;
-	option.width = INS_PREVIEW_WIDTH;
-	option.height = INS_PREVIEW_HEIGHT;
-	option.mode = INS_MODE_PANORAMA;
-	option.map = INS_MAP_FLAT;
-	option.framerate = Arational(1,1);
-	option.bitrate = 200000*1000/interval;
+	option.in_w 		= 4000;
+	option.in_h 		= 3000;
+	option.mime 		= INS_H264_MIME;
+	option.width 		= INS_PREVIEW_WIDTH;
+	option.height 		= INS_PREVIEW_HEIGHT;
+	option.mode 		= INS_MODE_PANORAMA;
+	option.map 			= INS_MAP_FLAT;
+	option.framerate 	= Arational(1,1);
+	option.bitrate 		= 200000*1000 / interval;
 
 	auto sink = std::make_shared<stream_sink>(RTMP_PREVIEW_URL);
 	sink->set_video(true);
@@ -168,3 +177,5 @@ void timelapse_mgr::print_option(const ins_video_option& option) const
 			option.stiching.url.c_str());
 	}
 }
+
+

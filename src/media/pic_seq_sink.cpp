@@ -83,7 +83,7 @@ void pic_seq_sink::write_frame(const std::shared_ptr<ins_frame>& frame)
 {
     if (is_key_sink_ && !(frame->sequence % 3)) {	/* 每3张,检测一次磁盘空间,不要检测太频繁 */
         if (ins_util::disk_available_size(url_.c_str()) < INS_MIN_SPACE_MB - 100) {
-            quit_ = true; /* 磁盘满退出   */
+            quit_ = true; 	/* 磁盘满退出   */
             LOGERR("pid:%d no disk space left", frame->pid);
             std::stringstream ss;
 		    ss << "{\"name\":\"" << INTERNAL_CMD_SINK_FINISH << "\",\"code\":" << INS_ERR_NO_STORAGE_SPACE << "}";
@@ -104,17 +104,3 @@ void pic_seq_sink::write_frame(const std::shared_ptr<ins_frame>& frame)
 }
 
 
-
-// int pic_seq_sink::check_disk_space(uint32_t pid)
-// {
-// 	if (ins_util::disk_available_size(url_.c_str()) > INS_MIN_SPACE_MB - 100) return INS_OK;
-	
-// 	LOGERR("pid:%d no disk space left", pid);
-
-// 	if (is_key_sink_) {
-// 		std::stringstream ss;
-// 		ss << "{\"name\":\"" << INTERNAL_CMD_SINK_FINISH << "\",\"code\":" << INS_ERR_NO_STORAGE_SPACE << "}";
-// 		access_msg_center::queue_msg(0, ss.str());
-// 	}
-//     return INS_ERR;
-// }

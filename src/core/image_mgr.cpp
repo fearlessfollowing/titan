@@ -214,9 +214,9 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
     }
 	
 	if (option_.burst.enable) {				/* 拍照类型为burst */
-		param.type	= INS_PIC_TYPE_BURST;
-		param.count	= option_.burst.count;
-		cnt 		= option_.burst.count;
+		param.type		= INS_PIC_TYPE_BURST;
+		param.count		= option_.burst.count;
+		cnt 			= option_.burst.count;
 	} else if (option_.hdr.enable) {		/* 拍照类型为hdr */
 		param.type 		= INS_PIC_TYPE_HDR;
 		param.count 	= option_.hdr.count;
@@ -240,6 +240,9 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
     if (param.b_usb_jpeg && param.b_usb_raw && param.mime == INS_RAW_JPEG_MIME) 
         cnt *= 2;
 
+	/*
+	 * 创建image_repo用来存储各路模组传递的数据(默认的类型INS_PIC_TYPE_PHOTO)
+	 */
     img_repo_ = std::make_shared<cam_img_repo>();
 
     if (option_.origin.storage_mode == INS_STORAGE_MODE_NV || option_.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {
@@ -251,7 +254,7 @@ std::future<int32_t> image_mgr::open_camera_capture(int32_t& cnt)
         sink->start(0); 
     }
 
-    if (option_.b_stabilization && option_.b_stiching) {
+    if (option_.b_stabilization && option_.b_stiching) {	/* 需要实时拼接并且开启防抖 */
         stablz_ = std::make_shared<stabilization>();
 	    auto S = std::static_pointer_cast<gyro_sink>(stablz_);
 	    img_repo_->add_gyro_sink(S);

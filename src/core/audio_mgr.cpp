@@ -121,6 +121,7 @@ int32_t audio_mgr::open_inner_mic(int32_t type, bool fanless, bool hdmi_audio)
     ret = spatial_handle_->open(samplerate_, channel_, fanless);
     RETURN_IF_NOT_OK(ret);
 
+
     if (type != INS_AUDIO_N_C) {	// 也就是在预览的时候用到
 
 		spatial_ = true;

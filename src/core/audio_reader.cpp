@@ -26,23 +26,26 @@ int32_t audio_reader::open(int32_t card, int32_t dev, int32_t dev_type)
     	dev_->get_param(samplerate_, channel_, fmt_);
 	} else {
 		samplerate_ = 48000;
-		channel_ = 2;
-		fmt_ = SND_PCM_FORMAT_S16_LE;
+		channel_ 	= 2;
+		fmt_ 		= SND_PCM_FORMAT_S16_LE;
 	}
 	
     dev_->set_param(samplerate_, channel_, fmt_);
+	
     frame_size_ = dev_->get_frame_size();
-    fmt_size_ = dev_->get_fmt_size(fmt_);
-	dev_type_ = dev_type;
+    fmt_size_   = dev_->get_fmt_size(fmt_);
+	dev_type_   = dev_type;
 
     pool_ = std::make_shared<obj_pool<insbuff>>(-1, "pcm");
-	// pool_->alloc(32);
-	// for (int32_t i = 0; i < 32; i++)
-	// {
-	// 	auto buff = pool_->pop();
-	// 	if (!buff->data()) buff->alloc(frame_size_);
-	// }
 
+	#if 0	
+	pool_->alloc(32);
+	for (int32_t i = 0; i < 32; i++) {
+		auto buff = pool_->pop();
+		if (!buff->data()) buff->alloc(frame_size_);
+	}
+	#endif
+	
     th_ = std::thread(&audio_reader::task, this);
 
     return INS_OK;
@@ -143,14 +146,16 @@ void audio_reader::aliagn_frame(const std::shared_ptr<insbuff>& buff)
 	}
 }
 
-// bool audio_reader::deque_frame(ins_pcm_frame& frame)
-// {
-//     std::lock_guard<std::mutex> lock(mtx_);
-//     if (queue_.size() < 2) return false;
-//     frame = queue_.front();
-//     queue_.pop_front();
-//     return true;
-// }
+#if 0
+bool audio_reader::deque_frame(ins_pcm_frame& frame)
+{
+	std::lock_guard<std::mutex> lock(mtx_);
+	if (queue_.size() < 2) return false;
+	frame = queue_.front();
+	queue_.pop_front();
+	return true;
+}
+#endif
 
 void audio_reader::output(const std::shared_ptr<insbuff>& buff)
 {

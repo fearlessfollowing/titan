@@ -27,58 +27,58 @@ struct amba_frame_info;
 class usb_camera {
 
 public:
-			usb_camera(uint32_t pid, uint32_t index): pid_(pid), index_(index) { 
-				pool_ = std::make_shared<obj_pool<ins_frame>>(-1, "usb frame");
-				th_cmd_read_ = std::thread(&usb_camera::read_cmd_task, this);
-			};
+				usb_camera(uint32_t pid, uint32_t index): pid_(pid), index_(index) { 
+					pool_ = std::make_shared<obj_pool<ins_frame>>(-1, "usb frame");		/* 构造一个ins_frame缓冲池(默认含有16个对象) */
+					th_cmd_read_ = std::thread(&usb_camera::read_cmd_task, this);		/* 创建一个读模组命令响应的线程 */
+				};
 
-			~usb_camera() { close(); };
+				~usb_camera() { close(); };
 
-	void 	close();
-	int32_t exception() { return exception_; };
-	int32_t set_camera_time();
-	int32_t get_camera_time(int32_t& delta_time);
-	int32_t start_video_rec(const std::shared_ptr<cam_video_buff_i>& queue);
-	int32_t stop_video_rec();
-	int32_t start_still_capture(const cam_photo_param& param, std::shared_ptr<cam_img_repo> pic_buff = nullptr);
-	int32_t set_video_param(const cam_video_param& param, const cam_video_param* sec_param = nullptr);
-	int32_t get_video_param(cam_video_param& param, std::shared_ptr<cam_video_param>& sec_param);
-	int32_t set_photo_param(const cam_photo_param& param);
-	int32_t set_capture_mode(int32_t mode);
-	int32_t set_options(std::string property,int32_t value);
-	int32_t get_options(std::string property, std::string& value);
-	int32_t get_version(std::string& version);
-	int32_t test_spi();
-	int32_t reboot();
-	int32_t format_flash();
-	int32_t upgrade(std::string file_name, const std::string& md5);
-	int32_t set_uuid(std::string uuid);
-	int32_t get_uuid(std::string& uuid, std::string& sensorId);
-	int32_t calibration_awb_req(int32_t x, int32_t y, int32_t r, std::string& sensor_id, int32_t* maxvalue, std::shared_ptr<insbuff>& buff);
-	int32_t calibration_bpc_req();
-	int32_t calibration_blc_req();
-	int32_t calibration_blc_reset();
-	int32_t send_buff_data(const uint8_t* data, uint32_t size, int32_t type, int32_t timeout);
-	int32_t gyro_calibration();
-	int32_t magmeter_calibration();
-	int32_t start_magmeter_calibration();
-	int32_t stop_magmeter_calibration();
-	int32_t do_magmeter_calibration();
-	int32_t get_vig_min_value(int32_t& value);
-	int32_t set_vig_min_value(int32_t value);
-	int32_t storage_speed_test();
-	int32_t delete_file(std::string dir);
-	int32_t send_data(uint8_t* data, uint32_t size);
+	void 		close();
+	int32_t 	exception() { return exception_; };
+	int32_t 	set_camera_time();
+	int32_t 	get_camera_time(int32_t& delta_time);
+	int32_t 	start_video_rec(const std::shared_ptr<cam_video_buff_i>& queue);
+	int32_t 	stop_video_rec();
+	int32_t 	start_still_capture(const cam_photo_param& param, std::shared_ptr<cam_img_repo> pic_buff = nullptr);
+	int32_t 	set_video_param(const cam_video_param& param, const cam_video_param* sec_param = nullptr);
+	int32_t 	get_video_param(cam_video_param& param, std::shared_ptr<cam_video_param>& sec_param);
+	int32_t 	set_photo_param(const cam_photo_param& param);
+	int32_t 	set_capture_mode(int32_t mode);
+	int32_t 	set_options(std::string property,int32_t value);
+	int32_t 	get_options(std::string property, std::string& value);
+	int32_t 	get_version(std::string& version);
+	int32_t 	test_spi();
+	int32_t 	reboot();
+	int32_t 	format_flash();
+	int32_t 	upgrade(std::string file_name, const std::string& md5);
+	int32_t 	set_uuid(std::string uuid);
+	int32_t 	get_uuid(std::string& uuid, std::string& sensorId);
+	int32_t 	calibration_awb_req(int32_t x, int32_t y, int32_t r, std::string& sensor_id, int32_t* maxvalue, std::shared_ptr<insbuff>& buff);
+	int32_t 	calibration_bpc_req();
+	int32_t 	calibration_blc_req();
+	int32_t 	calibration_blc_reset();
+	int32_t 	send_buff_data(const uint8_t* data, uint32_t size, int32_t type, int32_t timeout);
+	int32_t 	gyro_calibration();
+	int32_t	 	magmeter_calibration();
+	int32_t 	start_magmeter_calibration();
+	int32_t 	stop_magmeter_calibration();
+	int32_t 	do_magmeter_calibration();
+	int32_t 	get_vig_min_value(int32_t& value);
+	int32_t 	set_vig_min_value(int32_t value);
+	int32_t 	storage_speed_test();
+	int32_t 	delete_file(std::string dir);
+	int32_t 	send_data(uint8_t* data, uint32_t size);
 	
-	std::future<int32_t> wait_cmd_over();
-	int32_t do_wait_cmd_over();
-	uint32_t get_sequence();
-	void set_delta_time(uint32_t sequence, int32_t delta_time);
-	int32_t get_log_file(std::string file_name);
-	int32_t change_usb_mode();
-	int64_t get_start_pts() { return start_pts_; };
+	std::future<int32_t> 	wait_cmd_over();
+	int32_t 				do_wait_cmd_over();
+	uint32_t 				get_sequence();
+	void 					set_delta_time(uint32_t sequence, int32_t delta_time);
+	int32_t 				get_log_file(std::string file_name);
+	int32_t 				change_usb_mode();
+	int64_t 				get_start_pts() { return start_pts_; };
 
-	std::string get_result();
+	std::string 			get_result();
 	
 	std::shared_ptr<ins_frame> deque_pic();
 	
@@ -161,37 +161,39 @@ private:
 	std::mutex 								mtx_cmd_rsp_;
 	std::string 							cmd_result_; 	// json, data content
 	
-	double 		fps_ = 30;
-	int32_t 	delta_time_cur_ = 0; //delta time between tx1 and a12
-	int32_t 	delta_time_new_ = 0; //delta time between tx1 and a12
-	uint32_t 	sequence_cur_ = 0;
-	uint32_t 	sequence_delta_time_ = -1; //should change to new delta time at this sequence
-	int32_t 	pic_cnt_ = 0; //module will take more than one pic when in burst mode
+	double 									fps_ = 30;
+	int32_t 								delta_time_cur_ = 0; //delta time between tx1 and a12
+	int32_t 								delta_time_new_ = 0; //delta time between tx1 and a12
+	uint32_t 								sequence_cur_ = 0;
+	uint32_t 								sequence_delta_time_ = -1; //should change to new delta time at this sequence
+	int32_t 								pic_cnt_ = 0; //module will take more than one pic when in burst mode
 
-	int32_t 	single_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
-	int32_t 	total_pic_timeout_ 	= RECV_PIC_TIMEOUT; //3s
+	int32_t 								single_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
+	int32_t 								total_pic_timeout_ 	= RECV_PIC_TIMEOUT; //3s
 
-	std::string pic_type_ = INS_PIC_TYPE_PHOTO;
+	std::string 							pic_type_ = INS_PIC_TYPE_PHOTO;
 
-	uint32_t 	pic_seq_ = 0;
-	uint32_t 	raw_seq_ = 0;
-	FILE* 		log_file_fp_ = nullptr;
-	uint32_t 	frame_seq_ = 0;
-	bool 		b_retransmit_ = false;
-	int64_t 	start_pts_ = INS_PTS_NO_VALUE;
+	static uint32_t 						timelape_seq = 0;
 
-	std::shared_ptr<obj_pool<ins_frame>> pool_;
-	std::shared_ptr<insbuff> gyro_buff_;
-	struct timeval 		tm_module_end_;
+	uint32_t 								pic_seq_ = 0;
+	uint32_t 								raw_seq_ = 0;
+	FILE* 									log_file_fp_ = nullptr;
+	uint32_t 								frame_seq_ = 0;
+	bool 									b_retransmit_ = false;
+	int64_t 								start_pts_ = INS_PTS_NO_VALUE;
+
+	std::shared_ptr<obj_pool<ins_frame>> 	pool_;
+	std::shared_ptr<insbuff> 				gyro_buff_;
+	struct timeval 							tm_module_end_;
 	
-	int32_t 			exception_ = INS_OK; //作为异常的标记表示退出
-	bool 				b_record_ = false;
-	int32_t 			rec_seq_ = -1;
-	uint64_t 			temp_cnt_ = 0;
+	int32_t 								exception_ = INS_OK; //作为异常的标记表示退出
+	bool 									b_record_ = false;
+	int32_t 								rec_seq_ = -1;
+	uint64_t 								temp_cnt_ = 0;
 
-	int32_t 			cnt = -1;
-	struct timeval 		start_time;
-	struct timeval 		end_time;
+	int32_t 								cnt = -1;
+	struct timeval 							start_time;
+	struct timeval 							end_time;
 };
 
 #endif

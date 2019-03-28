@@ -17,21 +17,21 @@ class stabilization;
 
 class image_mgr {
 public:
-                            ~image_mgr();
-    int32_t                 start(cam_manager* camera, const ins_picture_option& option, bool b_calibration = false);
+                            		~image_mgr();
+    int32_t                 		start(cam_manager* camera, const ins_picture_option& option, bool b_calibration = false);
 
 private:
-    void                    task();
-    int                     process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
-    int32_t                 calibration(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
-    std::future<int32_t>    open_camera_capture(int32_t& cnt);
-    void                    open_usb_sink(std::string path);
-    int32_t                 compose(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame, const ins_picture_option& option);
-    int32_t                 do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_metadata& ori_meta, const ins_picture_option& option);
-    int32_t                 hdr_compose();
-    int32_t                 save_origin(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
-    void                    send_pic_finish_msg(int32_t err, const std::string& path) const;
-    void                    print_option(const ins_picture_option& option) const;
+    void                    		task();
+    int                     		process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
+    int32_t                 		calibration(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
+    std::future<int32_t>    		open_camera_capture(int32_t& cnt);
+    void                    		open_usb_sink(std::string path);
+    int32_t                 		compose(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame, const ins_picture_option& option);
+    int32_t                 		do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_metadata& ori_meta, const ins_picture_option& option);
+    int32_t                 		hdr_compose();
+    int32_t                 		save_origin(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_frame);
+    void                    		send_pic_finish_msg(int32_t err, const std::string& path) const;
+    void                    		print_option(const ins_picture_option& option) const;
 
     ins_picture_option              option_;
     cam_manager*                    camera_ = nullptr;		/* cam_manager管理所有的模组,由access_msg_center中传递过来 */

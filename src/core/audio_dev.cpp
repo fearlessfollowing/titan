@@ -113,6 +113,7 @@ int32_t audio_dev::get_param(uint32_t& samplerate, uint32_t& channel, snd_pcm_fo
     return INS_OK;
 }
 
+
 int32_t audio_dev::read(std::shared_ptr<insbuff>& buff)
 {
     auto ret = snd_pcm_readi(handle_, buff->data(), INS_AUDIO_FRAME_SIZE);
@@ -210,4 +211,6 @@ bool audio_dev::is_channel_3_silence()
 
     return true;
 }
+
+
 

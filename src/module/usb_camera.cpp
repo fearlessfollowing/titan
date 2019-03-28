@@ -152,7 +152,8 @@ int32_t usb_camera::stop_video_rec()
  *		img_repo - 存储照片数据的repo
  * 返 回 值: 成功返回INS_OK; 失败返回错误码(见inserr.h)
  *********************************************************************************************/
-int32_t usb_camera::start_still_capture(const cam_photo_param& param, std::shared_ptr<cam_img_repo> img_repo)
+int32_t usb_camera::start_still_capture(const cam_photo_param& param, 
+											   std::shared_ptr<cam_img_repo> img_repo)
 {
 	pic_queue_.clear();
 
@@ -950,10 +951,13 @@ std::future<int32_t> usb_camera::wait_cmd_over()
 	return std::async(std::launch::async, &usb_camera::do_wait_cmd_over, this);
 }
 
+
+
 int32_t usb_camera::do_wait_cmd_over()
 {
 	/* 表示发送命令失败或者没有发送命令，不用去等待响应 */
-	if (send_cmd_ == -1) return INS_OK;
+	if (send_cmd_ == -1) 
+		return INS_OK;
 
 	int32_t timeout;
 	if (send_cmd_ == USB_CMD_STILL_CAPTURE) {
@@ -969,12 +973,6 @@ int32_t usb_camera::do_wait_cmd_over()
 			/* 模组可能在数据还没有传完的时候就回响应了,所以这里阻塞到数据读完 */
 			ret = stop_data_read_task(true); /* 响应成功，有可能读数据出错 */
 		} else {
-			// if (ret == INS_ERR_M_UNSPEED_STORAGE)
-			// {
-			// 	auto s_pid = std::to_string(pid_);
-			// 	property_set("module.unspeed", s_pid);
-			// 	LOGINFO("pid:%d set module.unspeed = %s", pid_, s_pid.c_str());
-			// }
 			stop_data_read_task(false); /* 马上停止读线程 */
 		}
 		img_repo_ = nullptr;
@@ -1004,7 +1002,6 @@ void usb_camera::read_cmd_task()
 	while (!quit_) {
 		read_cmd(0); // 无限长
 	}
-
 	LOGINFO("pid:%d cmd read task exit", pid_);
 }
 
@@ -1100,21 +1097,21 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 	cmd_result_ = "";
 	root_obj.get_string("data", cmd_result_);
 
-	if (rsp_result == INS_OK) {	/* 成功处理的某个命令后者模组发来通知指示 */
-		if (USB_CMD_STORAGE_STATE_IND == rsp_cmd) {	/* 模组上的存储设备状态变化指示 */
+	if (rsp_result == INS_OK) {		/* 成功处理的某个命令后者模组发来通知指示 */
+		if (USB_CMD_STORAGE_STATE_IND == rsp_cmd) {				/* 模组上的存储设备状态变化指示 */
 			std::string data;
 			root_obj.get_string("data", data);
 			send_storage_state(data);
-			return INS_OK; 		/* 不用设置cmd_rsp_map_，因为这个不是请求消息 */
+			return INS_OK; 			/* 不用设置cmd_rsp_map_，因为这个不是请求消息 */
 		} else if (USB_CMD_VIDEO_FRAGMENT == rsp_cmd) {			/* 启动新的视频段指示 */
 			if (pid_ != INS_CAM_NUM) 
-				return INS_OK; 	/* 只处理master */
+				return INS_OK; 		/* 只处理master */
 			auto obj_data = root_obj.get_obj("data");
 			int32_t sequence = -1;
 			obj_data->get_int("sequence", sequence);
 			if (sequence > 0) 
 				send_video_fragment_msg(sequence);
-			return INS_OK; 		/* 不用设置cmd_rsp_map_，因为这个不是请求消息 */
+			return INS_OK; 			/* 不用设置cmd_rsp_map_，因为这个不是请求消息 */
 		} else if (USB_CMD_VIG_MIN_VALUE_CHANGE == rsp_cmd) {	/* 视频分段最小值改变指示 */
 			send_vig_min_value_change_msg();
 		} else if (rsp_cmd == USB_CMD_SET_PHOTO_PARAM) {		/* USB_CMD_SET_PHOTO_PARAM的响应 */
@@ -1134,8 +1131,8 @@ int32_t usb_camera::read_cmd(int32_t timeout)
 				return INS_OK; 									/* 这里要return,不能设置cmd_rsp_值 */
 			} else if (state == "done") {
 				if (pid_ == INS_CAM_NUM && pic_type_ == INS_PIC_TYPE_TIMELAPSE) {	/* 如果是拍timelapse */
-					send_timelapse_pic_take(pic_seq_);
-				}
+					send_timelapse_pic_take(pic_seq_);	/* 自动加 */
+				}					
 			}
 		} else if (rsp_cmd == USB_CMD_GET_SYSTEM_TIME || rsp_cmd == USB_CMD_SET_SYSTEM_TIME) {	/* 设置/获取模组时间 */
 			gettimeofday(&tm_module_end_, nullptr);				/* 获取/设置系统时间接收响应的时间 */
@@ -1282,15 +1279,17 @@ void usb_camera::start_data_read_task()
 {
 	if (!is_data_thread_quit_) 
 		return;
-	is_data_thread_quit_ = false;
 	
+	is_data_thread_quit_ = false;
 	f_data_read_ = std::async(std::launch::async, &usb_camera::read_data_task, this);
 }
 
 
 int32_t usb_camera::stop_data_read_task(bool b_wait)
 {
-	if (!b_wait) is_data_thread_quit_ = true;
+	if (!b_wait) 
+		is_data_thread_quit_ = true;
+
 	int32_t ret = INS_OK; 
 	if (f_data_read_.valid()) 
 		ret = f_data_read_.get();
@@ -1325,6 +1324,8 @@ int32_t usb_camera::read_data_task()
 	return ret;
 }
 
+
+
 int32_t usb_camera::req_retransmit(bool read_pre_data)
 {
 	std::lock_guard<std::mutex> lock(cam_manager::mtx_);
@@ -1355,6 +1356,8 @@ int32_t usb_camera::req_retransmit(bool read_pre_data)
 	// }
 }
 
+
+
 int32_t usb_camera::read_data_head(amba_frame_info* head)
 {	
 	int32_t timeout;
@@ -1369,6 +1372,7 @@ int32_t usb_camera::read_data_head(amba_frame_info* head)
 	}
 
 	int32_t i = 0;
+	
 	while (i++ < loop_cnt) {	/* 循环10次 */
 		if (is_data_thread_quit_) {	/* is_data_thread_quit_ - 读数据线程是否需要退出标志 */
 			LOGINFO("pid:%d read head over", pid_);
@@ -1389,12 +1393,6 @@ int32_t usb_camera::read_data_head(amba_frame_info* head)
 		} else  {
 			if (head->reserve1 < INS_OK) {	// <0:代表出错
 				LOGERR("pid:%d read data err code:%d", pid_, head->reserve1);
-				// if (head->reserve1 == INS_ERR_M_UNSPEED_STORAGE)
-				// {
-				// 	auto s_pid = std::to_string(pid_);
-				// 	property_set("module.unspeed", s_pid);
-				// 	LOGINFO("pid:%d set module.unspeed = %s", pid_, s_pid.c_str());
-				// }
 				return head->reserve1;
 			} else if (head->size <= 0) {
 				LOGERR("pid:%x read invalid head size:%d", pid_, head->size);
@@ -1421,6 +1419,7 @@ int32_t usb_camera::read_data()
 	RETURN_IF_NOT_OK(ret);
 
 	if (head.type == AMBA_FRAME_IDR || head.type == AMBA_FRAME_I || head.type == AMBA_FRAME_B || head.type == AMBA_FRAME_P) {
+
 		if (head.reserve1 >= head.size) {
 			LOGERR("pid:%d reserve1:%d > size:%d", pid_, head.reserve1, head.size);
 			return INS_ERR_OVER;
@@ -1430,11 +1429,12 @@ int32_t usb_camera::read_data()
 		uint32_t offset = 0;
 		uint32_t size = head.size;
 		while (offset < size) {
-			uint32_t size_cur = std::min((unsigned)1024*1024, size - offset);
+			uint32_t size_cur = std::min((unsigned)1024 * 1024, size - offset);
 			int32_t ret = usb_device::get()->read_data(pid_, buff->data()+offset, size_cur, RECV_VID_TIMEOUT);
-			//LOGINFO("pid:%d total size:%d offset:%d read size:%d", pid_, head.size, offset, size_cur);	
+
+			/* LOGINFO("pid:%d total size:%d offset:%d read size:%d", pid_, head.size, offset, size_cur); */
 			if (ret == LIBUSB_ERROR_NULL_PACKET || ret == LIBUSB_ERROR_NOT_COMPLETE) {
-				//读数据读到头,请求重传后要先将上次的数据读完
+				/* 读数据读到头,请求重传后要先将上次的数据读完 */
 				auto r = req_retransmit(ret == LIBUSB_ERROR_NOT_COMPLETE);
 				RETURN_IF_NOT_OK(r);
 				return INS_ERR_RETRY;
@@ -1456,12 +1456,14 @@ int32_t usb_camera::read_data()
 			queue_video(buff, head.type, head.timestamp, head.sequence, head.reserve1);
 		}
 		return INS_OK;
-	} else if (head.type == AMBA_FRAME_PIC) {
-		uint32_t size = head.size;
-		auto buff = std::make_shared<page_buffer>(size);
+	} else if (head.type == AMBA_FRAME_PIC) {	/* 读照片数据(timelapse) */
+
+		uint32_t size = head.size;							/* 从头部获取照片数据的长度 */
+		auto buff = std::make_shared<page_buffer>(size);	/* 分配缓冲区来存储来自模组的照片数据 */
 		uint32_t offset = 0;
-		while (offset < head.size) {
-			uint32_t size = std::min((unsigned)1024*1024, head.size - offset);
+		
+		while (offset < head.size) {						/* 读取完整张照片数据 */
+			uint32_t size = std::min((unsigned)1024 * 1024, head.size - offset);
 			int32_t ret = usb_device::get()->read_data(pid_, buff->data()+offset, size, RECV_VID_TIMEOUT);
 			if (ret != LIBUSB_SUCCESS)  {
 				exception_ = INS_ERR_CAMERA_READ_DATA;
@@ -1469,6 +1471,8 @@ int32_t usb_camera::read_data()
 			}
 			offset += size;
 		}
+
+		/* 数据读取成功,将照片数据存入repo中 */
 		enque_pic(buff, head.timestamp, head.sequence, head.reserve1);
 
 		if (--pic_cnt_ <= 0) {
@@ -1476,19 +1480,19 @@ int32_t usb_camera::read_data()
 		} else {
 			return INS_OK;
 		}
-	} else if (head.type == AMBA_FRAME_CB_AWB) {
+	} else if (head.type == AMBA_FRAME_CB_AWB) { /* AWB数据帧 */
 		buff_ = std::make_shared<insbuff>(head.size);
 		int32_t ret = usb_device::get()->read_data(pid_, buff_->data(), head.size, RECV_VID_TIMEOUT);
 		if (ret != LIBUSB_SUCCESS) 
 			return INS_ERR_CAMERA_READ_DATA;
 		return INS_ERR_OVER;
-	} else if (head.type == AMBA_FRAME_CB_BRIGHT) {
+	} else if (head.type == AMBA_FRAME_CB_BRIGHT) {		/*  */
 		buff_ = std::make_shared<insbuff>(head.size);
 		int32_t ret = usb_device::get()->read_data(pid_, buff_->data(), head.size, RECV_VID_TIMEOUT);
 		if (ret != LIBUSB_SUCCESS) 
 			return INS_ERR_CAMERA_READ_DATA;
 		return INS_ERR_OVER;
-	} else if (head.type == AMBA_FRAME_PIC_RAW) {
+	} else if (head.type == AMBA_FRAME_PIC_RAW) {		/* PIC RAW数据帧 */
 		auto buff = std::make_shared<insbuff>(head.size);
 		int32_t ret = usb_device::get()->read_data(pid_, buff->data(), head.size, RECV_VID_TIMEOUT);
 		if (ret != LIBUSB_SUCCESS) {
@@ -1506,7 +1510,7 @@ int32_t usb_camera::read_data()
 		} else {
 			return INS_OK;
 		}
-	} else if (head.type == AMBA_FRAME_LOG) {
+	} else if (head.type == AMBA_FRAME_LOG) {		/* LOG日志数据帧 */
 		auto buff = std::make_shared<insbuff>(head.size);
 		int32_t ret = usb_device::get()->read_data(pid_, buff->data(), head.size, RECV_VID_TIMEOUT);
 		if (ret != LIBUSB_SUCCESS) 
@@ -1520,7 +1524,7 @@ int32_t usb_camera::read_data()
 			LOGINFO("pid:%d read log file seq:%d size:%d", pid_, head.sequence, head.size);
 			return INS_OK;
 		}
-	} else if (head.type == AMBA_FRAME_MAGMETER) {
+	} else if (head.type == AMBA_FRAME_MAGMETER) {		/* 磁力计数据帧 */
 		LOGINFO("pid:%d read head magmeter size:%d", pid_, head.size);
 		buff_ = std::make_shared<insbuff>(head.size);
 		int32_t ret = usb_device::get()->read_data(pid_, buff_->data(), head.size, RECV_VID_TIMEOUT);
@@ -1572,30 +1576,33 @@ void usb_camera::queue_pic_raw(const std::shared_ptr<insbuff>& buff, int32_t seq
 	raw_buff_.clear();
 }
 
+
+
 void usb_camera::enque_pic(const std::shared_ptr<page_buffer>& buff, int64_t timestamp, uint32_t sequence, uint32_t extra_size)
 {
 	std::lock_guard<std::mutex> lock(mtx_pic_);
 
 	auto frame = pool_->pop();
 	
-	//auto frame = std::make_shared<ins_frame>();
 	if (extra_size > 0 && extra_size < buff->offset()) {
-		uint8_t* extra_data = buff->data()+buff->offset()-extra_size;
+		uint8_t* extra_data = buff->data() + buff->offset() - extra_size;
 		parse_extra_data(extra_data, extra_size, sequence, &frame->metadata);
 		buff->set_offset(buff->offset()-extra_size);
 	}
 
-	memset(buff->data()+buff->offset(), 0x00, buff->size()-buff->offset());
-	frame->page_buf = buff; 
-	frame->pts = timestamp;
-	frame->dts = frame->pts;
-	frame->sequence = sequence;
+	memset(buff->data() + buff->offset(), 0x00, buff->size() - buff->offset());
+	frame->page_buf 	= buff; 
+	frame->pts 			= timestamp;
+	frame->dts 			= frame->pts;
+	frame->sequence 	= sequence;
 	frame->metadata.pts = frame->pts;
 	frame->metadata.raw = false;
-	frame->pid = pid_;
+	frame->pid			= pid_;
 
-	//LOGINFO("pid:%d jpeg size:%d seq:%d", pid_, frame->page_buf->offset(), frame->sequence);
-
+	#if 0
+	LOGINFO("pid:%d jpeg size:%d seq:%d", pid_, frame->page_buf->offset(), frame->sequence);
+	#endif
+	
 	img_repo_->queue_frame(index_, frame);
 }
 
@@ -1644,18 +1651,17 @@ void usb_camera::queue_video(const std::shared_ptr<page_buffer>& buff, uint8_t f
 	}
 	memset(buff->data()+buff->offset(), 0x00, buff->size()-buff->offset());
 
-	auto frame = pool_->pop();
-	//auto frame = std::make_shared<ins_frame>();
-	frame->page_buf = buff; 
-	//frame->pts_nv = timestamp - delta_pts_ + delta_time_cur_;
-	frame->pts = timestamp - delta_pts_;
-	frame->dts = frame->pts;
-	frame->duration = 1000000/fps_;
-	frame->media_type = INS_MEDIA_VIDEO;
-	frame->is_key_frame = (frametype == AMBA_FRAME_IDR)?true:false;
-	frame->pid = pid_;
-	frame->b_fragment = false;
-	frame->sequence = sequence;
+	auto frame 				= pool_->pop();
+	
+	frame->page_buf 		= buff; 
+	frame->pts 				= timestamp - delta_pts_;
+	frame->dts 				= frame->pts;
+	frame->duration 		= 1000000/fps_;
+	frame->media_type 		= INS_MEDIA_VIDEO;
+	frame->is_key_frame 	= (frametype == AMBA_FRAME_IDR) ? true : false;
+	frame->pid 				= pid_;
+	frame->b_fragment 		= false;
+	frame->sequence 		= sequence;
 
 	//printf("pid:%d sequence:%d pts %ld\n", pid_, sequence, frame->pts);
 
@@ -1746,6 +1752,8 @@ int32_t usb_camera::upgrade(std::string file_name, const std::string& md5)
 	return INS_OK;
 }
 
+
+
 int32_t usb_camera::send_fw(std::string file_name, const std::string& md5)
 {
 	LOGINFO("pid:%d send upgrade data begin", pid_);
@@ -1818,7 +1826,8 @@ void usb_camera::pre_process_timestamp(uint32_t sequence, int64_t timestamp)
 	if (delta_pts_ == INS_PTS_NO_VALUE) {
 		if (sequence == 0) {
 			delta_pts_ = timestamp - base_ref_pts_;
-			if (video_buff_) video_buff_->set_first_frame_ts(pid_, delta_pts_);
+			if (video_buff_) 
+				video_buff_->set_first_frame_ts(pid_, delta_pts_);
 			LOGINFO("pid:%d pts:%lld delta pts:%lld, seq:%d", pid_, timestamp, delta_pts_, sequence);
 		} else {
 			LOGERR("pid:%x delta pts not set, but seq:%d != 1 pts:%lld", pid_, sequence, timestamp);
@@ -1974,6 +1983,8 @@ void usb_camera::parse_sersor_info(const std::string& info, std::string& sensor_
 	LOGINFO("pid:%d sensor id:%s maxvalue:%d %d %d %d", pid_, sensor_id.c_str(), maxvalue[0], maxvalue[1], maxvalue[2], maxvalue[3]);
 }
 
+
+
 void usb_camera::parse_extra_data(const uint8_t* data, uint32_t size, uint32_t seq, jpeg_metadata* metadata)
 {	
 	amba_video_extra* head;
@@ -2069,6 +2080,8 @@ void usb_camera::parse_extra_data(const uint8_t* data, uint32_t size, uint32_t s
 		}
 	}
 }	
+
+
 
 void usb_camera::pasre_exif_info(const uint8_t* data, uint32_t size, jpeg_metadata* metadata)
 {

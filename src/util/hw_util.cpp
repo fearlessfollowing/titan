@@ -49,30 +49,6 @@ int32_t hw_util::get_temp(const std::string& property)
     }
 }
 
-// int hw_util::get_cpu_temp()
-// {
-//     std::string cmd = "cat /sys/class/thermal/thermal_zone1/temp";
-//     std::string output = ins_util::system_call_output(cmd);
-//     int32_t MCPU_temp = 0;
-//     if (output != "") MCPU_temp = atoi(output.c_str())/1000;
-
-//     //printf("CPU temp:%d\n", MCPU_temp);
-
-//     return MCPU_temp;
-// }
-
-// int hw_util::get_gpu_temp()
-// {
-//     std::string cmd = "cat /sys/class/thermal/thermal_zone2/temp";
-//     std::string output = ins_util::system_call_output(cmd);
-//     int32_t GPU_temp = 0;
-//     if (output != "") GPU_temp = atoi(output.c_str())/1000;
-
-//     //printf("GPU temp:%d\n", GPU_temp);
-
-//     return GPU_temp;
-// }
-
 #define FAN_CONTROL_REG		0x3
 #define FAN_CONTROL_BIT		7
 
@@ -144,7 +120,7 @@ bool gpio_direction_output(int32_t gpio, int value)
     return hw_util::gpio_write_value(pathname, val, strlen(val) + 1);
 }
 
-
+#define SWITCH_FAN_MODE "sys.ctl_fan_mode"
 
 bool hw_util::gpio_set_value(int32_t gpio, int value)
 {
@@ -153,36 +129,46 @@ bool hw_util::gpio_set_value(int32_t gpio, int value)
     return hw_util::gpio_write_value(pathname, value ? "1" : "0", 2);
 }
 
+
 void hw_util::switch_fan(bool b_open)
 {
+	std::string hw_mode = property_get(SWITCH_FAN_MODE);
+	if (hw_mode == "gpio") {
+	    ins_i2c i2c;
+  
+    	auto ret = i2c.open(0, 0x77);
+	    if (ret != INS_OK) {
+			LOGERR("open i2c bus 0x77 failed");
+			return;
+		}
 
-#if 0
-    ins_i2c i2c;
-    
-    auto ret = i2c.open(0, 0x77);
-    if (ret != INS_OK) return;
+    	uint8_t value = 0;
+	    ret = i2c.read(FAN_CONTROL_REG, value);
+    	if (ret != INS_OK) return;
 
-    uint8_t value = 0;
-    ret = i2c.read(FAN_CONTROL_REG, value);
-    if (ret != INS_OK) return;
+		LOGINFO("-------read: 0x77 0x03 val [0x%x]", value);
+    	if (b_open) {
+        	value |= (1 << FAN_CONTROL_BIT);
+	    } else {
+    	    value &= ~(1 << FAN_CONTROL_BIT);
+	    }
 
-    //LOGINFO("-------read:0x%x", value);
+		int cnt = 0;
+		do {
+			ret = i2c.write(FAN_CONTROL_REG, value);
+			if (ret == INS_OK) break;
+			cnt++;
+		} while (cnt < 3);
+			
+	    LOGINFO("switch fan: %d ret [%s]", b_open, (ret == INS_OK) ? "true": "false");
 
-    if (b_open) {
-        value |= (1 << FAN_CONTROL_BIT);
-    } else {
-        value &= ~(1 << FAN_CONTROL_BIT);
-    }
-
-    //LOGINFO("-------write:0x%x", value);
-
-    ret = i2c.write(FAN_CONTROL_REG, value);
-    if (ret != INS_OK) return;
-    LOGINFO("switch fan:%d success", b_open);
-#else 
-
-
-#endif
+	}else {
+		if (b_open) {
+			system("echo 255 > /sys/kernel/debug/tegra_fan/target_pwm");
+		} else {
+			system("echo 0 > /sys/kernel/debug/tegra_fan/target_pwm");
+		}
+	}
 	
 }
 

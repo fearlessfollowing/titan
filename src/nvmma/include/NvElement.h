@@ -117,10 +117,8 @@ protected:
      */
     NvElement(const char *name, NvElementProfiler::ProfilerField = NvElementProfiler::PROFILER_FIELD_NONE);
 
-    int is_in_error;        /**< Indicates if an error was encountered during
-                               the operation of the element. */
-    const char *comp_name;  /**< Specifies the name of the component,
-                               for debugging. */
+    int is_in_error;        	/**< Indicates if an error was encountered during the operation of the element. */
+    const char *comp_name;  	/**< Specifies the name of the component, for debugging. */
     NvElementProfiler profiler; /**< Profiler for the element. */
 
     /**

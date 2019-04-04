@@ -29,18 +29,18 @@ private:
     NvVideoDecoder* 		dec_ = nullptr;
     NvVideoConverter* 		conv_ = nullptr;
     safe_queue<NvBuffer*> 	conv_outp_queue_;
-    std::thread 		th_;
-    std::string 		name_;
-    std::string 		mime_;
-    bool 				b_error_ = true;
-    bool 				b_eos_ = false;
-    bool 				b_conv_eos_  = false;
-    int32_t 			out_plane_index_ = 0;
-    struct v4l2_buffer 	v4l2_buf_;
-    struct v4l2_plane 	planes_[MAX_PLANES];
-    struct v4l2_buffer 	v4l2_buf_conv_cap_;
-    struct v4l2_plane 	planes_conv_cap_[MAX_PLANES];
-    uint32_t 			close_wait_time_ms_ = 2000;
+    std::thread 			th_;
+    std::string 			name_;
+    std::string 			mime_;
+    bool 					b_error_ = true;
+    bool 					b_eos_ = false;
+    bool 					b_conv_eos_  = false;
+    int32_t 				out_plane_index_ = 0;
+    struct v4l2_buffer 		v4l2_buf_;
+    struct v4l2_plane 		planes_[MAX_PLANES];
+    struct v4l2_buffer 		v4l2_buf_conv_cap_;
+    struct v4l2_plane 		planes_conv_cap_[MAX_PLANES];
+    uint32_t 				close_wait_time_ms_ = 2000;
 };
 
 #endif

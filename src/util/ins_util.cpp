@@ -12,8 +12,7 @@
 int ins_util::disk_available_size(const char* path)
 {
 	struct statfs diskInfo;  
-    if (statfs(path, &diskInfo))
-    {
+    if (statfs(path, &diskInfo)) {
         LOGERR("statfs fail");
         return -1; //代表出错
     }  
@@ -25,7 +24,7 @@ int ins_util::disk_available_size(const char* path)
 
     //LOGINFO("----space:%u", available_size>>20);
 
-    return (available_size>>20);
+    return (available_size >> 20);
 }
 
 int ins_util::md5_file(std::string file_name, std::string& md5_value)
@@ -169,32 +168,37 @@ Arational ins_util::to_real_fps(int framerate)
 {
     Arational fps;
 
-	switch (framerate)
-	{
+	switch (framerate) {
 		case 15:
             fps.num = 15000;
             fps.den = 1001;
 			break;
+			
 		case 24:
             fps.num = 24000;
             fps.den = 1001;
 			break;
+			
 		case 30:
             fps.num = 30000;
             fps.den = 1001;
 			break;
+			
 		case 60:
             fps.num = 60000;
             fps.den = 1001;
 			break;
+			
 		case 120:
             fps.num = 120000;
             fps.den = 1001;
 			break;
+			
 		case 240:
             fps.num = 240000;
             fps.den = 1001;
 			break;
+			
 		default:
             fps.num = framerate;
             fps.den = 1;
@@ -204,33 +208,26 @@ Arational ins_util::to_real_fps(int framerate)
     return fps;
 }
 
+
+
 int ins_util::system_call(const std::string& cmd) 
 {
     int ret = 0;
     auto old_handle = signal(SIGCHLD, SIG_DFL); //如果SIGCHLD被设置为了SIG_IGN,system函数会返回失败
 
     int r = system(cmd.c_str());
-    if (r == -1) 
-    {
+    if (r == -1) {
         LOGERR("cmd:%s fail 1, err:%d %s", cmd.c_str(), errno, strerror(errno));
         ret = -1;
-    } 
-    else 
-    {
-        if (WIFEXITED(r)) 
-        {
-            if (WEXITSTATUS(r))
-            {
+    } else {
+        if (WIFEXITED(r)) {
+            if (WEXITSTATUS(r)) {
                 LOGERR("cmd:%s fail 3", cmd.c_str());
                 ret = -1;
-            }
-            else
-            {
+            } else {
                 ret = 0;
             }
-        } 
-        else 
-        {
+        } else {
             LOGERR("cmd:%s fail 2", cmd.c_str());
             ret = -1;
         }

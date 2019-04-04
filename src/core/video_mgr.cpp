@@ -24,8 +24,8 @@
 #define ENCODE_INDEX_MAIN      	0   	/* 编码拼接流 */
 #define ENCODE_INDEX_PRE       	1   	/* 编码预览流：文件预览/网络预览 */
 
-#define SINK_INDEX_NET 0 				/* 直播存文件的网络流 或者 预览的网络流 */
-#define SINK_INDEX_FILE  1 				/* 直播存文件的文件流 或者 预览的文件流 */
+#define SINK_INDEX_NET 			0		/* 直播存文件的网络流 或者 预览的网络流 */
+#define SINK_INDEX_FILE  		1		/* 直播存文件的文件流 或者 预览的文件流 */
 
 #define VIDEO_BUFF_INDEX_ORIGIN  0    	/* 原始流 */
 #define VIDEO_BUFF_INDEX_COMPOSE 1    	/* 拼接流 */
@@ -81,7 +81,7 @@ void video_mgr::set_first_frame_ts(int32_t rec_seq, int64_t ts)
 	if (prj_path_ != "") 	/* 工程文件中添加时间戳 */
 		prj_file_mgr::add_first_frame_ts(prj_path_, ts);
 	
-	if (local_sink_) 
+	if (local_sink_) 		/* 启动stream task任务开始写数据 */
 		local_sink_->start(ts);
 }
 
@@ -118,8 +118,8 @@ void video_mgr::switch_stablz(bool enable)
 int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 {
     camera_ 	= camera;
-	audio_type_ = option.audio.type;
-	prj_path_ 	= option.prj_path;
+	audio_type_ = option.audio.type;	/* 音频设备类型 */
+	prj_path_ 	= option.prj_path;		/* 工程文件的存储路径 */
 
 	LOGINFO("------- video_mgr start, options as follow: -------");
     print_option(option);
@@ -127,18 +127,20 @@ int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 	video_composer::init_cuda();
 
 	int enable = 1;
+
+	/* 是否需要视频分段(存视频文件时使用) */
 	xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_VIDEO_FRAGMENT, enable);
 	b_frag_ = enable ? true : false;
 
 	if (option.b_audio) 	/* 需要音频,打开音频设备 */
 		open_audio(option);
 
-	bool storage_aux = false;
+	bool storage_aux = false;	/* 是否需要存储第二路流 */
 	if (option.origin.storage_mode == INS_STORAGE_MODE_AB) {			/* 音频/gps/工程文件都传到模组 */
 		open_usb_sink(option.prj_path);  
 	} else if (option.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {	/* NV和Amba两边都存 */
 		storage_aux = !option.b_stiching;
-		if (!storage_aux) 
+		if (!storage_aux)	/* option.b_stiching = true */ 
 			open_local_sink(option.path); 	/* 不存辅码流的时候，只能单独存一个音频文件 */
 	}
 	
@@ -195,7 +197,8 @@ int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 int32_t video_mgr::open_preview(const ins_video_option& option)
 {
 	if (composer_) {	/* 实时拼接，添加一路预览编码流 */
-		if (option.origin.framerate > 60) {	// 大于60帧实时拼接的时候，性能不够出第二路
+		
+		if (option.origin.framerate > 60) {	/* 大于60帧实时拼接的时候，性能不够出第二路 */
 			LOGINFO("!!!!!!framerate:%d no preview", option.origin.framerate);
 			return INS_OK;
 		}
@@ -207,8 +210,9 @@ int32_t video_mgr::open_preview(const ins_video_option& option)
 		c_opt.height = INS_PREVIEW_HEIGHT;
 		c_opt.mode = INS_MODE_PANORAMA;
 		c_opt.map = INS_MAP_FLAT;
+
 		uint32_t framerate;
-		if (option.origin.framerate > 30) {	// 大于30帧实时拼接的时候，性能不够出,预览流降为15fps
+		if (option.origin.framerate > 30) {		/* 大于30帧实时拼接的时候，性能不够出,预览流降为15fps */
 			c_opt.bitrate = INS_PREVIEW_BITRATE/2;
 			framerate = 15;
 		} else {
@@ -222,18 +226,21 @@ int32_t video_mgr::open_preview(const ins_video_option& option)
 		sink->set_video(true);
 		sink->set_preview(true);
 		sink->set_live(true);
+		
 		audio_vs_sink(sink, AUDIO_INDEX_PRE_NET, false);
 		c_opt.m_sink.insert(std::make_pair(SINK_INDEX_NET, sink));
 
-		if (option.path != "") {	// 文件预览流
+		if (option.path != "") {	/* 文件预览流 */
 			std::string url = option.path + "/" + INS_PREVIEW_FILE;
 			auto sink = std::make_shared<stream_sink>(url);
 			sink->set_video(true);
-			sink->set_fragment(b_frag_, false); 
-			if (!option.b_to_file) sink->set_just_last_frame(true);
+			sink->set_fragment(b_frag_, false);
+			
+			if (!option.b_to_file) 
+				sink->set_just_last_frame(true);
+
 			audio_vs_sink(sink, AUDIO_INDEX_PRE_FILE, false);
 			c_opt.m_sink.insert(std::make_pair(SINK_INDEX_FILE, sink));
-
 			prj_file_mgr::add_preview_info(option.path, c_opt.bitrate, framerate);
 		}
 
@@ -262,6 +269,7 @@ int32_t video_mgr::open_preview(const ins_video_option& option)
 	return INS_OK;
 }
 
+
 int32_t video_mgr::start_preview(ins_video_option option)
 {
 	return INS_OK;
@@ -269,11 +277,6 @@ int32_t video_mgr::start_preview(ins_video_option option)
 
 void video_mgr::stop_preview()
 {
-	// LOGINFO("stop preview");
-
-	// if (composer_) composer_->encoder_del_output(ENCODE_INDEX_PRE, SINK_INDEX_NET);
-
-	// if (audio_) audio_->del_output(AUDIO_INDEX_PRE_NET);
 }
 
 void video_mgr::stop_live_file()
@@ -344,14 +347,15 @@ int32_t video_mgr::open_composer(const ins_video_option& option, bool preview) /
 	param.height 	= option.stiching.height;
 	param.bitrate 	= option.stiching.bitrate;
 	
-	param.ori_framerate = ins_util::to_real_fps(ori_fps);
-	param.framerate = ins_util::to_real_fps(option.stiching.framerate);
+	param.ori_framerate = ins_util::to_real_fps(ori_fps);	/* 原始流的帧率 */
+	param.framerate 	= ins_util::to_real_fps(option.stiching.framerate);	/* 拼接流的帧率 */
 
-	param.mode = option.stiching.mode;
-	param.map = option.stiching.map_type;
-	param.logo_file = option.logo_file;
-	param.hdmi_display = option.stiching.hdmi_display;
-	param.crop_flag = video_param_.crop_flag;
+	param.mode 			= option.stiching.mode;
+	param.map 			= option.stiching.map_type;
+	param.logo_file 	= option.logo_file;
+	param.hdmi_display 	= option.stiching.hdmi_display;
+	param.crop_flag 	= video_param_.crop_flag;
+	
 	auto default_offset = xml_config::is_user_offset_default();
 	
 	param.offset_type = (preview && default_offset) ? INS_OFFSET_FACTORY : INS_OFFSET_USER;
@@ -361,9 +365,13 @@ int32_t video_mgr::open_composer(const ins_video_option& option, bool preview) /
 	//以下为sink
 	if (option.stiching.url != "" || option.stiching.url_second != "") {
 		auto sink = std::make_shared<stream_sink>(option.stiching.url);
+		
 		sink->set_video(true);
 		sink->set_stitching(true);
-		if (option.type == INS_PREVIEW) sink->set_preview(true);
+
+		if (option.type == INS_PREVIEW) 
+			sink->set_preview(true);
+
 		if (option.stiching.url.find(".mp4", 0) == std::string::npos) {	//网络流
 			sink->set_live(true);
 			sink->set_auto_connect(option.auto_connect);
@@ -399,6 +407,7 @@ int32_t video_mgr::open_composer(const ins_video_option& option, bool preview) /
 			param.m_sink.insert(std::make_pair(SINK_INDEX_FILE, sink));
 		}
 	}
+
 
 	ret = composer_->open(param);
 	if (ret != INS_OK) {
@@ -478,27 +487,28 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 	}
 
 	cam_video_param param;
-	param.mime = option.origin.mime;
-	param.bitdepth = option.origin.bitdepth;
-	param.width = option.origin.width;
-	param.height = option.origin.height;
+	param.mime 		= option.origin.mime;
+	param.bitdepth 	= option.origin.bitdepth;
+	param.width 	= option.origin.width;
+	param.height 	= option.origin.height;
 	param.framerate = option.origin.framerate;
-	param.bitrate = option.origin.bitrate;
-	param.logmode = option.origin.logmode;
-	param.hdr = option.origin.hdr;
-	param.rec_seq = ++rec_seq_;
+	param.bitrate 	= option.origin.bitrate;
+	param.logmode 	= option.origin.logmode;
+	param.hdr 		= option.origin.hdr;
+	param.rec_seq 	= ++rec_seq_;
 	
 	if (option.origin.module_url != "") {
 		param.b_file_stream = true;
-		param.file_url = option.origin.module_url;
+		param.file_url 		= option.origin.module_url;
 	} else {
 		param.b_file_stream = false; 
 	}
 
 	//framerate_ = option.origin.framerate;
  
-	//usb传主码流： 1.直播原始流 2.只拼接不存原始流 3.存储模式为存nv的时候
-	//usb传辅码流： 除以上情况外的其他情况
+	/* usb传主码流: 1.直播原始流 2.只拼接不存原始流 3.存储模式为存nv的时候 
+	 * usb传辅码流: 除以上情况外的其他情况
+	 */
 	if (option.origin.live_prefix != "" 
 		|| (option.b_stiching && option.origin.storage_mode == INS_STORAGE_MODE_NONE)
 		|| option.origin.storage_mode == INS_STORAGE_MODE_NV) {
@@ -507,44 +517,74 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 		param.b_usb_stream = false;
 	}
 
-	if (!param.b_usb_stream) {
+	if (!param.b_usb_stream) {	/* 不传主码流 */
+
+		/* 构建并初始化辅码流参数 */
 		aux_param_ = std::make_shared<cam_video_param>();
-		aux_param_->b_usb_stream = true;
-		if (option.b_stiching) {	
-			if (option.origin.height * 4 == option.origin.width * 3) {
+		aux_param_->b_usb_stream = true;	/* 传辅码流 */
+		if (option.b_stiching) {			/* 需要实时拼接 */
+			if (option.origin.height * 4 == option.origin.width * 3) {	/* 宽高比为4:3 - 1920x1440 */
 				aux_param_->width 	= 1920;
 				aux_param_->height 	= 1440;
-			} else {
-				aux_param_->width 	= 2048; //1792;
-				aux_param_->height 	= 1152; //1008;
+			} else {	/* 宽高比为16:9 - 2048x1152 */
+				aux_param_->width 	= 2048; 	// 1792;
+				aux_param_->height 	= 1152; 	// 1008;
 			}
 			aux_param_->framerate 	= 30;
 			aux_param_->bitrate 	= 25000;
-		} else {
-			if (option.origin.height * 4 == option.origin.width * 3) {	//4:3 
+		} else {					/* 不需要实时拼接 */
+			if (option.origin.height * 4 == option.origin.width * 3) {	// 4:3 
 				aux_param_->width 	= 768;
 				aux_param_->height 	= 576;
-			} else {	//16:9
+			} else {	// 16:9
 				aux_param_->width 	= 768;
 				aux_param_->height 	= 432;
 			}
 
-			aux_param_->framerate 	= 30;
-			aux_param_->bitrate 	= 5000;
+			if (param.framerate % 25 == 0) {
+				aux_param_->framerate	= 25;
+			} else if (param.framerate % 30 == 0) {
+				aux_param_->framerate	= 30;
+			} else if (param.framerate < 25) {
+				aux_param_->framerate	= param.framerate;
+			}
+ 			aux_param_->bitrate 	= 5000;
 		}
-		
+
+		/*
+		 * 原始流存Amba, 不需要实时拼接, 第二路流也存文件,设置第二路流存文件的路径
+		 */
 		if (option.origin.storage_mode == INS_STORAGE_MODE_AB && !option.b_stiching) {
-			aux_param_->b_file_stream = true;
-			aux_param_->file_url = option.origin.module_url;
+			aux_param_->b_file_stream 	= true;
+			aux_param_->file_url 		= option.origin.module_url;
 		}
 	}
 
+	/* 给模组发送视频流参数 */
 	auto ret = camera_->set_all_video_param(param, aux_param_.get()); 
 	RETURN_IF_NOT_OK(ret);
 
-	ret = camera_->get_video_param(video_param_, aux_param_); //设置的参数可能和实际设置的不一样，要获取一次
+	/* 设置的参数可能和实际设置的不一样，要获取一次 */
+	ret = camera_->get_video_param(video_param_, aux_param_); 
 	RETURN_IF_NOT_OK(ret);
-	
+
+
+	LOGINFO("origin video param: width: %d, height: %d, framerate: %d, bitrate: %d", 
+											video_param_.width, 
+											video_param_.height, 
+											video_param_.framerate,
+											video_param_.bitrate);
+
+	if (aux_param_) {
+		LOGINFO("have aux video:");
+		LOGINFO("aux video param: width: %d, height: %d, framerate: %d, bitrate: %d", 
+												aux_param_->width, 
+												aux_param_->height, 
+												aux_param_->framerate,
+												aux_param_->bitrate);
+	}
+
+
 	/*
 	 * width x height x framerate x bitdepth x hdr
 	 */
@@ -565,16 +605,17 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 		video_buff_->add_gyro_sink(sink);
 	}
 
-	if (storage_aux
-		|| option.origin.storage_mode == INS_STORAGE_MODE_NV
-		|| option.origin.live_prefix != "") {
-    	open_origin_stream(option);  //录像开始前打开原始流sink
+
+	if (storage_aux || option.origin.storage_mode == INS_STORAGE_MODE_NV || option.origin.live_prefix != "") {
+    	open_origin_stream(option);  /* 录像开始前打开原始流sink */
 	}
 
 	/* 单镜头录像/合焦不用防抖 */
 	if (option.b_stabilization && option.index == -1) 
 		setup_stablz();
-  
+
+
+	/* 启动录像 */
 	ret = camera_->start_all_video_rec(m_queue); 
 	RETURN_IF_NOT_OK(ret);
 
@@ -586,28 +627,38 @@ void video_mgr::open_origin_stream(const ins_video_option& option)
 {
 	ins_video_param video_param;
 	video_param.mime = INS_H264_MIME;  //now origin all be h264
+
 	if (aux_param_ && aux_param_->b_usb_stream) {	/* 存辅码流 */
+		LOGINFO("just storage aux stream");
 		video_param.width = aux_param_->width;
 		video_param.height = aux_param_->height;
 		video_param.bitrate = aux_param_->bitrate;
 		video_param.fps = ins_util::to_real_fps(aux_param_->framerate).to_double();
 	} else {	// 存主码流
+		LOGINFO("just storage origin stream");
 		video_param.width = option.origin.width;
 		video_param.height = option.origin.height;
 		video_param.bitrate = option.origin.bitrate;
 		video_param.fps = ins_util::to_real_fps(option.origin.framerate).to_double();
 	}
 
+	LOGINFO("open_origin_stream: width: %d, height: %d, framerate: %f, bitrate: %d", 
+											video_param.width, 
+											video_param.height, 
+											video_param.fps,
+											video_param.bitrate);
+
+
 	std::map<uint32_t, std::shared_ptr<sink_interface>> map_sink;
 
 	for (uint32_t i = 0; i < INS_CAM_NUM; i++) {
 		std::stringstream ss;
 
-		if (option.origin.live_prefix != "") {
-			ss << option.origin.live_prefix << "/origin" << camera_->get_pid(i); //origin live
-		} else if (aux_param_) {
+		if (option.origin.live_prefix != "") {	/* 存原始流直播并存原始流 */
+			ss << option.origin.live_prefix << "/origin" << camera_->get_pid(i); 
+		} else if (aux_param_) {	/* 存辅码流 */
 			ss << option.path << "/origin_" << camera_->get_pid(i) << "_lrv.mp4";
-		} else {
+		} else {	/* 录像的原始流 */
 			ss << option.path << "/origin_" << camera_->get_pid(i) << ".mp4";
 		}
 		
@@ -761,6 +812,8 @@ void video_mgr::print_option(const ins_video_option& option) const
 		LOGINFO("auto connect interval:%d ms count:%d", option.auto_connect.interval, option.auto_connect.count);
 	}
 }
+
+
 
 // 存原片:
 // 主Amba+辅Nv         usb辅

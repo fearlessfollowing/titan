@@ -55,11 +55,10 @@ NvV4l2Element::NvV4l2Element(const char *comp_name, const char *dev_node, int fl
     output_plane_pixfmt = 0;
     capture_plane_pixfmt = 0;
 
-    /*Synchronization issue of libv4l2 open source library fixing here,adding lock for that*/
+    /* Synchronization issue of libv4l2 open source library fixing here,adding lock for that*/
     pthread_mutex_lock(&initializer_mutex);
     fd = v4l2_open(dev_node, flags | O_RDWR);
-    if (fd == -1)
-    {
+    if (fd == -1) {
         COMP_SYS_ERROR_MSG("Could not open device '" << dev_node << "'");
         is_in_error = 1;
         pthread_mutex_unlock(&initializer_mutex);
@@ -70,14 +69,13 @@ NvV4l2Element::NvV4l2Element(const char *comp_name, const char *dev_node, int fl
     COMP_DEBUG_MSG("Opened, fd = " << fd);
 
     ret = v4l2_ioctl(fd, VIDIOC_QUERYCAP, &caps);
-    if (ret != 0)
-    {
+    if (ret != 0) {
         COMP_SYS_ERROR_MSG("Error in VIDIOC_QUERYCAP");
         is_in_error = 1;
         return;
     }
-    if (!(caps.capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))
-    {
+	
+    if (!(caps.capabilities & V4L2_CAP_VIDEO_M2M_MPLANE)) {
         COMP_ERROR_MSG("Device does not support V4L2_CAP_VIDEO_M2M_MPLANE");
         is_in_error = 1;
         return;
@@ -89,48 +87,35 @@ NvV4l2Element::~NvV4l2Element()
     output_plane.deinitPlane();
     capture_plane.deinitPlane();
 
-    if (fd != -1)
-    {
+    if (fd != -1) {
         v4l2_close(fd);
         CAT_DEBUG_MSG("Device closed, fd = " << fd);
     }
 }
 
-int
-NvV4l2Element::dqEvent(struct v4l2_event &ev, uint32_t max_wait_ms)
+int NvV4l2Element::dqEvent(struct v4l2_event &ev, uint32_t max_wait_ms)
 {
     int ret;
 
-    do
-    {
+    do {
         ret = v4l2_ioctl(fd, VIDIOC_DQEVENT, &ev);
-
-        if (ret == 0)
-        {
+        if (ret == 0) {
             COMP_DEBUG_MSG("DQed event " << hex << ev.type << dec);
-        }
-        else if (errno != EAGAIN)
-        {
+        } else if (errno != EAGAIN) {
             COMP_SYS_ERROR_MSG("Error while DQing event");
             break;
-        }
-        else if (max_wait_ms-- == 0)
-        {
+        } else if (max_wait_ms-- == 0) {
             COMP_WARN_MSG("Error while DQing event: Resource temporarily unavailable");
             break;
-        }
-        else
-        {
+        } else {
             usleep(1000);
         }
-    }
-    while (ret && (output_plane.getStreamStatus() || capture_plane.getStreamStatus()));
+    } while (ret && (output_plane.getStreamStatus() || capture_plane.getStreamStatus()));
 
     return ret;
 }
 
-int
-NvV4l2Element::setControl(uint32_t id, int32_t value)
+int NvV4l2Element::setControl(uint32_t id, int32_t value)
 {
     struct v4l2_control ctl;
     int ret;
@@ -139,14 +124,9 @@ NvV4l2Element::setControl(uint32_t id, int32_t value)
     ctl.value = value;
 
     ret = v4l2_ioctl(fd, VIDIOC_S_CTRL, &ctl);
-
-    if (ret < 0)
-    {
-        COMP_SYS_ERROR_MSG("Error setting value " << value << " on control " <<
-                id);
-    }
-    else
-    {
+    if (ret < 0) {
+        COMP_SYS_ERROR_MSG("Error setting value " << value << " on control " << id);
+    } else {
         COMP_DEBUG_MSG("Set value " << value << " on control " << id);
     }
     return ret;
@@ -210,8 +190,7 @@ NvV4l2Element::getExtControls(v4l2_ext_controls &ctl)
     return ret;
 }
 
-int
-NvV4l2Element::subscribeEvent(uint32_t type, uint32_t id, uint32_t flags)
+int NvV4l2Element::subscribeEvent(uint32_t type, uint32_t id, uint32_t flags)
 {
     struct v4l2_event_subscription sub;
     int ret;
@@ -223,21 +202,17 @@ NvV4l2Element::subscribeEvent(uint32_t type, uint32_t id, uint32_t flags)
     sub.flags = flags;
 
     ret = v4l2_ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
-    if (ret == 0)
-    {
+    if (ret == 0) {
         COMP_DEBUG_MSG("Successfully subscribed to event " << type);
-    }
-    else
-    {
-        COMP_SYS_ERROR_MSG
-            ("Error while subscribing to event " << type);
+    } else {
+        COMP_SYS_ERROR_MSG("Error while subscribing to event " << type);
     }
 
     return ret;
 }
 
-int
-NvV4l2Element::abort()
+
+int NvV4l2Element::abort()
 {
     int ret = 0;
 
@@ -247,15 +222,15 @@ NvV4l2Element::abort()
     return ret;
 }
 
-int
-NvV4l2Element::waitForIdle(uint32_t max_wait_ms)
+
+int NvV4l2Element::waitForIdle(uint32_t max_wait_ms)
 {
     COMP_ERROR_MSG("wait_for_idle not implemented");
     return 0;
 }
 
-int
-NvV4l2Element::isInError()
+
+int NvV4l2Element::isInError()
 {
     int error = is_in_error;
     error |= capture_plane.isInError();
@@ -263,8 +238,7 @@ NvV4l2Element::isInError()
     return error;
 }
 
-void
-NvV4l2Element::enableProfiling()
+void NvV4l2Element::enableProfiling()
 {
     if (output_plane_pixfmt || capture_plane_pixfmt)
     {
@@ -273,3 +247,4 @@ NvV4l2Element::enableProfiling()
     }
     profiler.enableProfiling(true);
 }
+

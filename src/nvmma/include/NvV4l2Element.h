@@ -78,6 +78,8 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int subscribeEvent(uint32_t type, uint32_t id, uint32_t flags);
+
+	
     /**
      * Dequeues an event from the element.
      *
@@ -102,6 +104,7 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int setControl(uint32_t id, int32_t value);
+	
     /**
      * Gets the value of a control.
      *
@@ -123,7 +126,8 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int setExtControls(struct v4l2_ext_controls &ctl);
-    /**
+
+	/**
      * Gets the value of several controls.
      *
      * Calls \c VIDIOC_G_EXT_CTRLS IOCTL internally.
@@ -133,12 +137,14 @@ public:
      */
     int getExtControls(struct v4l2_ext_controls &ctl);
 
+
     virtual int isInError();
 
     /**
      * Sets the output plane.
      */
     NvV4l2ElementPlane output_plane;  /**< Output plane of the element */
+	
     /**
      * Sets the capture plane.
      */
@@ -178,8 +184,8 @@ public:
 protected:
     int fd;         /**< Specifies the FD of the device opened using \c v4l2_open. */
 
-    uint32_t output_plane_pixfmt;  /**< Pixel format of output plane buffers */
-    uint32_t capture_plane_pixfmt; /**< Pixel format of capture plane buffers */
+    uint32_t output_plane_pixfmt;  	/**< Pixel format of output plane buffers */
+    uint32_t capture_plane_pixfmt; 	/**< Pixel format of capture plane buffers */
 
     /**
      * Creates a new V4l2Element named \a name.
@@ -197,5 +203,6 @@ protected:
      */
     NvV4l2Element(const char *comp_name, const char *dev_node, int flags, NvElementProfiler::ProfilerField fields);
 };
-/** @} */
 #endif
+
+

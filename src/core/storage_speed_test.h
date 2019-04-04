@@ -22,12 +22,15 @@ private:
     void    queue_buff(int index, const std::shared_ptr<page_buffer>& buff);
     std::shared_ptr<page_buffer> dequeue_buff(int index);
 
-    static const int    num_ = 7;
+    static const int    num_ = 9;
+
     std::thread         th_p_[num_];
     std::thread         th_c_[num_];
     std::mutex          mtx_[num_];
+
     std::vector<int>    fd_;
     std::vector<std::deque<std::shared_ptr<page_buffer>>> queue_;
+
     int                 result_ = 0;
     bool                quit_ = false;
 };

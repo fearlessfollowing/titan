@@ -61,14 +61,15 @@ int32_t video_composer::open(const compose_option& option)
         option_.insert(std::make_pair(option.index, option));
     }
  
-    render_ 	= std::make_shared<render>();
-    dec_fps_ 	= option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
-    rend_mode_ 	= option.mode;    		//渲染出来帧的模式
+    render_ 		= std::make_shared<render>();
+    dec_fps_ 		= option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
+    rend_mode_ 		= option.mode;    		//渲染出来帧的模式
 	render_->set_mode(option.mode);
 	render_->set_map_type(option.map);
     render_->set_offset_type(option.crop_flag, option.offset_type);
 	render_->set_input_resolution(option.in_w, option.in_h);
     render_->set_output_resolution(option.width, option.height);
+
 
     if (option.logo_file != "") 
 		render_->set_logo(option.logo_file);
@@ -184,6 +185,7 @@ void video_composer::enc_task()
 
     mtx_.lock();
     render_setup_ = true;
+	
     for (auto& opt : option_) {
         auto enc = std::make_shared<nv_video_enc>();
         enc->set_resolution(opt.second.width, opt.second.height);
@@ -227,6 +229,8 @@ void video_composer::enc_task()
     }
     mtx_.unlock();
 
+
+	/* 为每个camera创建一个解码器 */
     for (uint32_t i = 0; i < INS_CAM_NUM; i++) {
         std::stringstream ss;
         ss << "dec" << i; 
@@ -241,7 +245,6 @@ void video_composer::enc_task()
         dec_.push_back(dec);
     }
 
-	/* 为每个camera创建一个解码器 */
     for (uint32_t i = 0; i < dec_.size(); i++) {
         th_dec_[i] = std::thread(&video_composer::dec_task, this, i);
     }

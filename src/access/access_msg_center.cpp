@@ -1063,31 +1063,32 @@ void access_msg_center::start_live(const char* msg, std::string cmd, int sequenc
 	ins_video_option opt;
 	DECLARE_AND_DO_WHILE_0_BEGIN
 
-	ret = msg_parser_.live_option(msg, opt);
+	ret = msg_parser_.live_option(msg, opt);	/* 1.解析直播参数 */
 	BREAK_IF_NOT_OK(ret);
 
-	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);
+	BREAK_EXCPET_STATE(CAM_STATE_PREVIEW);		/* 2.相机状态检查 */
 
-	if (state_ & CAM_STATE_PREVIEW) {
+	if (state_ & CAM_STATE_PREVIEW) {			/* 如果相机之前处于预览状态下, 先停止预览 */
 		ret = do_camera_operation_stop(false);
 		BREAK_IF_NOT_OK(ret);
-	} else {
+	} else {	/* 如果相机之前处于非预览状态下,需要先开启模组 */
 		OPEN_CAMERA_IF_ERR_BREAK(-1);
 	}
 
-	video_mgr_ = std::make_shared<video_mgr>();
+	video_mgr_ = std::make_shared<video_mgr>();	/* 构建video_mgr并启动 */
 	ret = video_mgr_->start(camera_.get(), opt);
 	if (ret != INS_OK) {
 		do_camera_operation_stop(true); break;
 	}
 
-	if (state_ & CAM_STATE_PREVIEW) {
+	if (state_ & CAM_STATE_PREVIEW) {			/* 如果之前处于预览状态,重启开启预览流 */
 		video_mgr_->start_preview(state_mgr_.preview_opt_);
 	}
 
 	state_mgr_.set_time();
 	state_mgr_.option_ = opt;
 	state_ |= CAM_STATE_LIVE;
+	
 	b_need_stop_live_ = false;
 	b_stop_live_rec_ = false;
 
@@ -1109,6 +1110,7 @@ void access_msg_center::start_live(const char* msg, std::string cmd, int sequenc
 		std::string cmd = "rm -rf " + opt.path;
 		system(cmd.c_str());
 	}
+	
 }
 
 
@@ -1955,16 +1957,17 @@ void access_msg_center::storage_test_1(const char* msg, std::string cmd, int seq
 
 void access_msg_center::test_storage_speed(const char* msg, std::string cmd, int sequence)
 {
+	/* 发送响应,表示接收到了测速命令 */
 	sender_->set_ind_msg_sequece(ACCESS_CMD_STORAGE_ST_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
 
 	std::string path;
 	msg_parser_.storage_speed_test_option(msg, path);
-	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {
+	if (state_ != CAM_STATE_IDLE && state_ != CAM_STATE_PREVIEW) {	/* 非空闲或预览装,返回413错误 */
 		sender_->send_ind_msg(ACCESS_CMD_STORAGE_ST_FINISH_, INS_ERR_NOT_ALLOW_OP_IN_STATE);
 	} else {
 		int32_t ret = INS_OK;
-		if (state_ & CAM_STATE_PREVIEW) {
+		if (state_ & CAM_STATE_PREVIEW) {		/* 预览状态下,测速会先停止预览 */
 			ret = do_camera_operation_stop(false);
 		} else {
 			ret = open_camera(-1);
@@ -1973,7 +1976,7 @@ void access_msg_center::test_storage_speed(const char* msg, std::string cmd, int
 		if (ret != INS_OK)  {
 			sender_->send_ind_msg(ACCESS_CMD_STORAGE_ST_FINISH_, ret);
 		} else {
-			state_ |= CAM_STATE_STORAGE_ST; 
+			state_ |= CAM_STATE_STORAGE_ST;		/* 进入测速状态 */
 			th_ = std::thread(&access_msg_center::do_test_storage_speed, this, path);
 		}
 	}
@@ -1981,7 +1984,9 @@ void access_msg_center::test_storage_speed(const char* msg, std::string cmd, int
 
 void access_msg_center::do_test_storage_speed(std::string path)
 {
-	std::map<int32_t, bool> map_res;
+	LOGINFO("do storage speed test, path[%s]", path.c_str());
+
+	std::map<int32_t, bool> map_res;	
 	std::future<int> f_module = std::async(
 			std::launch::async, 
 			[this, &map_res]() -> int
@@ -2012,8 +2017,9 @@ void access_msg_center::do_test_storage_speed(std::string path)
 	queue_msg(0, obj.to_string());
 
 	json_obj param_obj;
-	param_obj.set_bool("local", (ret_local==INS_OK));
-	auto array = json_obj::new_array();
+	param_obj.set_bool("local", (ret_local == INS_OK));	/* 设置本地测速的状态(true/false) */
+	
+	auto array = json_obj::new_array();		/* 设置各模组的测速结果 */
 	for (auto& it : map_res) {
 		json_obj t_obj;
 		t_obj.set_int("index", it.first);

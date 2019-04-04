@@ -296,6 +296,9 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 
 	RETURN_IF_NOT_OK(ret);
 
+	/*
+	 * 录像时启动对时任务
+	 */
 	sync_quit_ = false;
 	th_time_sync_ = std::thread(&cam_manager::time_sync_task, this, true);
 
@@ -303,6 +306,9 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 }
 
 
+/*
+ * Amba-NV对时
+ */
 void cam_manager::time_sync_task(bool b_record)
 {
 	auto it = map_cam_.find(master_index_);
@@ -316,21 +322,30 @@ void cam_manager::time_sync_task(bool b_record)
 	int delta_time = 0;
 	int cnt = 0;
 	
-	while (!sync_quit_) {
-		if (cnt++ < 600) {
+	while (!sync_quit_) {	/* 时间同步任务非退出状态 */
+
+		if (cnt++ < 600) {	/* 600 * 100 * 1000 us = 60000ms = 60s */
 			usleep(100*1000);
 			continue;
 		}
 
-		cnt = 0;
+		cnt = 0;	
+		
 		mtx_.lock();
-		int ret = it->second->get_camera_time(delta_time);
+		int ret = it->second->get_camera_time(delta_time);	/* 获取Amba的Master的系统时间(单位为us) */
 		mtx_.unlock();
-		if (ret != INS_OK) continue;
+
+		if (ret != INS_OK) 	/* 获取失败,进入下一次循环 */
+			continue;
+		
 		nv_amba_delta_usec_ = delta_time;
+
 		unsigned int delay_cnt = 30;
-		if (!b_record) delay_cnt = 2;
-		unsigned int sequence = it->second->get_sequence()+delay_cnt; //delay 
+		if (!b_record) 
+			delay_cnt = 2;
+
+		unsigned int sequence = it->second->get_sequence() + delay_cnt; //delay 
+
 		for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 			it->second->set_delta_time(sequence, delta_time);
 		}
@@ -338,6 +353,8 @@ void cam_manager::time_sync_task(bool b_record)
 
 	nv_amba_delta_usec_ = 0;
 }
+
+
 
 int cam_manager::stop_video_rec(unsigned int index)
 {
@@ -393,6 +410,8 @@ int cam_manager::stop_all_video_rec()
 	return ret;
 }
 
+
+
 int cam_manager::get_video_param(cam_video_param& param, std::shared_ptr<cam_video_param>& sec_param)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
@@ -405,6 +424,8 @@ int cam_manager::get_video_param(cam_video_param& param, std::shared_ptr<cam_vid
 
 	return it->second->get_video_param(param, sec_param);
 }
+
+
 
 int cam_manager::start_all_timelapse_ex(const cam_photo_param& param, const std::shared_ptr<cam_img_repo>& img_repo)
 {
@@ -766,6 +787,7 @@ int cam_manager::get_all_options(std::string property, std::vector<std::string>&
 
 	return ret;
 }
+
 
 int cam_manager::send_all_file_data(std::string file_name, int type, int timeout)
 {

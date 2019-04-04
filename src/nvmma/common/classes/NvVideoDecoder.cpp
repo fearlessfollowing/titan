@@ -86,9 +86,9 @@ NvVideoDecoder::~NvVideoDecoder()
 {
 }
 
+
 int
-NvVideoDecoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width,
-        uint32_t height)
+NvVideoDecoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height)
 {
     struct v4l2_format format;
     uint32_t num_bufferplanes;

@@ -15,6 +15,7 @@
     if (conv_) conv_->abort(); \
     b_error_ = true; \
 
+
 static bool conv_outputplane_cb(struct v4l2_buffer *v4l2_buf, NvBuffer *buffer, NvBuffer *shared_buffer, void *arg)
 {
     assert(arg != nullptr);
@@ -58,6 +59,8 @@ void nv_video_dec::close()
     LOGINFO("%s close", name_.c_str());
 }
 
+
+
 int32_t nv_video_dec::open(std::string name, std::string mime)
 {
     int32_t ret = 0;
@@ -74,6 +77,7 @@ int32_t nv_video_dec::open(std::string name, std::string mime)
         return INS_ERR;
     }
 
+	/* 创建NV硬件解码器对象 */
     dec_ = NvVideoDecoder::createVideoDecoder(name.c_str());
     RETURN_IF_TRUE(dec_ == nullptr, "createVideoDecoder error", INS_ERR);
 
@@ -405,11 +409,12 @@ void nv_video_dec::queue_input_buff(NvBuffer* buff, int64_t pts)
     }
 }
 
+
+
 // void nv_video_dec::input_send_eos()
 // {
 //     NvBuffer* buff = nullptr;
-//     if (INS_OK == dequeue_input_buff(buff, -1))
-//     {
+//     if (INS_OK == dequeue_input_buff(buff, -1)) {
 //         queue_input_buff(nullptr);
 //     }
 // }
@@ -444,6 +449,7 @@ int32_t nv_video_dec::dequeue_output_buff(NvBuffer* &buff, int64_t& pts, uint32_
     }
 }
 
+
 void nv_video_dec::queue_output_buff(NvBuffer* buff)
 {
     if (b_error_ || b_conv_eos_) return;
@@ -458,8 +464,7 @@ void nv_video_dec::queue_output_buff(NvBuffer* buff)
 
 // bool nv_video_dec::conv_capture_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer *buffer, NvBuffer *shared_buffer)
 // {
-//     if (v4l2_buf == nullptr)
-//     {
+//     if (v4l2_buf == nullptr) {
 //         NV_DEC_ABORT();
 //         return false;
 //     }
@@ -469,12 +474,10 @@ void nv_video_dec::queue_output_buff(NvBuffer* buff)
 //     //do something
 
 //     int ret = conv_->capture_plane.qBuffer(*v4l2_buf, nullptr);
-//     if (ret < 0)
-//     {
+//     if (ret < 0) {
 //         NV_DEC_ABORT();
 //         return false;
 //     }
-
 //     return true;
 // }
 

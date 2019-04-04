@@ -45,6 +45,8 @@ void ins_mux::close()
 	b_head_write_ = false;
 }
 
+
+
 int ins_mux::open(const ins_mux_param& param, const char* url)
 {
 	int ret = 0;
@@ -126,44 +128,35 @@ int ins_mux::open(const ins_mux_param& param, const char* url)
 		}
 
 		//set io timeout
-		if (protocal == "rtmp") //rtmp
-		{
+		if (protocal == "rtmp") {	//rtmp
 			av_dict_set(&io_opts, "rwtimeout", "3000000", 0);
-		}
-		else if (protocal == "tcp")
-		{
+		} else if (protocal == "tcp") {
 			av_dict_set(&io_opts, "timeout", "3000000", 0);
 		}
 
 		ret = avio_open2(&ctx_->pb, url, AVIO_FLAG_WRITE, nullptr, &io_opts);
 		av_dict_free(&io_opts);
-		if (ret < 0)
-		{
+		if (ret < 0) {
 			LOGERR("avio_open fail, ret:%d %s", ret, FFERR2STR(ret));
 			return INS_ERR;
 		}
 	}
 
 	AVDictionary* mux_opts = nullptr;
-	for (auto it = param.mux_options.begin(); it != param.mux_options.end(); it++)
-	{
+	for (auto it = param.mux_options.begin(); it != param.mux_options.end(); it++) {
 		av_dict_set(&mux_opts, it->first.c_str(), it->second.c_str(), 0);
 	}
 
 	ret = avformat_write_header(ctx_, &mux_opts);
 	av_dict_free(&mux_opts);
-	if (ret < 0)
-	{
+	if (ret < 0) {
 		LOGINFO("avformat_write_header fail:%d %s", ret, FFERR2STR(ret));
 		return INS_ERR;
 	}
 
-	if (flush_packet) 
-	{
+	if (flush_packet)  {
 		ctx_->flags |= AVFMT_FLAG_FLUSH_PACKETS;
-	}
-	else 
-	{
+	} else {
 		ctx_->flags &= ~AVFMT_FLAG_FLUSH_PACKETS;
 	}
 

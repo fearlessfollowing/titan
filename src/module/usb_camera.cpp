@@ -19,6 +19,9 @@
 #define RECV_CMD_TIMEOUT 	20000 	/* 停止录像存卡需要时间 */
 #define RECV_VID_TIMEOUT 	5000
 
+#define MIN_READ_DATA_LEN	(2*1024*1024)
+
+
 std::atomic_llong usb_camera::base_ref_pts_(INS_PTS_NO_VALUE);
 
 
@@ -85,6 +88,7 @@ int32_t usb_camera::get_camera_time(int32_t& delta_time)
 {
 	int32_t ret = INS_ERR;
 	int32_t loop_cnt = 30;
+	
 	while (--loop_cnt > 0) {
 		struct timeval tm_start;
 		gettimeofday(&tm_start, nullptr);
@@ -103,13 +107,18 @@ int32_t usb_camera::get_camera_time(int32_t& delta_time)
 		json_obj root_obj(cmd_result_.c_str());
 		root_obj.get_int("tv_sec", sec);
 		root_obj.get_int("tv_usec", usec);
-		delta_time = tm_module_end_.tv_sec*1000*1000 + tm_module_end_.tv_usec - sec*1000*1000 - usec;
+		
+		delta_time = tm_module_end_.tv_sec * 1000 * 1000 + tm_module_end_.tv_usec - sec * 1000 * 1000 - usec;
+
 		LOGINFO("pid:%d nv - amba delta time:%d ttl:%d", pid_, delta_time, ttl);
 		return INS_OK;
 	}
+
 	LOGINFO("pid:%x get time fail", pid_);
 	return ret;
 }
+
+
 
 uint32_t usb_camera::get_sequence() 
 { 
@@ -1429,7 +1438,7 @@ int32_t usb_camera::read_data()
 		uint32_t offset = 0;
 		uint32_t size = head.size;
 		while (offset < size) {
-			uint32_t size_cur = std::min((unsigned)1024 * 1024, size - offset);
+			uint32_t size_cur = std::min((unsigned)MIN_READ_DATA_LEN, size - offset);
 			int32_t ret = usb_device::get()->read_data(pid_, buff->data()+offset, size_cur, RECV_VID_TIMEOUT);
 
 			/* LOGINFO("pid:%d total size:%d offset:%d read size:%d", pid_, head.size, offset, size_cur); */
@@ -1463,7 +1472,7 @@ int32_t usb_camera::read_data()
 		uint32_t offset = 0;
 		
 		while (offset < head.size) {						/* 读取完整张照片数据 */
-			uint32_t size = std::min((unsigned)1024 * 1024, head.size - offset);
+			uint32_t size = std::min((unsigned)MIN_READ_DATA_LEN, head.size - offset);
 			int32_t ret = usb_device::get()->read_data(pid_, buff->data()+offset, size, RECV_VID_TIMEOUT);
 			if (ret != LIBUSB_SUCCESS)  {
 				exception_ = INS_ERR_CAMERA_READ_DATA;
@@ -1844,6 +1853,7 @@ void usb_camera::pre_process_timestamp(uint32_t sequence, int64_t timestamp)
 }
 
 
+
 void usb_camera::parse_nal_pos(const uint8_t* data, uint32_t data_size, uint8_t nal_type, int32_t& start_pos, int32_t& size)
 {
 	start_pos = -1;
@@ -1870,6 +1880,7 @@ void usb_camera::parse_nal_pos(const uint8_t* data, uint32_t data_size, uint8_t 
 		i += offset;
 	}
 }
+
 
 int32_t usb_camera::parse_sps_pps(const uint8_t* data, uint32_t data_size)
 {
@@ -1970,6 +1981,7 @@ int32_t usb_camera::process_magmeter_data(std::shared_ptr<insbuff> buff, std::st
 
 	return INS_OK;
 }
+
 
 void usb_camera::parse_sersor_info(const std::string& info, std::string& sensor_id, int32_t* maxvalue)
 {
@@ -2139,6 +2151,7 @@ void usb_camera::pasre_exif_info(const uint8_t* data, uint32_t size, jpeg_metada
 	// 	metadata->exif.exposure_program);
 }
 
+
 void usb_camera::clear_rec_context()
 {
 	//LOGINFO("pid:%x clear sps pps", pid_);
@@ -2150,6 +2163,7 @@ void usb_camera::clear_rec_context()
 	delta_time_new_ = 0;
 	sequence_cur_ = 0;
 }
+
 
 void usb_camera::send_rec_over_msg(int32_t errcode) const
 {	
@@ -2175,6 +2189,13 @@ void usb_camera::send_pic_origin_over() const
 }
 
 
+/**********************************************************************************************
+ * 函数名称: send_timelapse_pic_take
+ * 功能描述: 发送一组timelapse拍摄完成消息 
+ * 参   数: 
+ * 		sequence - 序列值(当前拍的组数)
+ * 返 回 值: 无
+ *********************************************************************************************/
 void usb_camera::send_timelapse_pic_take(uint32_t sequence) const
 {	
 	json_obj param_obj;
@@ -2203,6 +2224,14 @@ void usb_camera::send_storage_state(std::string state) const
 }
 
 
+/**********************************************************************************************
+ * 函数名称: send_first_frame_ts
+ * 功能秒数: 发送第一帧数据的时间戳
+ * 参   数: 
+ * 		rec_seq - 序列值
+ *		ts - 时间戳
+ * 返 回 值: 无
+ *********************************************************************************************/
 void usb_camera::send_first_frame_ts(int32_t rec_seq, int64_t ts) const
 {
 	json_obj obj;
@@ -2257,3 +2286,5 @@ void usb_camera::print_fps_info()
 		LOGINFO("pid:%d fps: %lf", pid_, fps);
 	}
 }
+
+

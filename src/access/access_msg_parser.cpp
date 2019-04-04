@@ -1,3 +1,4 @@
+#if 0
 #include "access_msg_parser.h"
 #include "xml_config.h"
 #include "inslog.h"
@@ -1183,6 +1184,7 @@ std::string access_msg_parser::gen_video_file_prefix(ins_video_option& opt)
 			if (opt.origin.framerate == 5) {		/* 1.如果是街景  VID_GSV*/
 				type = "VID_GSV";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 
+
 			} else if (opt.origin.bitdepth == 10) {	/* 2.如果是10bit */
 				if (opt.origin.framerate == 60) {
 					if (opt.origin.logmode == 1) {
@@ -1223,12 +1225,6 @@ std::string access_msg_parser::gen_video_file_prefix(ins_video_option& opt)
 }
 
 
-/*
- * PIC_XXXX_XXXX_XXX
- * PIC_RAW_XXXX_XXXX_XXX
- * PIC_AEB[3,5,7,9]_XXXX_XXXX
- * PIC_BST_XXXX_XXXX
- */
 std::string access_msg_parser::gen_pic_file_prefix(std::string type, ins_picture_option& opt)
 {
 	struct timeval time;
@@ -1499,3 +1495,4 @@ int access_msg_parser::check_audio_option(const ins_audio_option& option) const
 	return INS_OK;
 }
 
+#endif

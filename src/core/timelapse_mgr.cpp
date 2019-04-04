@@ -28,23 +28,21 @@ int timelapse_mgr::start(cam_manager* camera, const ins_video_option& option)
     print_option(option);
 
     cam_repo_ = std::make_shared<cam_img_repo>(INS_PIC_TYPE_TIMELAPSE);
-
 	cam_photo_param param;
 
-
-	param.type = INS_PIC_TYPE_TIMELAPSE;
-	param.width = option.origin.width;
-	param.height = option.origin.height;
-	param.mime = option.origin.mime;
-	param.interval = option.timelapse.interval;
-	param.file_url = option.origin.module_url;
+	param.type 		= INS_PIC_TYPE_TIMELAPSE;
+	param.width 	= option.origin.width;
+	param.height 	= option.origin.height;
+	param.mime 		= option.origin.mime;
+	param.interval 	= option.timelapse.interval;
+	param.file_url 	= option.origin.module_url;
 
 
 	if (option.origin.storage_mode == INS_STORAGE_MODE_NV) {	// 全存大卡
-        param.b_usb_jpeg = true;
-		param.b_usb_raw = true;
-		param.b_file_jpeg = false;
-		param.b_file_raw = false;
+        param.b_usb_jpeg 	= true;
+		param.b_usb_raw 	= true;
+		param.b_file_jpeg 	= false;
+		param.b_file_raw 	= false;
 
 		#if 0
 		if (param.mime != INS_RAW_MIME) {
@@ -135,6 +133,10 @@ int32_t timelapse_mgr::open_composer(std::string path, uint32_t interval)
 	option.m_sink.insert(std::make_pair(0, sink));
 
 	std::string url = path + "/" + INS_PREVIEW_FILE;
+
+	/*
+	 * 构造一个stream_sink
+	 */
 	sink = std::make_shared<stream_sink>(url);
 	sink->set_video(true);
 	sink->set_stitching(true);

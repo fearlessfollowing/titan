@@ -52,6 +52,7 @@ static void add_accel_offset(XMLDocument& xml_doc, XMLElement* e_gyro)
 	e_gyro->LinkEndChild(e_calibration);
 }
 
+
 static void add_depth_map(XMLDocument& xml_doc, XMLElement* e_root, std::string path)
 {
 	//depth map
@@ -421,7 +422,9 @@ int32_t prj_file_mgr::updata_video_info(std::string path, cam_video_param* param
 	return INS_OK;
 }
 
-int32_t prj_file_mgr::add_aux_file_info(std::string path, const std::shared_ptr<cam_video_param> aux_info,int32_t storage_loc)
+
+
+int32_t prj_file_mgr::add_aux_file_info(std::string path, const std::shared_ptr<cam_video_param> aux_info, int32_t storage_loc)
 {
 	std::lock_guard<std::mutex> lock(_mtx);
 

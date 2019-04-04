@@ -104,19 +104,28 @@ struct ins_video_option {
 	ins_stiching_option 	stiching;
 	bool 					b_audio = false;
 	ins_audio_option 		audio;
+	
 	int 					delay = 0;
 	int 					duration = -1;		//second
+
 	int 					index = -1; 		/* 单镜头合焦HDMI预览 */
+
 	std::string 			path;
 	std::string 			prj_path;
+
 	bool 					b_override = false; /* 文件覆盖写 */
 	bool 					b_to_file = true; 	/* 不写文件只保存最后一帧 */
+
 	bool 					b_stabilization = false;
+
 	ins_auto_connect 		auto_connect; 		/* for living */
 	std::string 			logo_file;
+
 	uint8_t 				type = 0; 			/* 0:preview; 1:rec; 2:live */
+
 	std::string 			name;				/* 区别是录像;还是直播 */
  };
+
 
 
 struct ins_video_file_option {

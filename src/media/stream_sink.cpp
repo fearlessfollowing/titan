@@ -25,7 +25,8 @@ stream_sink::~stream_sink()
 	b_release_ = true;
 	INS_THREAD_JOIN(th_);
 
-	if (b_just_last_frame_) key_frame_to_jpeg(last_key_frame_);
+	if (b_just_last_frame_) 
+		key_frame_to_jpeg(last_key_frame_);
 
 	mux_ = nullptr;
 
@@ -94,7 +95,7 @@ void stream_sink::task()
 {
 	if (open_mux()) {
 		if (b_live_) 
-			send_net_link_state_msg(true);
+			send_net_link_state_msg(true);	/* 启动流任务时,如果是直播模式,发送"connected"消息 */
 	} else { 
 		return;
 	}
@@ -247,7 +248,9 @@ int stream_sink::write_mux(const ins_frame* frame)
 
 void stream_sink::check_fragment(const ins_frame* frame)
 {	
-	if (b_live_) return;
+	if (b_live_) 
+		return;
+
 	if (fragment_type_ == SINK_NO_FRAGMENT) {
 		return;
 	} else if (fragment_type_ == SINK_AUTO_FRAGMENT) {
@@ -263,7 +266,8 @@ void stream_sink::check_fragment(const ins_frame* frame)
 	//以下为分段处理
 	create_new_mux(frame->pts);
 
-	if (b_origin_key_) prj_file_mgr::add_origin_frag_file(path_, url_sequence_-1);
+	if (b_origin_key_) 
+		prj_file_mgr::add_origin_frag_file(path_, url_sequence_-1);
 }
 
 
@@ -309,20 +313,16 @@ bool stream_sink::av_sync()
 
 	std::lock_guard<std::mutex> lock(mtx_);
 
-	if (b_video_)  // if has video sync to video
-	{
-		while (!video_queue_.empty())
-		{
+	if (b_video_) {	// if has video sync to video
+		while (!video_queue_.empty()) {
 			auto frame = video_queue_.front();
-			if (!frame->is_key_frame)  //video must start with key frame
-			{
+			if (!frame->is_key_frame) {	// video must start with key frame
 				LOGINFO("-----not key frame discard");
 				video_queue_.pop(); continue;
 			}
-			// if (b_audio_)
-			// {
-			// 	if (audio_queue_.empty() || audio_queue_.front()->pts > frame->pts + 30000)  
-			// 	{
+			
+			// if (b_audio_) {
+			// 	if (audio_queue_.empty() || audio_queue_.front()->pts > frame->pts + 30000) {
 			// 		LOGERR("???????????? %s audio queue:%d  discard video", url_.c_str(), audio_queue_.size());
 			// 		video_queue_.pop(); continue;
 			// 	}
@@ -349,10 +349,17 @@ bool stream_sink::av_sync()
 
 void stream_sink::queue_gps(std::shared_ptr<ins_gps_data>& gps)
 {
-	if (!b_gps_) return;
-	if (b_release_) return;
-	if (!b_start_) return;
-	if (b_just_last_frame_) return;
+	if (!b_gps_) 
+		return;
+
+	if (b_release_) 
+		return;
+
+	if (!b_start_) 
+		return;
+
+	if (b_just_last_frame_) 
+		return;
 
 	std::lock_guard<std::mutex> lock(mtx_);
 	if (gps_queue_.size() > 100) {
@@ -364,6 +371,8 @@ void stream_sink::queue_gps(std::shared_ptr<ins_gps_data>& gps)
 		gps_queue_.push(gps);
 	}
 }
+
+
 
 void stream_sink::queue_gyro(std::shared_ptr<insbuff>& data, int64_t delta_ts)
 {
@@ -684,6 +693,8 @@ int32_t stream_sink::dequeue_and_write()
 // }
 #endif
 
+
+
 void stream_sink::do_discard_frame(bool b_keyframe)
 {
 	if (!b_keyframe) return;
@@ -692,11 +703,11 @@ void stream_sink::do_discard_frame(bool b_keyframe)
 	int32_t discard_cnt = 0;
 	
 	if (b_live_) {
-		threshold = 2 * std::max((int32_t)fps_, 30); //最大缓存2s数据，超过开始丢帧
+		threshold = 2 * std::max((int32_t)fps_, 30); 	/* 最大缓存2s数据，超过开始丢帧 */
 		if (video_queue_.size() > threshold) 
 			discard_cnt = video_queue_.size() - threshold;
 	} else {
-		threshold = 5 * std::max((int32_t)fps_, 30); //最大缓存5s数据，超过开始丢帧
+		threshold = 5 * std::max((int32_t)fps_, 30); 	/* 最大缓存5s数据，超过开始丢帧 */
 		if (video_queue_.size() > threshold) 
 			discard_cnt = video_queue_.size() - threshold;
 	}
@@ -709,7 +720,7 @@ void stream_sink::do_discard_frame(bool b_keyframe)
 
 
 #if 0
-	// 只丢视频帧不丢音频帧
+	/* 只丢视频帧不丢音频帧 */
 	long long video_pts = video_queue_.front()->pts;
 
 	while (!audio_queue_.empty()) {
@@ -780,8 +791,10 @@ void stream_sink::do_net_disconnect()
 		timer_->start(auto_connect_interval_/1000);
 	}
 
-	if (retry_cnt_ == 1) send_net_link_state_msg(false);
+	if (retry_cnt_ == 1) 
+		send_net_link_state_msg(false);
 }
+
 
 void stream_sink::do_reconnect()
 {
@@ -835,6 +848,7 @@ void stream_sink::send_rec_over_msg(int errcode)
 	access_msg_center::queue_msg(0, obj.to_string());
 }
 
+
 void stream_sink::send_net_link_state_msg(bool b_connect)
 {
 	if (b_release_) return;
@@ -850,10 +864,12 @@ void stream_sink::send_net_link_state_msg(bool b_connect)
 	access_msg_center::send_msg(ACCESS_CMD_NET_LINK_STATE_, &param_obj);
 }
 
+
 int stream_sink::key_frame_to_jpeg(const std::shared_ptr<ins_frame>& frame)
 {
 	if (frame == nullptr) 
 		return INS_ERR;
+	
 	if (video_param_ == nullptr) 
 		return INS_ERR;
 

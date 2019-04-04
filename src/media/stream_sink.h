@@ -105,7 +105,7 @@ public:
 
 	void set_preview(bool value) {
 		b_preview_ = value;
-		if (value) { // 预览的时候必然自动重连
+		if (value) { 		/* 预览的时候必然自动重连 */
 			b_live_ = true;
 			b_auto_connect_ = true;
 			auto_connect_interval_ = 1000;

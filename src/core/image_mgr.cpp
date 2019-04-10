@@ -22,8 +22,8 @@
 image_mgr::~image_mgr()
 {
     quit_ = true;
-    INS_THREAD_JOIN(th_);
-    gps_mgr::get()->del_all_output();
+    INS_THREAD_JOIN(th_);				/* 停止拍照线程 */
+    gps_mgr::get()->del_all_output();	/* 停止从GPS管理器中获取GPS数据 */
     LOGINFO("image mgr destroy");
 }
 
@@ -45,7 +45,9 @@ int32_t image_mgr::start(cam_manager* camera, const ins_picture_option& option, 
     option_ = option;
     b_calibration_ = b_calibration;
 
-    /* 启动拍照线程 */
+    /* 
+     * 启动拍照线程 
+     */
     th_ = std::thread(&image_mgr::task, this);
     return INS_OK;
 }
@@ -62,8 +64,11 @@ void image_mgr::task()
 {
     if (option_.delay > 0) {    /* 如果需要延时 */
 		LOGINFO("delay:%ds to take picture", option_.delay);
-		usleep(option_.delay*1000*1000);
+		usleep(option_.delay * 1000 * 1000);
 	}
+
+	sleep(3);	/* 等待预览停止(测试拍照时卡在shooting) - 2019年4月10日 */
+
 
     int32_t cnt = 0;
     int32_t cnt_cur = 0;
@@ -153,8 +158,8 @@ int image_mgr::process(const std::map<uint32_t, std::shared_ptr<ins_frame>>& m_f
         RETURN_IF_NOT_OK(ret);
     } else if (!option_.b_stiching
         && !m_frame.begin()->second->metadata.raw
-        && jpeg_seq_ == 1 		//burst/bracket/hdr有多组，用第一组生成缩略图
-        && option_.index == -1) //单镜头拍照不生成缩略图
+        && jpeg_seq_ == 1 			/* burst/bracket/hdr有多组，用第一组生成缩略图 */
+        && option_.index == -1) 	/* 单镜头拍照不生成缩略图 */
     {	/* 非实时拼接也要拼接一张缩略图 */
         ins_picture_option option; 
         option.stiching.mode 		= INS_MODE_PANORAMA; 
@@ -378,6 +383,8 @@ int32_t image_mgr::do_compose(std::vector<ins_img_frame>& v_dec_img, const jpeg_
 	
     return INS_OK;
 }
+
+
 
 int32_t image_mgr::hdr_compose()
 {

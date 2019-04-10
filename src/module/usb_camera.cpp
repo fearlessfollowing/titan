@@ -51,13 +51,20 @@ int32_t usb_camera::set_camera_time()
 {
 	int32_t ret = INS_ERR;
 	int32_t loop_cnt = 30;
+	time_t t1;
+	struct tm *tm_local;
 	
 	while (--loop_cnt > 0) {
 		struct timeval tm_start;
 		gettimeofday(&tm_start, nullptr);
+		time(&t1);
+		tm_local = localtime(&t1);
+		t1 = mktime(tm_local);
 
 		json_obj obj;
-		obj.set_int("tv_sec", tm_start.tv_sec);
+		//obj.set_int("tv_sec", tm_start.tv_sec);
+
+		obj.set_int("tv_sec", t1);		
 		obj.set_int("tv_usec", tm_start.tv_usec);
 		ret = send_cmd(USB_CMD_SET_SYSTEM_TIME, obj.to_string());
 		BREAK_IF_NOT_OK(ret);
@@ -459,7 +466,8 @@ int32_t usb_camera::set_options(std::string property,int32_t value)
 		|| property == "ev_bias" 
 		|| property == "ae_meter"
 		|| property == "iso_cap"
-		|| property == "long_shutter") {
+		|| property == "long_shutter"
+		|| property == "half_sync_level") {
 		return set_image_property(property, value);
 	} else {
 		//0:PAL 1:NTSC
@@ -474,9 +482,7 @@ int32_t usb_camera::get_options(std::string property, std::string& value)
 	json_obj obj;
 	obj.set_string("property", property);
 
-	if (property == ACCESS_MSG_OPT_FLICKER 
-		|| property == ACCESS_MSG_OPT_BLC_STATE 
-		|| property == ACCESS_MSG_OPT_STORAGE_CAP) {
+	if (property == ACCESS_MSG_OPT_FLICKER || property == ACCESS_MSG_OPT_BLC_STATE || property == ACCESS_MSG_OPT_STORAGE_CAP) {
 		ret = send_cmd(USB_CMD_GET_CAMERA_PARAM, obj.to_string());
 		RETURN_IF_NOT_OK(ret);
 	} else if (property == ACCESS_MSG_OPT_IMGPARAM) {
@@ -493,6 +499,7 @@ int32_t usb_camera::get_options(std::string property, std::string& value)
 	if (property == ACCESS_MSG_OPT_FLICKER || property == ACCESS_MSG_OPT_BLC_STATE) {
 		json_obj obj(cmd_result_.c_str());
 		obj.get_string(property.c_str(), value);
+	
 		//LOGINFO("pid:%d %s:%s", pid_, property.c_str(), value.c_str());
 	} else if (property == ACCESS_MSG_OPT_STORAGE_CAP) {
 		json_obj obj(cmd_result_.c_str());
@@ -516,7 +523,7 @@ int32_t usb_camera::set_image_property(std::string property,int32_t value)
 	auto ret = send_cmd(USB_CMD_SET_IMAGE_PROPERTY, obj.to_string());
 	RETURN_IF_NOT_OK(ret);
 
-	if ((property == "aaa_mode" && !value)) {	// 0:手动 1：自动 2：独立 3：快门优先 4：iso优先
+	if ((property == "aaa_mode" && !value)) {	/* 0:手动 1：自动 2：独立 3：快门优先 4：iso优先 */
 		single_pic_timeout_ = RECV_PIC_TIMEOUT;
 		LOGINFO("pid:%d set aaa mode:%d", pid_, value);
 	} else if (property == "long_shutter") {

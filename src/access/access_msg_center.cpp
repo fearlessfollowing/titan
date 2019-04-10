@@ -222,7 +222,7 @@ int access_msg_center::setup()
 	RETURN_IF_NOT_OK(ret);
 
 
-	//用黑色背景遮盖ubuntu界面
+	/* 用黑色背景遮盖ubuntu界面 */
 	insx11::setup_x(); 
 
 	auto gps_mgr = gps_mgr::create();
@@ -653,7 +653,8 @@ int access_msg_center::set_one_option(std::string property, int value, const std
 				|| property == "ev_bias" 
 				|| property == "ae_meter"
 				|| property == "iso_cap"
-				|| property == "long_shutter") {
+				|| property == "long_shutter"
+				|| property == "half_sync_level") {
 		if (camera_ == nullptr) {
 			LOGERR("camera not open");
 			return INS_ERR_NOT_ALLOW_OP_IN_STATE;
@@ -667,6 +668,7 @@ int access_msg_center::set_one_option(std::string property, int value, const std
 		}
 		if (camera_) 
 			camera_->set_options(INS_CAM_ALL_INDEX, property, value);
+		
 	} else if (property == ACCESS_MSG_OPT_FANLESS) {
 		msg_parser_.b_fanless_ = (value == 0) ? false : true;
 		xml_config::set_value(INS_CONFIG_OPTION, INS_CONFIG_FANLESS, value);
@@ -881,9 +883,9 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 			BREAK_IF_NOT_OK(ret);
 		} else {				/* 未启动视频管理器 */
 			OPEN_CAMERA_IF_ERR_BREAK(-1);	/* open_camera - 打开模组 */
-			video_mgr_ = std::make_shared<video_mgr>();		
+			video_mgr_ = std::make_shared<video_mgr>();		/* 构造视频管理器 */
 			ret = video_mgr_->start(camera_.get(), opt);	/* 启动视频管理器 */
-			if (ret != INS_OK) {
+			if (ret != INS_OK) {	/* 启动失败,停止预览 */
 				do_camera_operation_stop(false); break;
 			}
 		}
@@ -899,6 +901,8 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);	/* 回复预览请求完成响应 */
 	
 }
+
+
 
 void access_msg_center::stop_preview(const char* msg, std::string cmd, int sequence)
 {
@@ -1317,6 +1321,17 @@ void access_msg_center::set_offset(const char* msg, std::string cmd, int sequenc
 }
 
 
+
+
+/***********************************************************************************************
+** 函数名称: set_gyro_calibration_res
+** 函数功能: 设置陀螺仪拼接结果
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::set_gyro_calibration_res(const char* msg, std::string cmd, int sequence)
 {
 	sender_->send_rsp_msg(sequence, INS_OK, cmd);
@@ -1328,11 +1343,22 @@ void access_msg_center::set_gyro_calibration_res(const char* msg, std::string cm
 		return;
 	}
 
-	auto quat = param_obj->get_double_array("imu_rotation");
+	auto quat = param_obj->get_double_array("imu_rotation");	/* 从"parameters"中提取IMU信息 */
 
 	xml_config::set_gyro_rotation(quat);
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: get_gyro_calibration_res
+** 函数功能: 获取陀螺仪拼接结果
+** 入口参数:
+**		msg - 请求参数
+**		cmd - 命令
+**		sequence - 响应序列
+** 返 回 值: 无
+*************************************************************************************************/
 void access_msg_center::get_gyro_calibration_res(const char* msg, std::string cmd, int sequence)
 {
 	int ret = INS_OK;
@@ -1420,6 +1446,8 @@ void access_msg_center::get_offset(const char* msg, std::string cmd, int sequenc
 
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
 }
+
+
 
 void access_msg_center::get_image_param(const char* msg, std::string cmd, int sequence)
 {
@@ -1544,6 +1572,8 @@ void access_msg_center::calibration(const char* msg, std::string cmd, int sequen
 		}
 	}
 }
+
+
 
 int32_t access_msg_center::do_calibration(std::string mode, int delay)
 {
@@ -1872,6 +1902,8 @@ void access_msg_center::update_gamma_curve(const char* msg, std::string cmd, int
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
 
+
+
 void access_msg_center::format_camera_moudle(const char* msg, std::string cmd, int sequence)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -1893,6 +1925,8 @@ void access_msg_center::format_camera_moudle(const char* msg, std::string cmd, i
 
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
+
+
 
 void access_msg_center::get_module_log_file(const char* msg, std::string cmd, int sequence)
 {
@@ -2400,6 +2434,8 @@ void access_msg_center::query_gps_status(const char* msg, std::string cmd, int s
 		obj.set_int("fix_type", data->fix_type);
 		json_obj s_obj;
 		s_obj.set_int("sv_num", data->sv_status.sv_num);
+		std::stringstream ss << data->sv_status.sv_num;
+		property_set("sys.sv_num", ss.str());
 
 		auto array = json_obj::new_array();
 		for (int32_t i = 0; i < data->sv_status.sv_num; i++) {

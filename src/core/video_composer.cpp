@@ -49,7 +49,7 @@ video_composer::~video_composer()
 
     INS_THREAD_JOIN(th_screen_render_);
 
-    LOGINFO("video composer destroy");
+    LOGINFO("++++++ video composer destroy +++++++");
 }
 
 
@@ -64,6 +64,7 @@ int32_t video_composer::open(const compose_option& option)
     render_ 		= std::make_shared<render>();
     dec_fps_ 		= option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
     rend_mode_ 		= option.mode;    		//渲染出来帧的模式
+
 	render_->set_mode(option.mode);
 	render_->set_map_type(option.map);
     render_->set_offset_type(option.crop_flag, option.offset_type);
@@ -85,14 +86,14 @@ int32_t video_composer::open(const compose_option& option)
     }
 
     LOGINFO("compose open in w:%u h:%u mode:%d map:%d hdmi:%d out w:%d h:%d crop:%d type:%d jpeg:%d fps:%lf %lf logo:%s", 
-        option.in_w, option.in_h, 
-        option.mode, option.map, 
-        option.hdmi_display, 
-        option.width, option.height, option.crop_flag,option.offset_type,
-        option.jpeg,
-        option.ori_framerate.to_double(),
-        option.framerate.to_double(),
-        option.logo_file.c_str());
+		        option.in_w, option.in_h, 
+		        option.mode, option.map, 
+		        option.hdmi_display, 
+		        option.width, option.height, option.crop_flag,option.offset_type,
+		        option.jpeg,
+		        option.ori_framerate.to_double(),
+		        option.framerate.to_double(),
+		        option.logo_file.c_str());
 
     return INS_OK;
 }
@@ -189,8 +190,9 @@ void video_composer::enc_task()
     for (auto& opt : option_) {
         auto enc = std::make_shared<nv_video_enc>();
         enc->set_resolution(opt.second.width, opt.second.height);
-        enc->set_bitrate(opt.second.bitrate*1000);
+        enc->set_bitrate(opt.second.bitrate * 1000);
         enc->set_framerate(opt.second.framerate);
+
         for (auto it = opt.second.m_sink.begin(); it != opt.second.m_sink.end(); it++) {
             enc->add_output(it->first, it->second);
         }
@@ -199,13 +201,15 @@ void video_composer::enc_task()
         ss << "enc-" << opt.second.index;
         ret = enc->open(ss.str(), opt.second.mime);
         if (ret != INS_OK) continue;
+
         enc_.insert(std::make_pair(opt.second.index, enc));
         modes_.insert(std::make_pair(opt.second.index, opt.second.mode));
-        //编码帧率>解码帧率的时候,不插帧,将编码帧率=解码帧率
+
+        /* 编码帧率 > 解码帧率的时候, 不插帧, 将编码帧率=解码帧率 */
         uint32_t interval = std::max(dec_fps_.num*opt.second.framerate.den/dec_fps_.den/opt.second.framerate.num, 1);
         enc_intervals_.insert(std::make_pair(opt.second.index, interval));
 
-        if (opt.second.jpeg && !jpeg_enc_) {	//只有一路编码jpeg
+        if (opt.second.jpeg && !jpeg_enc_) {	/* 只有一路编码jpeg */
             jpeg_index_ = opt.first;
             jpeg_enc_ = std::make_shared<nv_jpeg_enc>();
             auto ret_enc = jpeg_enc_->open("jpgenc", opt.second.width, opt.second.height);
@@ -240,18 +244,22 @@ void video_composer::enc_task()
         } else {
             dec->set_close_wait_time_ms(500);
         }
+		
         ret = dec->open(ss.str(), "h264");
         if (ret != INS_OK) return;
         dec_.push_back(dec);
     }
 
-    for (uint32_t i = 0; i < dec_.size(); i++) {
+    for (uint32_t i = 0; i < dec_.size(); i++) {	/* 创建解码线程 */
         th_dec_[i] = std::thread(&video_composer::dec_task, this, i);
     }
 
+
     while (!quit_ || dec_exit_num_ < INS_CAM_NUM) {
+		
         std::vector<NvBuffer*> v_dec_buff;
-        for (auto& dec : dec_) {
+		
+        for (auto& dec : dec_) {	/* 从所有的解码器解码队列中拿到对首一帧数据 */
             NvBuffer* buff;
             ret = dec->dequeue_output_buff(buff, pts, 0);
             BREAK_IF_NOT_OK(ret);
@@ -262,8 +270,9 @@ void video_composer::enc_task()
 
         std::lock_guard<std::mutex> lock(mtx_);
         std::map<uint32_t, NvBuffer*> m_enc_buff;
+		
         for (auto it = enc_.begin(); it != enc_.end(); it++) {
-            if (cnt%enc_intervals_[it->first]) continue;
+            if (cnt % enc_intervals_[it->first]) continue;
             NvBuffer* buff = nullptr;
             ret = it->second->dequeue_input_buff(buff, 20);
             BREAK_IF_NOT_OK(ret);
@@ -291,17 +300,23 @@ void video_composer::enc_task()
         
         print_fps_info();
 
+
         for (auto it = m_enc_buff.begin(); it != m_enc_buff.end(); it++) {
+
             if (jpeg_index_ == it->first) {
                 ins_jpg_frame frame;
                 frame.buff = jpeg_enc_->encode(it->second);
                 frame.pts = pts;
-                if (frame.buff) jpeg_sink_->queue_image(frame);
+
+                if (frame.buff) 
+					jpeg_sink_->queue_image(frame);
             }
 			
             auto item = enc_.find(it->first);
-            if (item == enc_.end()) continue; 
-            ret = item->second->queue_intput_buff(it->second, pts); 
+            if (item == enc_.end()) 
+				continue; 
+
+            ret = item->second->queue_intput_buff(it->second, pts); 	/* 将渲染处理后数据丢入编码器的input buff中 */
             if (ret != INS_OK) {
                 re_start_encoder(it->first);
             }
@@ -348,6 +363,8 @@ void video_composer::re_start_encoder(uint32_t index)
     enc_.insert(std::make_pair(index, enc));
 }
 
+
+
 int32_t video_composer::dequeue_frame(NvBuffer* buff, int32_t index, int64_t& pts)
 {
     while (!quit_) {
@@ -367,9 +384,11 @@ int32_t video_composer::dequeue_frame(NvBuffer* buff, int32_t index, int64_t& pt
 
 int32_t video_composer::compose(std::vector<NvBuffer*>& v_in_buff, std::map<uint32_t, NvBuffer*>& m_out_buff, const float* mat)
 {
-    if (b_gpu_err_) return INS_OK;
+    if (b_gpu_err_) 
+		return INS_OK;
     
     std::vector<EGLImageKHR> v_in_img; 
+
     for (uint32_t i = 0; i < v_in_buff.size(); i++) {
         auto img = NvEGLImageFromFd(egl_display_, v_in_buff[i]->planes[0].fd); 
         RETURN_IF_TRUE(img == nullptr, "NvEGLImageFromFd fail", INS_ERR);
@@ -377,7 +396,8 @@ int32_t video_composer::compose(std::vector<NvBuffer*>& v_in_buff, std::map<uint
     }
 
     std::vector<bool> v_half;
-    std::vector<EGLImageKHR> v_out_img; 
+    std::vector<EGLImageKHR> v_out_img;
+	
     for (auto it = m_out_buff.begin(); it != m_out_buff.end(); it++) {
         auto img = NvEGLImageFromFd(egl_display_, it->second->planes[0].fd); 
         RETURN_IF_TRUE(img == nullptr, "NvEGLImageFromFd fail", INS_ERR);
@@ -417,6 +437,8 @@ int32_t video_composer::compose(std::vector<NvBuffer*>& v_in_buff, std::map<uint
 
     return INS_OK;
 }
+
+
 
 int32_t video_composer::add_encoder(const compose_option& option)
 {

@@ -47,109 +47,134 @@ extern "C"
 /**
  * Defines Payload type for NvBuffer.
  */
-typedef enum
-{
-  /** buffer payload with HW memory handle for set of planes. */
-  NvBufferPayload_SurfArray,
-  /** buffer payload with HW memory handle for specific memory size. */
-  NvBufferPayload_MemHandle,
+typedef enum {
+	/** buffer payload with HW memory handle for set of planes. */
+  	NvBufferPayload_SurfArray,
+
+	/** buffer payload with HW memory handle for specific memory size. */
+  	NvBufferPayload_MemHandle,
 } NvBufferPayloadType;
 
 /**
  * Defines Layout formats for NvBuffer video planes.
  */
-typedef enum
-{
-  /** Pitch Layout. */
-  NvBufferLayout_Pitch,
-  /** BlockLinear Layout. */
-  NvBufferLayout_BlockLinear,
+typedef enum {
+	/** Pitch Layout. */
+  	NvBufferLayout_Pitch,
+
+	/** BlockLinear Layout. */
+  	NvBufferLayout_BlockLinear,
 } NvBufferLayout;
+
+
 
 /**
  * Defines memory access flags for NvBuffer.
  */
-typedef enum
-{
-  /** Memory read. */
-  NvBufferMem_Read,
-  /** Memory write. */
-  NvBufferMem_Write,
-  /** Memory read & write. */
-  NvBufferMem_Read_Write,
+typedef enum {
+	/** Memory read. */
+  	NvBufferMem_Read,
+
+	/** Memory write. */
+  	NvBufferMem_Write,
+
+	/** Memory read & write. */
+  	NvBufferMem_Read_Write,
 } NvBufferMemFlags;
+
 
 /**
  * Defines tags to associate, while allocation of NvBuffer.
  */
-typedef enum
-{
-  /** tag None. */
-  NvBufferTag_NONE            = 0x0,
-  /** tag for Camera. */
-  NvBufferTag_CAMERA          = 0x200,
-  /** tag for Jpeg Encoder/Decoder. */
-  NvBufferTag_JPEG            = 0x1500,
-  /** tag for H264/H265 Video Encoder. */
-  NvBufferTag_VIDEO_ENC       = 0x1200,
-  /** tag for H264/H265/VP9 Video Decoder. */
-  NvBufferTag_VIDEO_DEC       = 0x1400,
-  /** tag for Video Transform/Composite. */
-  NvBufferTag_VIDEO_CONVERT   = 0xf01,
+typedef enum {
+	/** tag None. */
+  	NvBufferTag_NONE            = 0x0,
+
+	/** tag for Camera. */
+  	NvBufferTag_CAMERA          = 0x200,
+
+	/** tag for Jpeg Encoder/Decoder. */
+  	NvBufferTag_JPEG            = 0x1500,
+
+	/** tag for H264/H265 Video Encoder. */
+  	NvBufferTag_VIDEO_ENC       = 0x1200,
+
+	/** tag for H264/H265/VP9 Video Decoder. */
+  	NvBufferTag_VIDEO_DEC       = 0x1400,
+
+	/** tag for Video Transform/Composite. */
+  	NvBufferTag_VIDEO_CONVERT   = 0xf01,
 } NvBufferTag;
 
 /**
  * Defines color formats for NvBuffer.
  */
-typedef enum
-{
-  /** YUV420 multi-planar. */
-  NvBufferColorFormat_YUV420,
-  /** YUV420 multi-planar. */
-  NvBufferColorFormat_YVU420,
-  /** Y/CbCr 4:2:0 multi-planar. */
-  NvBufferColorFormat_NV12,
-  /** Y/CbCr 4:2:0 multi-planar. */
-  NvBufferColorFormat_NV21,
-  /** YUV 4:2:2 planar. */
-  NvBufferColorFormat_UYVY,
-  /** YUV 4:2:2 planar. */
-  NvBufferColorFormat_VYUY,
-  /** YUV 4:2:2 planar. */
-  NvBufferColorFormat_YUYV,
-  /** YUV 4:2:2 planar. */
-  NvBufferColorFormat_YVYU,
-  /** BGRA-8-8-8-8 planar. */
-  NvBufferColorFormat_ABGR32,
-  /** XRGB-8-8-8-8 planar. */
-  NvBufferColorFormat_XRGB32,
-  /** ARGB-8-8-8-8 planar. */
-  NvBufferColorFormat_ARGB32,
-  /** Invalid color format. */
-  NvBufferColorFormat_Invalid,
+typedef enum {
+
+	/** YUV420 multi-planar. */
+  	NvBufferColorFormat_YUV420,
+
+	/** YUV420 multi-planar. */
+  	NvBufferColorFormat_YVU420,
+
+	/** Y/CbCr 4:2:0 multi-planar. */
+  	NvBufferColorFormat_NV12,
+
+	/** Y/CbCr 4:2:0 multi-planar. */
+  	NvBufferColorFormat_NV21,
+
+	/** YUV 4:2:2 planar. */
+  	NvBufferColorFormat_UYVY,
+
+	/** YUV 4:2:2 planar. */
+  	NvBufferColorFormat_VYUY,
+
+	/** YUV 4:2:2 planar. */
+  	NvBufferColorFormat_YUYV,
+
+	/** YUV 4:2:2 planar. */
+  	NvBufferColorFormat_YVYU,
+
+	/** BGRA-8-8-8-8 planar. */
+  	NvBufferColorFormat_ABGR32,
+
+	/** XRGB-8-8-8-8 planar. */
+  	NvBufferColorFormat_XRGB32,
+
+	/** ARGB-8-8-8-8 planar. */
+  	NvBufferColorFormat_ARGB32,
+
+	/** Invalid color format. */
+  	NvBufferColorFormat_Invalid,
 } NvBufferColorFormat;
 
 /**
  * Defines video flip methods.
  */
-typedef enum
-{
-  /** Video flip none. */
-  NvBufferTransform_None,
-  /** Video flip rotate 90 degree clockwise. */
-  NvBufferTransform_Rotate90,
-  /** Video flip rotate 180 degree clockwise. */
-  NvBufferTransform_Rotate180,
-  /** Video flip rotate 270 degree clockwise. */
-  NvBufferTransform_Rotate270,
-  /** Video flip with respect to X-axis. */
-  NvBufferTransform_FlipX,
-  /** Video flip with respect to Y-axis. */
-  NvBufferTransform_FlipY,
-  /** Video flip transpose. */
-  NvBufferTransform_Transpose,
-  /** Video flip inverse transpode. */
-  NvBufferTransform_InvTranspose,
+typedef enum {
+	/** Video flip none. */
+	NvBufferTransform_None,
+
+	/** Video flip rotate 90 degree clockwise. */
+	NvBufferTransform_Rotate90,
+
+	/** Video flip rotate 180 degree clockwise. */
+	NvBufferTransform_Rotate180,
+
+	/** Video flip rotate 270 degree clockwise. */
+	NvBufferTransform_Rotate270,
+
+	/** Video flip with respect to X-axis. */
+	NvBufferTransform_FlipX,
+
+	/** Video flip with respect to Y-axis. */
+	NvBufferTransform_FlipY,
+
+	/** Video flip transpose. */
+	NvBufferTransform_Transpose,
+
+	/** Video flip inverse transpode. */
+	NvBufferTransform_InvTranspose,
 } NvBufferTransform_Flip;
 
 /**
@@ -211,38 +236,46 @@ typedef struct
 /**
  * Defines coordinates for rectangle.
  */
-typedef struct
-{
-  /** rectangle top. */
-  uint32_t top;
-  /** rectangle left. */
-  uint32_t left;
-  /** rectangle width. */
-  uint32_t width;
-  /** rectangle height. */
-  uint32_t height;
-}NvBufferRect;
+typedef struct {
+	/** rectangle top. */
+	uint32_t top;
+
+	/** rectangle left. */
+	uint32_t left;
+
+	/** rectangle width. */
+	uint32_t width;
+
+	/** rectangle height. */
+	uint32_t height;
+} NvBufferRect;
+
 
 /**
  * Defines input parameters for hardware buffer creation.
  */
-typedef struct _NvBufferCreateParams
-{
-  /** width of the buffer. */
-  int32_t width;
-  /** height of the buffer. */
-  int32_t height;
-  /** payload type of the buffer. */
-  NvBufferPayloadType payloadType;
-  /** size of the memory.(Applicale for NvBufferPayload_MemHandle) */
-  int32_t memsize;
-  /** layout of the buffer. */
-  NvBufferLayout layout;
-  /** colorformat of the buffer. */
-  NvBufferColorFormat colorFormat;
-  /** tag to associate with the buffer. */
-  NvBufferTag nvbuf_tag;
-}NvBufferCreateParams;
+typedef struct _NvBufferCreateParams {
+	/** width of the buffer. */
+	int32_t width;
+
+	/** height of the buffer. */
+	int32_t height;
+
+	/** payload type of the buffer. */
+	NvBufferPayloadType payloadType;
+
+	/** size of the memory.(Applicale for NvBufferPayload_MemHandle) */
+	int32_t memsize;
+
+	/** layout of the buffer. */
+	NvBufferLayout layout;
+
+	/** colorformat of the buffer. */
+	NvBufferColorFormat colorFormat;
+
+	/** tag to associate with the buffer. */
+	NvBufferTag nvbuf_tag;
+} NvBufferCreateParams;
 
 /**
  * Defines parameters related to hardware buffer.

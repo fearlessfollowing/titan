@@ -204,14 +204,15 @@ int32_t video_mgr::open_preview(const ins_video_option& option)
 		}
 
 		compose_option c_opt;
-		c_opt.index = ENCODE_INDEX_PRE;
-		c_opt.mime = INS_H264_MIME;
-		c_opt.width = INS_PREVIEW_WIDTH;
-		c_opt.height = INS_PREVIEW_HEIGHT;
-		c_opt.mode = INS_MODE_PANORAMA;
-		c_opt.map = INS_MAP_FLAT;
+		c_opt.index 	= ENCODE_INDEX_PRE;
+		c_opt.mime 		= INS_H264_MIME;
+		c_opt.width 	= INS_PREVIEW_WIDTH;
+		c_opt.height 	= INS_PREVIEW_HEIGHT;
+		c_opt.mode 		= INS_MODE_PANORAMA;
+		c_opt.map 		= INS_MAP_FLAT;
 
 		uint32_t framerate;
+		
 		if (option.origin.framerate > 30) {		/* 大于30帧实时拼接的时候，性能不够出,预览流降为15fps */
 			c_opt.bitrate = INS_PREVIEW_BITRATE/2;
 			framerate = 15;
@@ -482,6 +483,7 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 	video_buff_ = std::make_shared<all_cam_video_buff>(v_index, path);
 
 	std::map<int32_t,std::shared_ptr<cam_video_buff_i>> m_queue;
+	
 	for (int32_t i = 0; i < INS_CAM_NUM; i++) {
 		m_queue.insert(std::make_pair(i, video_buff_));
 	}

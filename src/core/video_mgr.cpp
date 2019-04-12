@@ -140,7 +140,7 @@ int32_t video_mgr::start(cam_manager* camera, const ins_video_option& option)
 		open_usb_sink(option.prj_path);  
 	} else if (option.origin.storage_mode == INS_STORAGE_MODE_AB_NV) {	/* NV和Amba两边都存 */
 		storage_aux = !option.b_stiching;
-		if (!storage_aux)	/* option.b_stiching = true */ 
+		if (!storage_aux)					/* option.b_stiching = true */ 
 			open_local_sink(option.path); 	/* 不存辅码流的时候，只能单独存一个音频文件 */
 	}
 	
@@ -333,6 +333,10 @@ int32_t video_mgr::open_composer(const ins_video_option& option, bool preview) /
 	}
 	
 	auto Q = std::make_shared<all_cam_video_queue>(v_index, false);
+
+	/*
+	 * 给video_buff_添加一路输出用于拼接
+	 */
 	video_buff_->add_output(VIDEO_BUFF_INDEX_COMPOSE, std::dynamic_pointer_cast<all_cam_queue_i>(Q));
 
 	composer_ = std::make_shared<video_composer>();
@@ -471,9 +475,12 @@ void video_mgr::open_audio(const ins_video_option& option)
 	}
 }
 
+
+
 int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_aux)
 {
 	std::vector<uint32_t> v_index;
+	
 	for (uint32_t i = 0; i < INS_CAM_NUM; i++) {
 		v_index.push_back(i);
 	}
@@ -602,7 +609,7 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 	LOGINFO("r_%dx%d_%d_%d, delay = %d", video_param_.width, video_param_.height, video_param_.framerate, video_param_.bitdepth, video_param_.hdr);
 #endif
 
-	if (local_sink_) {	// 存陀螺仪数据
+	if (local_sink_) {	/* 存陀螺仪数据 */
 		auto sink = std::static_pointer_cast<gyro_sink>(local_sink_);
 		video_buff_->add_gyro_sink(sink);
 	}
@@ -615,7 +622,6 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 	/* 单镜头录像/合焦不用防抖 */
 	if (option.b_stabilization && option.index == -1) 
 		setup_stablz();
-
 
 	/* 启动录像 */
 	ret = camera_->start_all_video_rec(m_queue); 

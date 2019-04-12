@@ -264,8 +264,7 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 	std::lock_guard<std::mutex> lock(mtx_);
 	int ret = INS_OK;
 
-	/* 由于A12系统时间不准，每次录像前对一次时 */
-	for (auto& it : map_cam_) {
+	for (auto& it : map_cam_) {	/* 由于A12系统时间不准，每次录像前对一次时 */
 		ret = it.second->set_camera_time();
 		if (ret != INS_OK) {
 			LOGERR("pid:%d set_camera_time fail:%d", pid_[it.first], ret);
@@ -275,19 +274,23 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 
 	reset_base_ref();
 
+	/*
+	 * 给所有的模组发送启动录像命令(usb_camera::start_video_rec())
+	 */
 	for (auto& it : map_cam_) {
 		std::shared_ptr<cam_video_buff_i> q;
 		auto queue_it = queue.find(it.first);
 		if (queue_it != queue.end()) q = queue_it->second;
-		auto r = it.second->start_video_rec(q);
+		auto r = it.second->start_video_rec(q);		/* 给各个模组发送启动录像的命令 */
 		if (r != INS_OK && ret != INS_ERR_M_NO_SDCARD && ret != INS_ERR_M_NO_SPACE && ret != INS_ERR_M_STORAGE_IO) ret = r;
 	}
 
 	std::vector<std::future<int32_t>> v_f;
 	for (auto& it : map_cam_) {
-		auto f = it.second->wait_cmd_over();
+		auto f = it.second->wait_cmd_over();		/* 等待模组响应启动录像完成(开始接收模组发送的视频数据) */
 		v_f.push_back(std::move(f));
 	}
+
 
 	for (auto& it : v_f) {
 		auto r = it.get();
@@ -296,9 +299,7 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
 
 	RETURN_IF_NOT_OK(ret);
 
-	/*
-	 * 录像时启动对时任务
-	 */
+	/** 录像时启动对时任务 */
 	sync_quit_ = false;
 	th_time_sync_ = std::thread(&cam_manager::time_sync_task, this, true);
 
@@ -311,6 +312,7 @@ int32_t cam_manager::start_all_video_rec(const std::map<int,std::shared_ptr<cam_
  */
 void cam_manager::time_sync_task(bool b_record)
 {
+	/* 找到master对应的usb_camera */
 	auto it = map_cam_.find(master_index_);
 	if (it == map_cam_.end()) {
 		LOGERR("cann't find master index:%d in time sync task", master_index_);
@@ -324,13 +326,13 @@ void cam_manager::time_sync_task(bool b_record)
 	
 	while (!sync_quit_) {	/* 时间同步任务非退出状态 */
 
-		if (cnt++ < 600) {	/* 600 * 100 * 1000 us = 60000ms = 60s */
+		if (cnt++ < 600) {	/* 对时周期为60s */
 			usleep(100*1000);
 			continue;
 		}
 
 		cnt = 0;	
-		
+	
 		mtx_.lock();
 		int ret = it->second->get_camera_time(delta_time);	/* 获取Amba的Master的系统时间(单位为us) */
 		mtx_.unlock();
@@ -340,12 +342,15 @@ void cam_manager::time_sync_task(bool b_record)
 		
 		nv_amba_delta_usec_ = delta_time;
 
+		/*
+		 * 这是个经验值???
+		 * 非录像状态(模组的时间快2帧??)
+		 */
 		unsigned int delay_cnt = 30;
 		if (!b_record) 
 			delay_cnt = 2;
 
 		unsigned int sequence = it->second->get_sequence() + delay_cnt; //delay 
-
 		for (auto it = map_cam_.begin(); it != map_cam_.end(); it++) {
 			it->second->set_delta_time(sequence, delta_time);
 		}

@@ -36,19 +36,17 @@ int ins_util::md5_file(std::string file_name, std::string& md5_value)
 
 void ins_util::split(const std::string& s, std::vector<std::string>& v, const std::string& c)
 {
-  std::string::size_type pos1, pos2;
-  pos2 = s.find(c);
-  pos1 = 0;
+	std::string::size_type pos1, pos2;
+	pos2 = s.find(c);
+	pos1 = 0;
 
-  while(std::string::npos != pos2)
-  {
-    v.push_back(s.substr(pos1, pos2-pos1));
- 
-    pos1 = pos2 + c.size();
-    pos2 = s.find(c, pos1);
-  }
+  	while (std::string::npos != pos2) {
+		v.push_back(s.substr(pos1, pos2-pos1));
+	    pos1 = pos2 + c.size();
+    	pos2 = s.find(c, pos1);
+	}
 
-  if(pos1 != s.length()) v.push_back(s.substr(pos1));
+  	if (pos1 != s.length()) v.push_back(s.substr(pos1));
 }
 
 void ins_util::sleep_s(long long time)
@@ -67,7 +65,7 @@ void ins_util::sleep_s(long long time, int read_fd)
     fd_set read_set;
     FD_ZERO(&read_set);
     FD_SET(read_fd,&read_set);
-    select(read_fd+1,&read_set,nullptr,nullptr,&tm);
+    select(read_fd+1, &read_set, nullptr, nullptr, &tm);
 }
 
 std::string ins_util::create_name_by_mode(int mode)
@@ -82,8 +80,7 @@ std::string ins_util::create_name_by_mode(int mode)
 std::shared_ptr<insbuff> ins_util::read_entire_file(std::string file_name)
 {
     std::fstream s(file_name, s.binary | s.in);
-    if (!s.is_open())
-    {
+    if (!s.is_open()) {
         LOGERR("file:%s open fail", file_name.c_str());
         return nullptr;
     }
@@ -94,8 +91,7 @@ std::shared_ptr<insbuff> ins_util::read_entire_file(std::string file_name)
     s.seekg(0, std::ios::beg);
 
 	auto buff = std::make_shared<insbuff>(size);
-    if (!s.read((char*)buff->data(), buff->size()))
-    {
+    if (!s.read((char*)buff->data(), buff->size())) {
         LOGERR("file:%s read fail", file_name.c_str());
         return nullptr;
     }
@@ -105,11 +101,9 @@ std::shared_ptr<insbuff> ins_util::read_entire_file(std::string file_name)
 
 int ins_util::read_file(const std::vector<std::string>& file, std::vector<std::shared_ptr<page_buffer>>& data)
 {
-    for (unsigned i = 0; i < file.size(); i++)
-    {
+    for (unsigned i = 0; i < file.size(); i++) {
         std::fstream s(file[i], s.binary | s.in);
-        if (!s.is_open())
-        {
+        if (!s.is_open()) {
             LOGERR("file:%s open fail", file[i].c_str());
             return INS_ERR_FILE_OPEN;
         }
@@ -119,8 +113,7 @@ int ins_util::read_file(const std::vector<std::string>& file, std::vector<std::s
         s.seekg(0, std::ios::beg);
 
         auto buff = std::make_shared<page_buffer>(size);
-        if (!s.read((char*)buff->data(), size))
-        {
+        if (!s.read((char*)buff->data(), size)) {
             LOGERR("file:%s read fail, req size:%d read size:%d", file[i].c_str(), size, s.gcount());
             return INS_ERR_FILE_IO;
         }
@@ -133,16 +126,14 @@ int ins_util::read_file(const std::vector<std::string>& file, std::vector<std::s
 int ins_util::file_cnt_under_dir(std::string filename)
 {
     auto dir = opendir(filename.c_str());
-    if (dir == nullptr)
-    {
+    if (dir == nullptr) {
         LOGERR("opendir:%s fail", filename.c_str());
         return -1; //代表错误
     }
 
     int file_cnt = 0;
     struct dirent *ptr;
-    while ((ptr = readdir(dir)) != nullptr)
-    {
+    while ((ptr = readdir(dir)) != nullptr) {
         if (ptr->d_type == DT_REG) file_cnt++;
     }
 
@@ -157,8 +148,7 @@ void ins_util::check_create_dir(const std::string& filename)
 	if (pos == std::string::npos) return;	
 
     auto dir = filename.substr(0, pos);
-    if (access(dir.c_str(), 0))
-    {
+    if (access(dir.c_str(), 0))  {
         std::string cmd = "mkdir -p " + dir;
         system(cmd.c_str());
     }
@@ -241,8 +231,7 @@ int ins_util::system_call(const std::string& cmd)
 std::string ins_util::system_call_output(const std::string& cmd, bool del_rn) 
 {
     auto fp = popen(cmd.c_str(), "r");
-    if (fp == nullptr)
-    {
+    if (fp == nullptr) {
         LOGERR("cmd:%s popen fail", cmd.c_str());
         return "";
     }
@@ -250,6 +239,7 @@ std::string ins_util::system_call_output(const std::string& cmd, bool del_rn)
     char buff[1024] = {0};
     auto ret = fread(buff, 1, sizeof(buff), fp);
 	fclose(fp);
+	
     if (del_rn) buff[ret-1] = 0;
 
 	return std::string(buff);

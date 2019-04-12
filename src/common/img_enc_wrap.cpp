@@ -9,12 +9,9 @@ extern "C"
 #include "libswscale/swscale.h"
 }
 
-img_enc_wrap::img_enc_wrap(int32_t mode, int32_t map, const jpeg_metadata* metadata)
-    : map_(map) 
-    , mode_(mode)
+img_enc_wrap::img_enc_wrap(int32_t mode, int32_t map, const jpeg_metadata* metadata): map_(map), mode_(mode)
 {
-    if (metadata)
-    {
+    if (metadata) {
         M = std::make_shared<jpeg_metadata>();
         *(M.get()) = *metadata;
         M->b_gyro = false;
@@ -22,6 +19,7 @@ img_enc_wrap::img_enc_wrap(int32_t mode, int32_t map, const jpeg_metadata* metad
         M->map_type =  map_;
     }
 }
+
 
 int32_t img_enc_wrap::encode(const ins_img_frame& frame, std::vector<std::string> url)
 {
@@ -38,18 +36,14 @@ int32_t img_enc_wrap::encode(const ins_img_frame& frame, std::vector<std::string
     jpeg_muxer muxer;
     muxer.create(url[0], enc_frame.buff->data(), enc_frame.buff->size(), M.get());
     
-    if ((mode_ == INS_MODE_3D_TOP_LEFT || mode_ == INS_MODE_3D_TOP_RIGHT))
-    {
+    if ((mode_ == INS_MODE_3D_TOP_LEFT || mode_ == INS_MODE_3D_TOP_RIGHT)) {
         if (url.size() < 3) return INS_OK;
 
         std::string url_1, url_2;
-        if (mode_ == INS_MODE_3D_TOP_LEFT)
-        {
+        if (mode_ == INS_MODE_3D_TOP_LEFT) {
             url_1 = url[1];
             url_2 = url[2];
-        }
-        else
-        {
+        } else {
             url_1 = url[2];
             url_2 = url[1];
         }
@@ -64,7 +58,7 @@ int32_t img_enc_wrap::encode(const ins_img_frame& frame, std::vector<std::string
     
 	    muxer.create(url_1, out.buff->data(), out.buff->size(), M.get());
 
-        in.buff = std::make_shared<insbuff>(frame.buff->data()+frame.w*frame.h*3/2, frame.w*frame.h*3/2, false);
+        in.buff = std::make_shared<insbuff>(frame.buff->data() + frame.w*frame.h*3/2, frame.w*frame.h*3/2, false);
         ret = enc.encode(in, out);
         RETURN_IF_NOT_OK(ret);
         muxer.create(url_2, out.buff->data(), out.buff->size(), M.get());

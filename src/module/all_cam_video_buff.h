@@ -60,7 +60,7 @@ private:
 	
     std::mutex 		mtx_;
     std::mutex 		mtx_out_;
-    std::mutex 		mtx_gyro_; //gyor && exposure
+    std::mutex 		mtx_gyro_; 											//gyor && exposure
     
 	std::map<uint32_t, std::queue<std::shared_ptr<ins_frame>>> queue_;	/* 存放所有模块数据帧的缓冲区队列 */
 
@@ -69,22 +69,23 @@ private:
     std::map<uint32_t, std::shared_ptr<all_cam_queue_i>> out_;			/* <Origin/Aux, all_cam_video_buff> */
 	
     std::chrono::system_clock::time_point 		sync_point_;
+	
     bool 										quit_ = false;
 	
     std::map<uint32_t, std::shared_ptr<exposure_times>> exp_queue_;		/* 存放所有模块的曝光时间 */
 
 	std::shared_ptr<obj_pool<insbuff>> 			buff_pool_;
-    std::shared_ptr<obj_pool<exposure_times>> 	exp_pool_;
+    std::shared_ptr<obj_pool<exposure_times>> 	exp_pool_;				/* 曝光时间pool */
 	
-    std::vector<std::shared_ptr<gyro_sink>> 	sinks_;
+    std::vector<std::shared_ptr<gyro_sink>> 	sinks_;					/* 存储陀螺仪数据的vector */
 
 	std::map<uint32_t, int64_t> 				first_frame_ts_;		/* 各模组第一帧的时间戳 */
 
 	std::string 								path_;					/* 工程文件路径(需要更新第一帧的时间戳) */
 	
-    #ifdef DEBUG_GYRO_PTS
+#ifdef DEBUG_GYRO_PTS
     int64_t last_pts_ = 0;
-    #endif
+#endif
 };
 
 #endif

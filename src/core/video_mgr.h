@@ -15,13 +15,14 @@ class usb_sink;
 class cam_video_param;
 class stabilization;
 
+
 class video_mgr     {
 public:
     			~video_mgr();   
     int32_t 	start(cam_manager* camera, const ins_video_option& option);
     int32_t 	start_preview(ins_video_option option);
     void 		stop_preview();
-    void 		stop_live_file();	//停止直播时候的文件存储
+    void 		stop_live_file();			// 停止直播时候的文件存储
     int32_t 	get_snd_type();
     void 		set_first_frame_ts(int32_t rec_seq, int64_t ts);
     void 		notify_video_fragment(int32_t sequence);
@@ -38,23 +39,32 @@ private:
     int32_t 	open_preview(const ins_video_option& option);
     void 		setup_stablz();
     void 		audio_vs_sink(std::shared_ptr<stream_sink>& sink, uint32_t index, bool is_origin);
+
     void 		send_snd_state_msg(int32_t type, std::string name, bool b_spatial);
+
     void 		print_option(const ins_video_option& option) const;
 	
-    cam_manager* 						camera_ = nullptr;
+    cam_manager* 						camera_ = nullptr;		/* 模组管理器 */
     std::shared_ptr<audio_mgr> 			audio_;					/* 音频管理 */
     std::shared_ptr<video_composer> 	composer_;				/* 视频合成 */
     std::shared_ptr<all_cam_video_buff> video_buff_;			/* 接收所有模块的视频流数据 */
+
     std::shared_ptr<cam_video_param> 	aux_param_;				/* 第二路的视频流参数 */
     cam_video_param 					video_param_;			/* 第一路的视频流参数 */
+
     bool 								b_frag_ = false;        /* 视频是否分段 */
+
     int32_t 							audio_type_ = 0;        /* 音频设备的类型 */
     std::string 						prj_path_;              /* 工程文件的路径 */
+
     std::shared_ptr<usb_sink> 			usb_sink_;
+
     std::shared_ptr<stream_sink> 		local_sink_;
-    std::shared_ptr<stabilization> 		stablz_;
+
+    std::shared_ptr<stabilization> 		stablz_;				/* 防抖处理 */
     bool 								b_stablz_ = false;
-    static int32_t 						rec_seq_;
+
+    static int32_t 						rec_seq_;				/* 索引值 */
 };
 
 #endif

@@ -859,6 +859,36 @@ void access_msg_center::restart_preview(const char* msg, std::string cmd, int se
 **		cmd - 命令
 **		sequence - 响应序列
 ** 返 回 值: 无
+** {
+**		"name": 
+**		"camera._startPreview", 
+**		"parameters": {
+**			"audio": {
+**				"bitrate": 128, 
+**				"channelLayout": "stereo", 
+**				"mime": "aac", 
+**				"sampleFormat": "s16", 
+**				"samplerate": 48000
+**			}, 
+**			"origin": {
+**				"bitrate": 20000, 
+**				"framerate": 30, 
+**				"height": 1440, 
+**				"mime": "h264", 
+**				"width": 1920
+**			}, 
+**			"stiching": {
+**				"bitrate": 5000, 
+**				"framerate": 30, 
+**				"height": 960, 
+**				"map": "flat", 
+**				"mime": "h264", 
+**				"mode": "pano", 
+**				"width": 1920
+**			}
+**		}, 
+**		"requestSrc": "ui"
+** }
 *************************************************************************************************/
 void access_msg_center::start_preview(const char* msg, std::string cmd, int sequence)
 {	
@@ -1218,9 +1248,7 @@ void access_msg_center::take_picture(const char* msg, std::string cmd, int seque
 	}
 
 
-	/*
-	 * 启动img_mgr进行拍照动作
-	 */
+	/** 启动img_mgr进行拍照动作 */
 	img_mgr_ = std::make_shared<image_mgr>();
 	ret = img_mgr_->start(camera_.get(), opt);	/* 启动拍照线程(image_mgr::task) */
 	if (ret != INS_OK) {
@@ -1259,9 +1287,7 @@ void access_msg_center::query_state(const char* msg, std::string cmd, int sequen
 	res_obj.set_string("moduleVersion", camera_info::get_m_ver());
 	res_obj.set_int("GPSState", gps_mgr::get()->get_state());
 
-	/*
-	 * 获取当前的options参数
-	 */
+	/** 获取当前的options参数 */
 	state_mgr_.get_state_param(state_, res_obj);
 
 	sender_->send_rsp_msg(sequence, INS_OK, cmd, &res_obj);
@@ -2621,6 +2647,8 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 	qr_scanner_ 	= nullptr;
 	singlen_mgr_ 	= nullptr;
 
+	sleep(1);
+
 	auto ret = INS_OK;
 	if (camera_) 
 		ret = camera_->exception();
@@ -2659,6 +2687,8 @@ int access_msg_center::do_camera_operation_stop(bool restart_preview)
 
 	return INS_OK;
 }
+
+
 
 /*------------------------stitching box-----------------------------*/
 

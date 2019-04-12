@@ -11,7 +11,9 @@
 class nv_video_dec {
 public:
     		~nv_video_dec() { close(); };
+			
     int32_t open(std::string name, std::string mime);
+	
     int32_t dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms);
     void 	queue_input_buff(NvBuffer* buff, int64_t pts); //buff = nullptr || buff->planes[0].bytesused = 0 => eos
     //void input_send_eos();

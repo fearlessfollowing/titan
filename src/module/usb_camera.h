@@ -111,7 +111,9 @@ private:
 	void 		send_pic_origin_over() const;
 	void 		send_timelapse_pic_take(uint32_t sequence) const;
 	void 		send_storage_state(std::string state) const;
+	
 	void 		send_first_frame_ts(int32_t rec_seq, int64_t ts) const;
+
 	void 		send_video_fragment_msg(int32_t frament_index) const;
 	void 		send_vig_min_value_change_msg() const;
 	int32_t 	set_image_property(std::string property,int32_t value);
@@ -152,21 +154,26 @@ private:
 	bool 									wait_idr_ = false;
 	int64_t 								delta_pts_ = INS_PTS_NO_VALUE; //delta time between six module
 
-	std::shared_ptr<cam_video_buff_i> 		video_buff_;
-	std::shared_ptr<cam_img_repo> 			img_repo_;
+	std::shared_ptr<cam_video_buff_i> 		video_buff_;		/* 存储视频数据的buff */
+	
+	std::shared_ptr<cam_img_repo> 			img_repo_;			/* 存储照片数据的repo */
 
-	int32_t 								send_cmd_ = -1;	/* 当前正在发送的命令 */
+	int32_t 								send_cmd_ = -1;		/* 当前正在发送的命令 */
 	
 	std::unordered_map<uint32_t, int32_t> 	cmd_rsp_map_;
 	std::mutex 								mtx_cmd_rsp_;
-	std::string 							cmd_result_; 	// json, data content
+	std::string 							cmd_result_; 			// json, data content
 	
 	double 									fps_ = 30;
-	int32_t 								delta_time_cur_ = 0; //delta time between tx1 and a12
-	int32_t 								delta_time_new_ = 0; //delta time between tx1 and a12
-	uint32_t 								sequence_cur_ = 0;
-	uint32_t 								sequence_delta_time_ = -1; //should change to new delta time at this sequence
-	int32_t 								pic_cnt_ = 0; //module will take more than one pic when in burst mode
+	int32_t 								delta_time_cur_ = 0; 	//delta time between tx1 and a12
+	
+	int32_t 								delta_time_new_ = 0; 	/* 下次对时时,模组应该设置的时间戳 */
+
+	uint32_t 								sequence_cur_ = 0;		/* 当前的序列号 */
+
+	uint32_t 								sequence_delta_time_ = -1; /* 下一次对应对应的帧序列号 */
+
+	int32_t 								pic_cnt_ = 0; 			/* BURST模式下,模组会拍超过一组照片数据 */
 
 	int32_t 								single_pic_timeout_ = RECV_PIC_TIMEOUT; //3s
 	int32_t 								total_pic_timeout_ 	= RECV_PIC_TIMEOUT; //3s

@@ -7,6 +7,12 @@
 #include "Arational.h"
 #include "camera_info.h"
 
+
+#define ENABLE_SAVE_FILE_SYNC
+
+#define ENABLE_SYNC_DEBUG_TIME
+
+
 int32_t jpeg_muxer::create(std::string url, const uint8_t* data, uint32_t size, const jpeg_metadata* metadata)
 {
     auto ret = create_jpeg(url, data, size);
@@ -22,35 +28,44 @@ int32_t jpeg_muxer::create(std::string url, const uint8_t* data, uint32_t size, 
     return INS_OK;
 }
 
-#if 0
-// int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t size)
-// {
-//     int fd = ::open(url.c_str(), O_CREAT | O_WRONLY, 0666);
-//     if (fd < 0)
-//     {
-//         LOGERR("file:%s open fail", url.c_str());
-//         return INS_ERR_FILE_OPEN;
-//     }
 
-//     int ret = ::write(fd, data, size);
-//     if (ret < 0)
-//     {
-//         LOGERR("file:%s write fail:%d", url.c_str(), ret);
-//         ret = INS_ERR_FILE_IO;
-//     }
-//     else
-//     {
-//         LOGINFO("jpeg:%s created", url.c_str());
-//         ret = INS_OK;
-//     }
 
-//     fsync(fd);
-//     ::close(fd);
-
-//     return ret;
-// }
+#ifdef ENABLE_SAVE_FILE_SYNC
+int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t size)
+{
+#ifdef ENABLE_SYNC_DEBUG_TIME
+	struct timeval start_time, end_time;
+	gettimeofday(&start_time, nullptr); 		
 #endif
 
+	int fd = ::open(url.c_str(), O_CREAT | O_WRONLY, 0666);
+	if (fd < 0) {
+		LOGERR("file:%s open fail", url.c_str());
+		return INS_ERR_FILE_OPEN;
+	}
+
+	int ret = ::write(fd, data, size);
+	if (ret < 0) {
+		LOGERR("file:%s write fail:%d", url.c_str(), ret);
+		ret = INS_ERR_FILE_IO;
+	} else {
+		LOGINFO("jpeg:%s created", url.c_str());
+		ret = INS_OK;
+	}
+
+	syncfs(fd);
+	// fsync(fd);
+	::close(fd);
+
+#ifdef ENABLE_SYNC_DEBUG_TIME
+	gettimeofday(&end_time, nullptr);
+	double cts = (double)(end_time.tv_sec*1000000 + end_time.tv_usec - start_time.tv_sec*1000000 - start_time.tv_usec);
+	LOGINFO("create jpeg file sync used time: [%lf]us", cts);
+#endif	
+	return ret;
+}
+
+#else 
 
 int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t size)
 {
@@ -71,6 +86,8 @@ int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t s
         return INS_OK;
     }
 }
+#endif
+
 
 int32_t jpeg_muxer::set_metadata(const std::string& url, const jpeg_metadata* metadata)
 {    
@@ -168,6 +185,8 @@ void jpeg_muxer::set_photo_meta(Exiv2::ExifData& ed, const exif_info& exif)
     //焦距
     ed["Exif.Photo.FocalLength"] = Exiv2::URational(exif.focal_length_num, exif.focal_length_den);
 }
+
+
 
 void jpeg_muxer::set_gps_meta(Exiv2::ExifData& ed, const ins_gps_data& gps)
 {

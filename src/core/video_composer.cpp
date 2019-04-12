@@ -53,6 +53,7 @@ video_composer::~video_composer()
 }
 
 
+
 int32_t video_composer::open(const compose_option& option)
 {
     int32_t ret = 0;
@@ -322,6 +323,8 @@ void video_composer::enc_task()
             }
         }
     }
+
+
 
     mtx_.lock();
     for (auto it = enc_.begin(); it != enc_.end(); it++) 

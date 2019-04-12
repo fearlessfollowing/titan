@@ -11,8 +11,7 @@ all_cam_video_queue::all_cam_video_queue(std::vector<unsigned int>& index, bool 
 	: b_just_keyframe_(b_just_keyframe)
 {
 	LOGINFO("need just key frame:%d", b_just_keyframe_);
- 	for (unsigned int i = 0; i < index.size(); i++)
-	{
+ 	for (unsigned int i = 0; i < index.size(); i++) {
 		std::queue<std::shared_ptr<ins_frame>> queue;
 		queue_.insert(std::make_pair(index[i], queue));
 		//key_frames_not_deque_.insert(std::make_pair(index[i], 0));
@@ -22,13 +21,11 @@ all_cam_video_queue::all_cam_video_queue(std::vector<unsigned int>& index, bool 
 void all_cam_video_queue::set_sps_pps(std::map<unsigned int, std::shared_ptr<insbuff>>& sps, std::map<unsigned int, std::shared_ptr<insbuff>>& pps)
 {
 	LOGINFO("all_cam_video_queue set sps pps");
-	for (auto it = sps.begin(); it != sps.end(); it++)
-	{
+	for (auto it = sps.begin(); it != sps.end(); it++) {
 		INS_ASSERT(it->second != nullptr);
 	}
 
-	for (auto it = pps.begin(); it != pps.end(); it++)
-	{
+	for (auto it = pps.begin(); it != pps.end(); it++) {
 		INS_ASSERT(it->second != nullptr);
 	}
 

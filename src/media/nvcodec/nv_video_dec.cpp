@@ -7,13 +7,14 @@
 #include "nvbuf_utils.h"
 #include <linux/videodev2.h>
 
-#define NV_CODED_BUFF_SIZE 1536*1024
+#define NV_CODED_BUFF_SIZE	1536*1024
 
 #define NV_DEC_ABORT() \
-    LOGERR("%s abort", name_.c_str()); \
+    b_error_ = true; \
     if (dec_) dec_->abort();  \
     if (conv_) conv_->abort(); \
-    b_error_ = true; \
+	LOGERR("%s abort", name_.c_str()); 
+
 
 
 static bool conv_outputplane_cb(struct v4l2_buffer *v4l2_buf, NvBuffer *buffer, NvBuffer *shared_buffer, void *arg)
@@ -61,6 +62,16 @@ void nv_video_dec::close()
 
 
 
+
+/***********************************************************************************************
+** 函数名称: open
+** 函数功能: 打开解码器(nv_video_dec)
+** 入口参数:
+**		msg 	 - 消息数据
+**		cmd		 - 拍照命令"camera._takePicture"
+**		sequence - 通信序列值
+** 返 回 值: 成功返回INS_OK;失败返回错误码
+*************************************************************************************************/
 int32_t nv_video_dec::open(std::string name, std::string mime)
 {
     int32_t ret = 0;
@@ -81,9 +92,11 @@ int32_t nv_video_dec::open(std::string name, std::string mime)
     dec_ = NvVideoDecoder::createVideoDecoder(name.c_str());
     RETURN_IF_TRUE(dec_ == nullptr, "createVideoDecoder error", INS_ERR);
 
+	/* 提交一个分辨率改变事件 */
     ret = dec_->subscribeEvent(V4L2_EVENT_RESOLUTION_CHANGE, 0, 0);
     RETURN_IF_TRUE(ret < 0, "subscribeEvent error", INS_ERR);
 
+	/* 通知解码器支持非完整帧输入到解码器 */
     ret = dec_->disableCompleteFrameInputBuffer();
     RETURN_IF_TRUE(ret < 0, "disableCompleteFrameInputBuffer error", INS_ERR);
 
@@ -103,13 +116,18 @@ int32_t nv_video_dec::open(std::string name, std::string mime)
     RETURN_IF_TRUE(ret < 0, "setStreamStatus error", INS_ERR);
 
     b_error_ = false;
-    
+
+	/*
+	 * 创建解码采集loop线程
+	 */
     th_ = std::thread(&nv_video_dec::capture_plane_loop, this);
 
     LOGINFO("%s open mime:%s", name_.c_str(), mime.c_str());
 
     return INS_OK;
 }
+
+
 
 int32_t nv_video_dec::setup_capture_plane()
 {
@@ -177,6 +195,7 @@ int32_t nv_video_dec::setup_capture_plane()
     //convert bl to pl for writing raw video to file
     conv_->output_plane.setDQThreadCallback(conv_outputplane_cb);
     //conv_->capture_plane.setDQThreadCallback(conv_captureplane_cb);
+
     conv_->output_plane.startDQThread(this);
     //conv_->capture_plane.startDQThread(this);
 
@@ -199,14 +218,19 @@ int32_t nv_video_dec::setup_capture_plane()
     return INS_OK;
 }
 
+
+
 void nv_video_dec::capture_plane_loop()
 {
     int ret = 0;
     struct v4l2_event event;
     event.type = 0;
     
-    //LOGINFO("%s capure loop start", name_.c_str());
+	LOGINFO("%s: decoder capture loop thread", name_.c_str());
 
+	/*
+	 * 1.等待一个V4L2_EVENT_RESOLUTION_CHANGE事件到来
+	 */
     while (event.type != V4L2_EVENT_RESOLUTION_CHANGE && !b_eos_ && !b_error_) {
         ret = dec_->dqEvent(event, 5000);
         if (ret < 0) {
@@ -225,6 +249,7 @@ void nv_video_dec::capture_plane_loop()
     while (!(b_error_ || dec_->isInError() || b_eos_)) {
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
+	
         memset(&v4l2_buf, 0, sizeof(v4l2_buf));
         memset(planes, 0, sizeof(planes));
         v4l2_buf.m.planes = planes;
@@ -234,8 +259,7 @@ void nv_video_dec::capture_plane_loop()
         ret = dec_->capture_plane.dqBuffer(v4l2_buf, &dec_buffer, nullptr, 0);
         if (ret < 0) {
             if (errno == EAGAIN) {
-                usleep(5000);
-                //LOGINFO("dec capture plane dqbuffer eagain");
+                usleep(1000);
                 continue;
             } else {
                 NV_DEC_ABORT();
@@ -271,6 +295,9 @@ void nv_video_dec::capture_plane_loop()
     LOGINFO("%s capture loop exit", name_.c_str());
 }
 
+
+
+
 void nv_video_dec::conv_send_eos()
 {
     if (conv_ == nullptr) 
@@ -282,6 +309,7 @@ void nv_video_dec::conv_send_eos()
     NvBuffer *buff = nullptr;
     struct v4l2_buffer v4l2_buf;
     struct v4l2_plane planes[MAX_PLANES];
+	
     memset(&v4l2_buf, 0, sizeof(v4l2_buf));
     memset(&planes, 0, sizeof(planes));
     v4l2_buf.m.planes = planes;
@@ -336,6 +364,7 @@ bool nv_video_dec::conv_output_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer 
     return true;
 }
 
+
 int32_t nv_video_dec::dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms)
 {
     if (b_eos_ || b_error_) 
@@ -368,6 +397,7 @@ int32_t nv_video_dec::dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms)
         }
     }
 }
+
 
 void nv_video_dec::queue_input_buff(NvBuffer* buff, int64_t pts)
 {
@@ -453,7 +483,6 @@ int32_t nv_video_dec::dequeue_output_buff(NvBuffer* &buff, int64_t& pts, uint32_
 void nv_video_dec::queue_output_buff(NvBuffer* buff)
 {
     if (b_error_ || b_conv_eos_) return;
-
     auto ret = conv_->capture_plane.qBuffer(v4l2_buf_conv_cap_, nullptr);
     if (ret < 0) {
         NV_DEC_ABORT();
@@ -461,24 +490,23 @@ void nv_video_dec::queue_output_buff(NvBuffer* buff)
 }
 
 
+#if 0
+bool nv_video_dec::conv_capture_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer *buffer, NvBuffer *shared_buffer)
+{
+	if (v4l2_buf == nullptr) {
+		NV_DEC_ABORT();
+		return false;
+	}
 
-// bool nv_video_dec::conv_capture_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer *buffer, NvBuffer *shared_buffer)
-// {
-//     if (v4l2_buf == nullptr) {
-//         NV_DEC_ABORT();
-//         return false;
-//     }
+	if (v4l2_buf->m.planes[0].bytesused == 0) return false;
 
-//     if (v4l2_buf->m.planes[0].bytesused == 0) return false;
-
-//     //do something
-
-//     int ret = conv_->capture_plane.qBuffer(*v4l2_buf, nullptr);
-//     if (ret < 0) {
-//         NV_DEC_ABORT();
-//         return false;
-//     }
-//     return true;
-// }
-
+	//do something
+	int ret = conv_->capture_plane.qBuffer(*v4l2_buf, nullptr);
+	if (ret < 0) {
+		NV_DEC_ABORT();
+		return false;
+	}
+	return true;
+}
+#endif
 

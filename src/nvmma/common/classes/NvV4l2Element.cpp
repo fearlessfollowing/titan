@@ -240,8 +240,7 @@ int NvV4l2Element::isInError()
 
 void NvV4l2Element::enableProfiling()
 {
-    if (output_plane_pixfmt || capture_plane_pixfmt)
-    {
+    if (output_plane_pixfmt || capture_plane_pixfmt) {
         COMP_ERROR_MSG("Profiling must be enabled before setting formats on either plane");
         return;
     }

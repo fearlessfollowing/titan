@@ -2213,15 +2213,25 @@ void usb_camera::parse_extra_data(const uint8_t* data, uint32_t size, uint32_t s
 				offset += head->count;
 				break;
 			}
+
 			
 			case AMBA_EXTRA_TEMP: { 
-				int8_t temp = *(data + offset);
-				offset += head->count;
+				//int8_t temp = *(data + offset);
+				int16_t temp = *((int16_t*)(data + offset));
+				int8_t h2_temp = 0, sensor_temp = 0;
+				sensor_temp = (temp & 0xff);
+				h2_temp = (temp >> 8) & 0xff;
+
+				//offset += head->count;
+				offset += sizeof(int16_t);
+
 				if (temp_cnt_++ % (int32_t)fps_ == 0) {
 					auto s_temp = std::to_string(temp);
 					std::string name = "module.temp";
 					name += std::to_string(pid_);
 
+					LOGINFO("sensor_tem: %d C, h2_temp:%d C\n", sensor_temp, h2_temp);
+					
 					//LOGINFO("set %s = %s", name.c_str(), s_temp.c_str());
 					property_set(name, s_temp);
 				}

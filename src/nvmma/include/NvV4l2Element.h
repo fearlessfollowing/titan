@@ -151,7 +151,7 @@ public:
     NvV4l2ElementPlane capture_plane; /**< Capture plane of the element */
 
     /**
-     *
+     * 中止处理已经入队列的buffers, 所有的buffer将返回给应用
      * Terminates processing of queued buffers immediately. All the buffers are
      * returned to the application.
      *

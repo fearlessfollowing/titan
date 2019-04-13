@@ -60,8 +60,7 @@
  * @c %NvElement also provides other common functionality, such as keeping
  * track of errors.
  */
-class NvElement
-{
+class NvElement {
 public:
     /**
      * Indicates whether the element encountered an error during its operation.
@@ -69,13 +68,13 @@ public:
      * @return 0 if no error was encountered, a non-zero value if an
      *            error was encountered.
      */
-    virtual int isInError()
-    {
+    virtual int isInError() {
         return is_in_error;
     }
-    virtual ~NvElement()
-    {
+	
+    virtual ~NvElement() {
     }
+
 
     /**
      * Gets profiling data for the element.
@@ -125,11 +124,11 @@ protected:
      * Disallows copy constructor.
      */
     NvElement(const NvElement& that);
+	
     /**
      * Disallows assignment.
      */
     void operator=(NvElement const&);
 
 };
-/** @} */
 #endif

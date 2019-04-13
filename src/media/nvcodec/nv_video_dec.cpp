@@ -103,12 +103,14 @@ int32_t nv_video_dec::open(std::string name, std::string mime)
     ret = dec_->setOutputPlaneFormat(fmt, NV_CODED_BUFF_SIZE);
     RETURN_IF_TRUE(ret < 0, "setOutputPlaneFormat error", INS_ERR);
 
+	/* Disabe Picture Buffer */
     ret = dec_->disableDPB();
     RETURN_IF_TRUE(ret < 0, "disableDPB error", INS_ERR);
 
     ret = dec_->output_plane.setupPlane(V4L2_MEMORY_MMAP, 9, true, false);
     RETURN_IF_TRUE(ret < 0, "output_plane setupPlane error", INS_ERR);
 
+	/* 构造转换器 */
     conv_ = NvVideoConverter::createVideoConverter("conv");
     RETURN_IF_TRUE(conv_ == nullptr, "createVideoConverter error", INS_ERR);
 
@@ -406,9 +408,9 @@ void nv_video_dec::queue_input_buff(NvBuffer* buff, int64_t pts)
     if (buff == nullptr) {
         v4l2_buf_.m.planes[0].bytesused = 0;
     } else {
-        v4l2_buf_.timestamp.tv_sec = pts/1000000;
-        v4l2_buf_.timestamp.tv_usec = pts%1000000;
-        v4l2_buf_.flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+        v4l2_buf_.timestamp.tv_sec 		= pts/1000000;
+        v4l2_buf_.timestamp.tv_usec 	= pts%1000000;
+        v4l2_buf_.flags 				= V4L2_BUF_FLAG_TIMESTAMP_COPY;
         v4l2_buf_.m.planes[0].bytesused = buff->planes[0].bytesused;
     }
 

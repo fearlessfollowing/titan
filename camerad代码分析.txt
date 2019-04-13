@@ -1,0 +1,306 @@
+1.主页面启动预览:
+{
+	"name": "camera._startPreview", 
+	"parameters": {
+		"audio": {"bitrate": 128, "channelLayout": "stereo", "mime": "aac", "sampleFormat": "s16", "samplerate": 48000}, 
+		"origin": {"bitrate": 20000, "framerate": 30, "height": 1440, "mime": "h264", "width": 1920}, 
+		"stiching": {"bitrate": 5000, "framerate": 30, "height": 960, "map": "flat", "mime": "h264", "mode": "pano", "width": 1920}
+	}, 
+	"requestSrc": "ui"
+}
+
+access_msg_center::start_preview
+	OPEN_CAMERA_IF_ERR_BREAK(-1)	// 打开所有的模组open_camera
+	video_mgr_ = std::make_shared<video_mgr>()	// 构造视频管理器
+	video_mgr_->start(camera_.get(), opt)		// 启动视频管理器
+
+
+video_mgr_::start(cam_manager* cam, ins_video_option& opt)
+	video_composer::init_cuda		// 初始化CUDA
+	open_audio(option);				// 打开音频(可选)
+
+	open_camera_rec(option, storage_aux)				// 设置模组参数,开启预览	
+	open_composer(option, option.type == INS_PREVIEW)	// 开启视频合成器
+
+
+2019-04-11 01:52:05:999435 INFO  [access/access_msg_center.cpp:239] [----MESSAGE----] seq:29 
+{
+	"name": "camera._startPreview", 
+	"parameters": {
+		"audio": {"bitrate": 128, "channelLayout": "stereo", "mime": "aac", "sampleFormat": "s16", "samplerate": 48000}, 
+		"origin": {"bitrate": 20000, "framerate": 30, "height": 1440, "mime": "h264", "width": 1920}, 
+		"stiching": {"bitrate": 5000, "framerate": 30, "height": 960, "map": "flat", "mime": "h264", "mode": "pano", "width": 1920}
+	}, 
+	"requestSrc": "ui"
+}
+
+/* 模组下电/上电 */
+2019-04-11 01:52:05:999682 INFO  [module/cam_manager.cpp:45] power off module
+2019-04-11 01:52:06:298653 INFO  [module/cam_manager.cpp:33] power on module
+2019-04-11 01:52:06:865037 INFO  [core/gps_dev.cpp:39] time:1554918726865.021973 fixtype:0 latitude:0.000000 longitude:0.000000 altitude:0.000000 speed:0.000000 svnum:1
+
+2019-04-11 01:52:07:275328 INFO  [module/usb_device.cpp:153] libusb init success
+2019-04-11 01:52:11:619813 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x1
+2019-04-11 01:52:11:720065 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x5
+2019-04-11 01:52:11:820245 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x2
+2019-04-11 01:52:11:920441 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x6
+2019-04-11 01:52:12:020683 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x3
+2019-04-11 01:52:12:127481 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x7
+2019-04-11 01:52:12:228432 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x4
+2019-04-11 01:52:12:328661 INFO  [module/usb_device.cpp:84] usb device arrive pid:0x8
+
+/*
+ * 打开模组:
+ * - 获取模组的版本
+ * - 设置模组的参数
+ */
+2019-04-11 01:52:12:332089 INFO  [module/cam_manager.cpp:187] all camera open
+2019-04-11 01:52:13:332595 INFO  [module/usb_camera.cpp:1178] pid:8 send cmd:USB_CMD_GET_SYSTEM_VERSION {"cmd":1426063472}
+2019-04-11 01:52:13:333278 INFO  [module/usb_camera.cpp:1026] pid:8 recv cmd:USB_CMD_GET_SYSTEM_VERSION respone:{"type":1426063472,"code":1,"data":{"version":"1.2.190329.190329.190409B2"}} code:0
+
+2019-04-11 01:52:13:363525 INFO  [module/usb_camera.cpp:1178] pid:1 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:364134 INFO  [module/usb_camera.cpp:1178] pid:2 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:364392 INFO  [module/usb_camera.cpp:1178] pid:3 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:364429 INFO  [module/usb_camera.cpp:1026] pid:1 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:364709 INFO  [module/usb_camera.cpp:1178] pid:4 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:364753 INFO  [module/usb_camera.cpp:1026] pid:2 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:364896 INFO  [module/usb_camera.cpp:1026] pid:3 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:364985 INFO  [module/usb_camera.cpp:1178] pid:5 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:365231 INFO  [module/usb_camera.cpp:1026] pid:4 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:365495 INFO  [module/usb_camera.cpp:1178] pid:6 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:365723 INFO  [module/usb_camera.cpp:1026] pid:5 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:365777 INFO  [module/usb_camera.cpp:1178] pid:7 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:366015 INFO  [module/usb_camera.cpp:1178] pid:8 send cmd:USB_CMD_SET_CAMERA_PARAM {"cmd":1426063536,"data":{ "property": "flicker", "value": 0 }}
+2019-04-11 01:52:13:366049 INFO  [module/usb_camera.cpp:1026] pid:6 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:366280 INFO  [module/usb_camera.cpp:1026] pid:7 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":1426063536,"code":1} code:0
+2019-04-11 01:52:13:366458 INFO  [module/usb_camera.cpp:1026] pid:8 recv cmd:USB_CMD_SET_CAMERA_PARAM respone:{"type":142606336,"code":1} code:0
+
+
+/*
+ * video_mgr_.start
+ * 启动视频管理器
+ */
+2019-04-11 01:52:13:366914 INFO  [core/video_mgr.cpp:98] ------- video_mgr start, options as follow: -------
+2019-04-11 01:52:13:366961 INFO  [core/video_mgr.cpp:732] origin option: type:0 h264-8 w:1920 h:1440 fps:30 bitrate:20000 loc:-1 module: live: override:0 tofile:1 stab:1 log:0 hdr:0 logo: index:-1
+2019-04-11 01:52:13:366986 INFO  [core/video_mgr.cpp:745] stiching option: mime:h264 width:1920 height:960 framerate:30 bitrate:5000, mode:0 map_type:0 hdmi:1 url:rtmp://127.0.0.1/live/preview
+
+2019-04-11 01:52:13:367012 INFO  [core/video_mgr.cpp:753] audio samplerate:48000 bitrate:128 type:1 fanless:0
+2019-04-11 01:52:13:413752 ERROR [core/audio_dev.cpp:33] hw:2,0 open fail:-2 No such file or directory
+
+2019-04-11 01:52:13:562310 INFO  [core/audio_spatial.cpp:51] use denoise algo: tl
+2019-04-11 01:52:13:563122 ERROR [core/audio_spatial.cpp:237] file:/home/nvidia/insta360/noise_sample/0.wav open fail
+2019-04-11 01:52:13:563802 ERROR [core/audio_spatial.cpp:237] file:/home/nvidia/insta360/noise_sample/1.wav open fail
+2019-04-11 01:52:13:565932 INFO  [core/audio_spatial.cpp:85] spatial audio handle open vol:64 denoise db:-16
+2019-04-11 01:52:13:566535 INFO  [media/ffaacenc.cpp:76] ffaac encode samplerate:48000 channle:2 bitrate:128000 buffsize:4096
+
+2019-04-11 01:52:13:566638 INFO  [core/audio_reader.cpp:57] hw:1,0 offset time:0
+2019-04-11 01:52:13:566672 INFO  [core/audio_mgr.cpp:65] audio open name:insta360 spatial:0 dev type:1 audio type:1
+
+/*
+ * 设置模组启动流的参数
+ * {
+ *		"width": 1920, 
+ *		"height": 1440, 
+ *		"mime": "h264", 
+ *		"bitdepth": 8, 
+ *		"framerate": 30, 
+ *		"log_mode": 0, 
+ *		"hdr": false, 
+ *		"bitrate": 20, 
+ *		"file_stream": false, 
+ *		"file_url": "", 
+ *		"usb_stream": true 
+ * }
+ */
+2019-04-11 01:52:13:566832 INFO  [module/usb_camera.cpp:1178] pid:1 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:567479 INFO  [module/usb_camera.cpp:1178] pid:2 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:567817 INFO  [module/usb_camera.cpp:1178] pid:3 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:568107 INFO  [module/usb_camera.cpp:1178] pid:4 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:568388 INFO  [module/usb_camera.cpp:1178] pid:5 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:568913 INFO  [module/usb_camera.cpp:1178] pid:6 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:569254 INFO  [module/usb_camera.cpp:1178] pid:7 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+2019-04-11 01:52:13:569535 INFO  [module/usb_camera.cpp:1178] pid:8 send cmd:USB_CMD_SET_VIDEO_PARAM {"cmd":1426063409,"data":{ "width": 1920, "height": 1440, "mime": "h264", "bitdepth": 8, "framerate": 30, "log_mode": 0, "hdr": false, "bitrate": 20, "file_stream": false, "file_url": "", "usb_stream": true }}
+
+2019-04-11 01:52:13:581481 INFO  [access/fifo_write.cpp:99] send msg seq:2302 content len:121 content:{ "name": "camera._snd_state_", "sequence": 0, "parameters": { "type": 1, "is_spatial": false, "dev_name": "insta360" } }
+
+2019-04-11 01:52:13:583816 INFO  [core/audio_reader.cpp:207] hw:1,0 first time:1554918733 583816
+2019-04-11 01:52:13:791700 INFO  [module/usb_camera.cpp:1026] pid:4 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:791786 INFO  [module/usb_camera.cpp:1026] pid:7 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:791890 INFO  [module/usb_camera.cpp:1026] pid:3 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:791937 INFO  [module/usb_camera.cpp:1026] pid:8 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:792017 INFO  [module/usb_camera.cpp:1026] pid:2 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:792067 INFO  [module/usb_camera.cpp:1026] pid:5 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:793340 INFO  [module/usb_camera.cpp:1026] pid:1 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+2019-04-11 01:52:13:825055 INFO  [module/usb_camera.cpp:1026] pid:6 recv cmd:USB_CMD_SET_VIDEO_PARAM respone:{"type":1426063409,"code":1} code:0
+
+2019-04-11 01:52:13:840555 INFO  [module/usb_camera.cpp:1178] pid:8 send cmd:USB_CMD_GET_VIDEO_PARAM {"cmd":1426063408}
+2019-04-11 01:52:13:841527 INFO  [module/usb_camera.cpp:1026] pid:8 recv cmd:USB_CMD_GET_VIDEO_PARAM respone:{"type":1426063408,"code":1,"data":{"width":1920,"height":1440,"framerate":30,"bitrate":20,"mime":"h264","bitdepth":8,"log_mdoe":0,"rolling_shutter_time":32843.494415,"gyro_orientation":2,"crop_flag":0,"usb_stream":1,"file_stream":0}} code:0
+
+2019-04-11 01:52:13:871302 INFO  [core/video_mgr.cpp:534] origin video param: width: 1920, height: 1440, framerate: 30, bitrate: 20000
+
+2019-04-11 01:52:13:871356 INFO  [common/xml_config.cpp:497] module ver: 1.2.190329.190329.190409B2
+2019-04-11 01:52:13:871396 INFO  [common/xml_config.cpp:524] get_gyro_delay_time, key: r_1920x1440_30
+2019-04-11 01:52:13:871486 INFO  [common/xml_config.cpp:553] ------- from config file r_1920x1440_30 delay: 82000
+2019-04-11 01:52:13:871522 INFO  [core/video_mgr.cpp:557] r_1920x1440_30_8, delay = 82000
+2019-04-11 01:52:13:871565 ERROR [common/xml_config.cpp:379] load /home/nvidia/insta360/etc/gyro_offset.xml fail
+2019-04-11 01:52:13:871675 INFO  [core/stabilization.cpp:107] orientation:3 type:1 delay:82000 accel offset:0.000000 0.000000 0.000000
+
+2019-04-11 01:52:13:871824 INFO  [core/stabilization.cpp:120] -------stabilization task run
+
+2019-04-11 01:52:13:902715 INFO  [module/usb_camera.cpp:62] pid:1 set time ttl:966
+2019-04-11 01:52:13:933410 INFO  [module/usb_camera.cpp:62] pid:2 set time ttl:753
+2019-04-11 01:52:13:964077 INFO  [module/usb_camera.cpp:62] pid:3 set time ttl:744
+2019-04-11 01:52:13:994779 INFO  [module/usb_camera.cpp:62] pid:4 set time ttl:737
+2019-04-11 01:52:14:025448 INFO  [module/usb_camera.cpp:62] pid:5 set time ttl:705
+2019-04-11 01:52:14:056201 INFO  [module/usb_camera.cpp:62] pid:6 set time ttl:768
+2019-04-11 01:52:14:087154 INFO  [module/usb_camera.cpp:62] pid:7 set time ttl:971
+2019-04-11 01:52:14:117903 INFO  [module/usb_camera.cpp:62] pid:8 set time ttl:875
+
+2019-04-11 01:52:14:117984 INFO  [module/usb_camera.cpp:1178] pid:1 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:118529 INFO  [module/usb_camera.cpp:1178] pid:2 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:118817 INFO  [module/usb_camera.cpp:1178] pid:3 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:119081 INFO  [module/usb_camera.cpp:1178] pid:4 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:119339 INFO  [module/usb_camera.cpp:1178] pid:5 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:119863 INFO  [module/usb_camera.cpp:1178] pid:6 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:120111 INFO  [module/usb_camera.cpp:1178] pid:7 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+2019-04-11 01:52:14:120358 INFO  [module/usb_camera.cpp:1178] pid:8 send cmd:USB_CMD_START_VIDEO_RECORD {"cmd":1426063376}
+
+2019-04-11 01:52:14:140756 INFO  [module/usb_camera.cpp:1026] pid:8 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:140822 INFO  [module/usb_camera.cpp:1026] pid:5 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:141064 INFO  [module/usb_camera.cpp:1026] pid:2 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:141176 INFO  [module/usb_camera.cpp:1026] pid:4 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:141215 INFO  [module/usb_camera.cpp:1026] pid:7 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:141472 INFO  [module/usb_camera.cpp:1026] pid:1 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:141516 INFO  [module/usb_camera.cpp:1026] pid:6 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+2019-04-11 01:52:14:141567 INFO  [module/usb_camera.cpp:1026] pid:3 recv cmd:USB_CMD_START_VIDEO_RECORD respone:{"type":1426063376,"code":1} code:0
+
+2019-04-11 01:52:14:150883 INFO  [module/usb_camera.cpp:1220] pid 1 read data task start
+2019-04-11 01:52:14:151032 INFO  [module/usb_camera.cpp:1220] pid 4 read data task start
+2019-04-11 01:52:14:151175 INFO  [module/usb_camera.cpp:1220] pid 8 read data task start
+2019-04-11 01:52:14:151241 INFO  [module/usb_camera.cpp:1220] pid 5 read data task start
+2019-04-11 01:52:14:151321 INFO  [module/usb_camera.cpp:1220] pid 2 read data task start
+2019-04-11 01:52:14:151404 INFO  [module/usb_camera.cpp:1220] pid 6 read data task start
+2019-04-11 01:52:14:151472 INFO  [module/usb_camera.cpp:1220] pid 7 read data task start
+2019-04-11 01:52:14:151536 INFO  [module/usb_camera.cpp:1220] pid 3 read data task start
+
+2019-04-11 01:52:14:151577 INFO  [module/all_cam_video_queue.cpp:13] need just key frame:0
+2019-04-11 01:52:14:151847 INFO  [core/video_composer.cpp:90] compose open in w:1920 h:1440 mode:0 map:0 hdmi:1 out w:1920 h:960 crop:0 type:0 jpeg:0 fps:29.970030 29.970030 logo:
+
+2019-04-11 01:52:14:151917 INFO  [core/video_mgr.cpp:160] ------- video mgr start over -------
+
+2019-04-11 01:52:14:151962 INFO  [render/insx11.cpp:24] ------screen width:640 height:480 depth:24 w:640 h:480
+
+2019-04-11 01:52:14:169522 INFO  [access/fifo_write.cpp:99] send msg seq:29 content len:134 content:{ "name": "camera._startPreview", "sequence": 29, "state": "done", "results": { "_previewUrl": "rtmp:\/\/127.0.0.1\/live\/preview" } }
+
+2019-04-11 01:52:14:190149 INFO  [media/stream_sink.cpp:75] rtmp://127.0.0.1/live/preview set audio param
+
+2019-04-11 01:52:14:212243 INFO  [access/access_msg_center.cpp:239] [----MESSAGE----] seq:30 {"name": "camera._queryStorage"}
+
+2019-04-11 01:52:14:212370 INFO  [module/usb_camera.cpp:1178] pid:1 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:213507 INFO  [module/usb_camera.cpp:1026] pid:1 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+2019-04-11 01:52:14:243234 INFO  [module/usb_camera.cpp:1178] pid:2 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:244373 INFO  [module/usb_camera.cpp:1026] pid:2 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+
+2019-04-11 01:52:14:250851 INFO  [core/video_composer.cpp:102] HDMI render task start
+
+2019-04-11 01:52:14:274028 INFO  [module/usb_camera.cpp:1178] pid:3 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:275132 INFO  [module/usb_camera.cpp:1026] pid:3 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+
+2019-04-11 01:52:14:275235 INFO  [render/render.cpp:248] pano crop:0 type:0 offset:8_2525.141_2632.553_1964.434_0.
+000_0.000_0.000_5280_3956_31_0.000_0.000_0.000_2533.671_2635.727_1973.607_44.704_-0.611_1.270_5280_3956_31_-3.048_-237
+.632_-96.975_2538.375_2641.750_1965.635_89.174_74.722_-74.355_5280_3956_31_4.210_-337.701_-334.921_2539.360_2642.
+536_1966.644_134.026_0.355_-0.420_5280_3956_31_-1.348_-244.340_-570.628_2536.361_2633.866_1970.966_179.961_-0.103_-0.
+311_5280_3956_31_0.768_-0.794_-672.711_2537.733_2633.757_1945.516_-135.513_-1.474_-0.382_5280_3956_31_9.495_234.243_-
+578.068_2537.742_2636.100_1944.256_-90.615_-58.459_-58.375_5280_3956_31_2.645_336.345_-337.616_2527.684_2624.982_1954.
+321_-45.334_-1.428_-0.740_5280_3956_31_-3.339_238.364_-101.946_10
+
+2019-04-11 01:52:14:275501 INFO  [module/usb_camera.cpp:1178] pid:4 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:276277 INFO  [module/usb_camera.cpp:1026] pid:4 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+
+2019-04-11 01:52:14:289551 INFO  [render/render.cpp:465] prepare vao fininsh
+2019-04-11 01:52:14:306006 INFO  [module/usb_camera.cpp:1178] pid:5 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:307087 INFO  [module/usb_camera.cpp:1026] pid:5 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+
+2019-04-11 01:52:14:327788 INFO  [media/nvcodec/nv_video_enc.cpp:178] enc-1 open mime:h264 w:1920 h:960 bitrate:5000000 fps:30000/1001
+
+2019-04-11 01:52:14:335156 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec0 open mime:h264
+2019-04-11 01:52:14:336776 INFO  [module/usb_camera.cpp:1178] pid:6 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:337898 INFO  [module/usb_camera.cpp:1026] pid:6 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+
+2019-04-11 01:52:14:338540 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec1 open mime:h264
+2019-04-11 01:52:14:341938 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec2 open mime:h264
+2019-04-11 01:52:14:345418 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec3 open mime:h264
+2019-04-11 01:52:14:348853 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec4 open mime:h264
+2019-04-11 01:52:14:352501 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec5 open mime:h264
+2019-04-11 01:52:14:356275 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec6 open mime:h264
+2019-04-11 01:52:14:359585 INFO  [media/nvcodec/nv_video_dec.cpp:115] dec7 open mime:h264
+
+2019-04-11 01:52:14:367492 INFO  [module/usb_camera.cpp:1178] pid:7 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:369254 INFO  [module/usb_camera.cpp:1026] pid:7 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+2019-04-11 01:52:14:398943 INFO  [module/usb_camera.cpp:1178] pid:8 send cmd:USB_CMD_GET_CAMERA_PARAM {"cmd":1426063537,"data":{ "property": "storage_capacity" }}
+2019-04-11 01:52:14:400040 INFO  [module/usb_camera.cpp:1026] pid:8 recv cmd:USB_CMD_GET_CAMERA_PARAM respone:{"type":1426063537,"code":1,"data":{"storage_total":60874,"storage_left":60230,"pro_suc":1,"storage_state":0}} code:0
+2019-04-11 01:52:14:403416 INFO  [module/usb_camera.cpp:1745] pid:6 set base ref time:1554918734338522 seq:0
+2019-04-11 01:52:14:403484 INFO  [module/usb_camera.cpp:1760] pid:6 pts:1554918734338522 delta pts:0, seq:0
+
+2019-04-11 01:52:14:403510 INFO  [module/usb_camera.cpp:1542] pid:6 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:405970 INFO  [module/usb_camera.cpp:1760] pid:4 pts:1554918734338144 delta pts:-378, seq:0
+
+2019-04-11 01:52:14:406054 INFO  [module/usb_camera.cpp:1542] pid:4 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:408856 INFO  [module/usb_camera.cpp:1760] pid:1 pts:1554918734337829 delta pts:-693, seq:0
+2019-04-11 01:52:14:408981 INFO  [module/usb_camera.cpp:1760] pid:5 pts:1554918734337837 delta pts:-685, seq:0
+2019-04-11 01:52:14:409060 INFO  [module/usb_camera.cpp:1542] pid:1 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:409103 INFO  [module/usb_camera.cpp:1542] pid:5 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:409168 INFO  [module/usb_camera.cpp:1760] pid:3 pts:1554918734338483 delta pts:-39, seq:0
+2019-04-11 01:52:14:409216 INFO  [module/usb_camera.cpp:1542] pid:3 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:409911 INFO  [module/usb_camera.cpp:1760] pid:7 pts:1554918734338400 delta pts:-122, seq:0
+2019-04-11 01:52:14:409988 INFO  [module/usb_camera.cpp:1760] pid:8 pts:1554918734338258 delta pts:-264, seq:0
+2019-04-11 01:52:14:410031 INFO  [module/usb_camera.cpp:1542] pid:8 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:410070 INFO  [module/usb_camera.cpp:1542] pid:7 first frame sequence:0 timestamp: 1554918734338522
+2019-04-11 01:52:14:411821 INFO  [module/usb_camera.cpp:1760] pid:2 pts:1554918734337799 delta pts:-723, seq:0
+2019-04-11 01:52:14:411907 INFO  [module/usb_camera.cpp:1542] pid:2 first frame sequence:0 timestamp: 1554918734338522
+
+2019-04-11 01:52:14:411970 INFO  [module/all_cam_video_queue.cpp:24] all_cam_video_queue set sps pps
+
+2019-04-11 01:52:14:429937 INFO  [access/access_msg_center.cpp:239] [----MESSAGE----] seq:0 { "name": "internal.first_frame_ts", "timestamp": 1554918734338522, "rec_seq": 8 }
+2019-04-11 01:52:14:430855 INFO  [access/fifo_write.cpp:99] send msg seq:30 content len:901 content:{ "name": "camera._queryStorage", "sequence": 30, "state": "done", "results": { "storagePath": "\/mnt\/SD0", "module": [ { "storage_total": 60874, "storage_left": 60230, "pro_suc": 1, "storage_state": 0, "index": 1 }, { "storage_total": 60874
+, "storage_left": 60230, "pro_suc": 1, "storage_state": 0, "index": 2 }, { "storage_total": 60874, "storage_left": 
+60230, "pro_suc": 1, "storage_state": 0, "index": 3 }, { "storage_total": 60874, "storage_left": 60230, "pro_suc": 1, 
+"storage_state": 0, "index": 4 }, { "storage_total": 60874, "storage_left": 60230, "pro_suc": 1, "storage_state": 0, "
+index": 5 }, { "storage_total": 60874, "storage_left": 60230, "pro_suc": 1, "storage_state": 0, "index": 6 }, { "
+storage_total": 60874, "storage_left": 60230, "pro_suc": 1, "storage_state": 0, "index": 7 }, { "storage_total": 60874
+, "storage_left": 60230, "pro_suc": 1, "storage_state": 0, "index": 8 } ] } }
+
+2019-04-11 01:52:14:474072 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec4 fmt change width:1920 height:1440
+2019-04-11 01:52:14:474250 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec0 fmt change width:1920 height:1440
+2019-04-11 01:52:14:475878 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec3 fmt change width:1920 height:1440
+2019-04-11 01:52:14:476574 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec7 fmt change width:1920 height:1440
+2019-04-11 01:52:14:476858 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec1 fmt change width:1920 height:1440
+2019-04-11 01:52:14:477171 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec5 fmt change width:1920 height:1440
+2019-04-11 01:52:14:479331 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec2 fmt change width:1920 height:1440
+2019-04-11 01:52:14:480803 INFO  [media/nvcodec/nv_video_dec.cpp:131] dec6 fmt change width:1920 height:1440
+
+2019-04-11 01:52:14:527456 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec0 capture plane setup
+2019-04-11 01:52:14:533273 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec7 capture plane setup
+2019-04-11 01:52:14:555586 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec3 capture plane setup
+2019-04-11 01:52:14:556108 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec4 capture plane setup
+2019-04-11 01:52:14:556537 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec5 capture plane setup
+2019-04-11 01:52:14:558141 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec6 capture plane setup
+2019-04-11 01:52:14:558912 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec1 capture plane setup
+2019-04-11 01:52:14:565808 INFO  [media/nvcodec/nv_video_dec.cpp:206] dec2 capture plane setup
+
+2019-04-11 01:52:14:663084 INFO  [media/nvcodec/nv_video_enc.cpp:308] enc-1 sps pps size:23
+
+2019-04-11 01:52:14:666187 INFO  [media/stream_sink.cpp:90] rtmp://127.0.0.1/live/preview set video param
+2019-04-11 01:52:14:666929 INFO  [media/insmux.cpp:203] mux:rtmp://127.0.0.1/live/preview video mime:h264 width:1920 height:960 timescale:1000000 bitrate:5000 configlen:23
+2019-04-11 01:52:14:667383 INFO  [media/insmux.cpp:269] mux:rtmp://127.0.0.1/live/preview audio samplerate:48000 channels:2 timescale:1000000 bitrate:128000 configlen:2 spatial:0
+
+2019-04-11 01:52:14:795436 INFO  [media/stream_sink.cpp:377] rtmp://127.0.0.1/live/preview start pts:1554918734338522
+2019-04-11 01:52:17:504054 INFO  [core/video_composer.cpp:515] fps: 32.073660
+2019-04-11 01:52:18:470984 INFO  [module/usb_camera.cpp:2166] pid:8 fps: 30.042490
+2019-04-11 01:52:20:574661 INFO  [core/video_composer.cpp:515] fps: 29.961508
+2019-04-11 01:52:22:542915 INFO  [module/usb_camera.cpp:2166] pid:8 fps: 29.961222
+2019-04-11 01:52:23:641815 INFO  [core/video_composer.cpp:515] fps: 29.995229
+2019-04-11 01:52:26:614084 INFO  [module/usb_camera.cpp:2166] pid:8 fps: 29.966823
+2019-04-11 01:52:26:715903 INFO  [core/video_composer.cpp:515] fps: 29.927578
+
+	

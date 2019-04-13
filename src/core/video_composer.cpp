@@ -157,10 +157,14 @@ void video_composer::dec_task(int32_t index)
         } else if (ret != INS_OK) {
             break;
         } else {
+			/*
+		 	 * 从模组的视频数据repo中提取一帧数据
+		 	 */
             ret = dequeue_frame(buff, index, pts);
             if (ret != INS_OK) 
 				buff->planes[0].bytesused = 0;
 
+			/* 将视频帧丢入到解码器的输入buffer中 */
             dec_[index]->queue_input_buff(buff, pts);
 
             if (ret != INS_OK) 
@@ -384,6 +388,8 @@ int32_t video_composer::dequeue_frame(NvBuffer* buff, int32_t index, int64_t& pt
     }
     return INS_ERR;
 }
+
+
 
 int32_t video_composer::compose(std::vector<NvBuffer*>& v_in_buff, std::map<uint32_t, NvBuffer*>& m_out_buff, const float* mat)
 {

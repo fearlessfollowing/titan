@@ -88,8 +88,7 @@ public:
     /**
      * Holds the buffer plane format.
      */
-    typedef struct
-    {
+    typedef struct {
         uint32_t width;             /**< Holds the width of the plane in pixels. */
         uint32_t height;            /**< Holds the height of the plane in pixels. */
 
@@ -234,15 +233,13 @@ public:
      */
     int unref();
 
-    const enum v4l2_buf_type buf_type;  /**< Type of the buffer. */
-    const enum v4l2_memory memory_type; /**< Type of memory associated
-                                           with the buffer. */
+    const enum v4l2_buf_type buf_type;  	/**< Type of the buffer. */
+    const enum v4l2_memory memory_type; 	/**< Type of memory associated with the buffer. */
 
-    const uint32_t index;               /**< Holds the buffer index. */
+    const uint32_t index;               	/**< Holds the buffer index. */
 
-    uint32_t n_planes;            /**< Holds the number of planes in the buffer. */
-    NvBufferPlane planes[MAX_PLANES];     /**< Holds the data pointer, plane file
-                                             descriptor (FD), plane format, etc. */
+    uint32_t n_planes;            			/**< Holds the number of planes in the buffer. */
+    NvBufferPlane planes[MAX_PLANES];     	/**< Holds the data pointer, plane file descriptor (FD), plane format, etc. */
 
     /**
      * Fills the NvBuffer::NvBufferPlaneFormat array.
@@ -282,6 +279,7 @@ private:
      * Disallows copy constructor.
      */
     NvBuffer(const NvBuffer& that);
+								
     /**
      * Disallows assignment.
      */

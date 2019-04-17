@@ -506,18 +506,16 @@ private:
     uint32_t total_dequeued_buffers;  /**< Holds the total number of buffers dequeued from
                                            the plane. */
 
-    bool streamon;  /**< Specifies whether the plane is streaming. */
+    bool streamon;  				/**< Specifies whether the plane is streaming. */
 
-    bool dqthread_running;  /**< Specifies whether DQ Thread is running.
-                                 Its value is toggled by the DQ Thread. */
-    bool stop_dqthread; /**< Specifies the value used to signal the DQ Thread to stop. */
+    bool dqthread_running;  		/**< Specifies whether DQ Thread is running. Its value is toggled by the DQ Thread. */
+    bool stop_dqthread; 			/**< Specifies the value used to signal the DQ Thread to stop. */
 
-    pthread_t dq_thread; /**< Speciifes the pthread ID of the DQ Thread. */
+    pthread_t dq_thread; 			/**< Speciifes the pthread ID of the DQ Thread. */
 
-    dqThreadCallback callback; /**< Specifies the callback method used by the DQ Thread. */
+    dqThreadCallback callback; 		/**< Specifies the callback method used by the DQ Thread. */
 
-    void *dqThread_data;    /**< Application supplied pointer provided as an
-                                argument in #dqThreadCallback. */
+    void *dqThread_data;    		/**< Application supplied pointer provided as an argument in #dqThreadCallback. */
 
     /**
      * The DQ thread method.
@@ -556,13 +554,13 @@ private:
      * @param[in] blocking A flag that indicates whether the device has been opened with blocking mode.
      * @param[in] profiler The profiler.
      */
-    NvV4l2ElementPlane(enum v4l2_buf_type buf_type, const char *device_name,
-                     int &fd, bool blocking, NvElementProfiler &profiler);
+    NvV4l2ElementPlane(enum v4l2_buf_type buf_type, const char *device_name, int &fd, bool blocking, NvElementProfiler &profiler);
 
     /**
      * Disallows copy constructor.
      */
     NvV4l2ElementPlane(const NvV4l2ElementPlane& that);
+	
     /**
      * Disallows assignment.
      */
@@ -575,10 +573,8 @@ private:
      */
      ~NvV4l2ElementPlane();
 
-    int is_in_error;        /**< Indicates if an error was encountered during
-                               the operation of the element. */
-    const char *comp_name;  /**< Specifies the name of the component,
-                               for debugging. */
+    int is_in_error;        /**< Indicates if an error was encountered during the operation of the element. */
+    const char *comp_name;  /**< Specifies the name of the component, for debugging. */
 
     friend class NvV4l2Element;
 };

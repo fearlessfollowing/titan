@@ -170,6 +170,10 @@ private:
 
 	static uint32_t 		state_;								/* 系统的状态 */
 
+	/****** For Debug ******/
+	uint32_t				enter_preview_cnt_ = 0;					/* 进入预览的次数统计 */
+
+
 	bool 					b_need_stop_live_ = false;
 	bool 					b_stop_live_rec_ = false;
 	std::mutex 				camera_operation_stop_mtx_;

@@ -2215,7 +2215,7 @@ void usb_camera::parse_extra_data(const uint8_t* data, uint32_t size, uint32_t s
 			}
 
 			
-			case AMBA_EXTRA_TEMP: { 
+			case AMBA_EXTRA_TEMP: {	/* 温度数据由一个字节变化为2个字节 */
 				//int8_t temp = *(data + offset);
 				int16_t temp = *((int16_t*)(data + offset));
 				int8_t h2_temp = 0, sensor_temp = 0;

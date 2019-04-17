@@ -57,14 +57,16 @@ NvV4l2ElementPlane::NvV4l2ElementPlane(enum v4l2_buf_type buf_type,
     this->buf_type = buf_type;
     this->blocking = blocking;
     is_in_error = 0;
-    switch (buf_type)
-    {
+
+    switch (buf_type) {
         case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
             plane_name = "Output Plane";
             break;
+
         case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
             plane_name = "Capture Plane";
             break;
+
         default:
             ERROR_MSG("Unsupported v4l2_buf_type " << buf_type);
             plane_name = "Unknown";
@@ -101,11 +103,9 @@ NvV4l2ElementPlane::~NvV4l2ElementPlane()
     pthread_cond_destroy(&plane_cond);
 }
 
-NvBuffer *
-NvV4l2ElementPlane::getNthBuffer(uint32_t n)
+NvBuffer * NvV4l2ElementPlane::getNthBuffer(uint32_t n)
 {
-    if (n >= num_buffers)
-    {
+    if (n >= num_buffers) {
         PLANE_DEBUG_MSG("WARNING:Requested " << n << "th buffer out of " <<
                 num_buffers << "buffers. Returning NULL");
         return NULL;
@@ -145,9 +145,11 @@ NvV4l2ElementPlane::dqBuffer(struct v4l2_buffer &v4l2_buf, NvBuffer ** buffer,
             total_dequeued_buffers++;
             num_queued_buffers--;
             pthread_cond_broadcast(&plane_cond);
+
             PLANE_DEBUG_MSG("DQed buffer " << v4l2_buf.index);
             pthread_mutex_unlock(&plane_lock);
         } else if (errno == EAGAIN) {
+
             pthread_mutex_lock(&plane_lock);
             if (v4l2_buf.flags & V4L2_BUF_FLAG_LAST) {
                 pthread_mutex_unlock(&plane_lock);
@@ -314,14 +316,11 @@ NvV4l2ElementPlane::unmapOutputBuffers(int index, int dmabuff_fd)
     uint32_t i;
     pthread_mutex_lock(&plane_lock);
 
-    switch (memory_type)
-    {
+    switch (memory_type) {
         case V4L2_MEMORY_DMABUF:
-            for (i = 0; i < n_planes; i++)
-            {
+            for (i = 0; i < n_planes; i++) {
                 ret = NvBufferMemUnMap (dmabuff_fd, i, (void **)&buffers[index]->planes[i].data);
-                if (ret < 0)
-                {
+                if (ret < 0) {
                     is_in_error = 1;
                     PLANE_SYS_ERROR_MSG("Error while Unmapping buffer");
                     pthread_mutex_unlock(&plane_lock);
@@ -329,12 +328,13 @@ NvV4l2ElementPlane::unmapOutputBuffers(int index, int dmabuff_fd)
                 }
             }
             break;
+			
         default:
             pthread_mutex_unlock(&plane_lock);
             return -1;
     }
-    if(ret == 0)
-    {
+
+    if (ret == 0) {
         PLANE_DEBUG_MSG("Unmapped Nvbuffer to buffers " << index);
     }
     pthread_mutex_unlock(&plane_lock);
@@ -342,12 +342,10 @@ NvV4l2ElementPlane::unmapOutputBuffers(int index, int dmabuff_fd)
     return ret;
 }
 
-int
-NvV4l2ElementPlane::getFormat(struct v4l2_format &format)
+int NvV4l2ElementPlane::getFormat(struct v4l2_format &format)
 {
     format.type = buf_type;
-    CHECK_V4L2_RETURN(v4l2_ioctl(fd, VIDIOC_G_FMT, &format),
-            "Getting format");
+    CHECK_V4L2_RETURN(v4l2_ioctl(fd, VIDIOC_G_FMT, &format), "Getting format");
 }
 
 int
@@ -532,9 +530,7 @@ NvV4l2ElementPlane::setStreamStatus(bool status)
     if (status)
     {
         ret = v4l2_ioctl(fd, VIDIOC_STREAMON, &buf_type);
-    }
-    else
-    {
+    } else {
         ret = v4l2_ioctl(fd, VIDIOC_STREAMOFF, &buf_type);
     }
     if (ret)
@@ -775,16 +771,17 @@ NvV4l2ElementPlane::waitAllBuffersDequeued(uint32_t max_wait_ms)
     CHECK_V4L2_RETURN(return_val, "Waiting for all buffers to get dequeued");
 }
 
+
 bool NvV4l2ElementPlane::setDQThreadCallback(dqThreadCallback callback)
 {
     if (dqthread_running)
         return false;
+
     this->callback = callback;
     return true;
 }
 
-void *
-NvV4l2ElementPlane::dqThread(void *data)
+void * NvV4l2ElementPlane::dqThread(void *data)
 {
     NvV4l2ElementPlane *plane = (NvV4l2ElementPlane *) data;
     const char *comp_name = plane->comp_name;
@@ -793,8 +790,9 @@ NvV4l2ElementPlane::dqThread(void *data)
     PLANE_DEBUG_MSG("Starting DQthread");
     prctl (PR_SET_NAME, plane_name, 0, 0, 0);
     plane->stop_dqthread = false;
-    while (!plane->stop_dqthread)
-    {
+
+    while (!plane->stop_dqthread) {
+
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
         NvBuffer *buffer;
@@ -806,27 +804,23 @@ NvV4l2ElementPlane::dqThread(void *data)
         v4l2_buf.m.planes = planes;
         v4l2_buf.length = plane->n_planes;
 
-        if (plane->dqBuffer(v4l2_buf, &buffer, &shared_buffer, -1) < 0)
-        {
-            if (errno != EAGAIN)
-            {
+        if (plane->dqBuffer(v4l2_buf, &buffer, &shared_buffer, -1) < 0) {
+            if (errno != EAGAIN) {
                 plane->is_in_error = 1;
             }
-            if (errno != EAGAIN || plane->streamon)
-            {
+
+            if (errno != EAGAIN || plane->streamon) {
                 ret = plane->callback(NULL, NULL, NULL, plane->dqThread_data);
             }
-            if (!plane->streamon)
-            {
+
+            if (!plane->streamon) {
                 break;
             }
-        }
-        else
-        {
+        } else {
             ret = plane->callback(&v4l2_buf, buffer, shared_buffer, plane->dqThread_data);
         }
-        if (!ret)
-        {
+		
+        if (!ret) {
             break;
         }
     }
@@ -836,30 +830,31 @@ NvV4l2ElementPlane::dqThread(void *data)
     plane->dqthread_running = false;
     pthread_cond_broadcast(&plane->plane_cond);
     pthread_mutex_unlock(&plane->plane_lock);
+	
     PLANE_DEBUG_MSG("Exiting DQthread");
     return NULL;
 }
 
-int
-NvV4l2ElementPlane::startDQThread(void *data)
+int NvV4l2ElementPlane::startDQThread(void *data)
 {
     pthread_mutex_lock(&plane_lock);
-    if (dqthread_running)
-    {
+    if (dqthread_running) {
         PLANE_DEBUG_MSG("DQ Thread already started");
         pthread_mutex_unlock(&plane_lock);
         return 0;
     }
+	
     dqThread_data = data;
     pthread_create(&dq_thread, NULL, dqThread, this);
     dqthread_running = true;
-    pthread_mutex_unlock(&plane_lock);
+
+	pthread_mutex_unlock(&plane_lock);
     PLANE_DEBUG_MSG("Started DQ Thread");
-    return 0;
+
+	return 0;
 }
 
-int
-NvV4l2ElementPlane::stopDQThread()
+int NvV4l2ElementPlane::stopDQThread()
 {
     // if (blocking)
     // {
@@ -873,8 +868,7 @@ NvV4l2ElementPlane::stopDQThread()
     return 0;
 }
 
-int
-NvV4l2ElementPlane::waitForDQThread(uint32_t max_wait_ms)
+int NvV4l2ElementPlane::waitForDQThread(uint32_t max_wait_ms)
 {
     struct timespec timeToWait;
     struct timeval now;
@@ -889,26 +883,22 @@ NvV4l2ElementPlane::waitForDQThread(uint32_t max_wait_ms)
     timeToWait.tv_nsec = timeToWait.tv_nsec % 1000000000L;
 
     pthread_mutex_lock(&plane_lock);
-    while (dqthread_running)
-    {
+    while (dqthread_running) {
         ret = pthread_cond_timedwait(&plane_cond, &plane_lock, &timeToWait);
-        if (ret == ETIMEDOUT)
-        {
+        if (ret == ETIMEDOUT) {
             return_val = -1;
             break;
         }
     }
     pthread_mutex_unlock(&plane_lock);
 
-    if (ret == 0)
-    {
+    if (ret == 0) {
         pthread_join(dq_thread, NULL);
         dq_thread = 0;
         PLANE_DEBUG_MSG("Stopped DQ Thread");
-    }
-    else
-    {
+    } else {
         PLANE_ERROR_MSG("Timed out waiting for dqthread");
     }
     return return_val;
 }
+

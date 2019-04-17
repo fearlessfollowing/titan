@@ -54,17 +54,25 @@ video_composer::~video_composer()
 
 
 
+
+/***********************************************************************************************
+** 函数名称: open
+** 函数功能: 打开视频合成器(创建一个编码线程,根据是否需要HDMI显示创建渲染线程)
+** 入口参数:
+**		option 	 - 打开参数
+** 返 回 值: 无
+*************************************************************************************************/
 int32_t video_composer::open(const compose_option& option)
 {
     int32_t ret = 0;
     
-    if (!option.m_sink.empty()) {
+    if (!option.m_sink.empty()) {	/* 合成器option有输出的sink,将该option加入到option_ map中 */
         option_.insert(std::make_pair(option.index, option));
     }
  
     render_ 		= std::make_shared<render>();
     dec_fps_ 		= option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
-    rend_mode_ 		= option.mode;    		//渲染出来帧的模式
+    rend_mode_ 		= option.mode;    			//渲染出来帧的模式
 
 	render_->set_mode(option.mode);
 	render_->set_map_type(option.map);
@@ -82,22 +90,29 @@ int32_t video_composer::open(const compose_option& option)
     th_enc_ = std::thread(&video_composer::enc_task, this);
 
     in_hdmi_ = option.hdmi_display;
-    if (option.hdmi_display) {
+    if (option.hdmi_display) {	/* 如果需要HDMI显示,创建渲染线程 */
         th_screen_render_ = std::thread(&video_composer::screen_render_task, this);
     }
 
-    LOGINFO("compose open in w:%u h:%u mode:%d map:%d hdmi:%d out w:%d h:%d crop:%d type:%d jpeg:%d fps:%lf %lf logo:%s", 
-		        option.in_w, option.in_h, 
-		        option.mode, option.map, 
-		        option.hdmi_display, 
-		        option.width, option.height, option.crop_flag,option.offset_type,
-		        option.jpeg,
-		        option.ori_framerate.to_double(),
-		        option.framerate.to_double(),
-		        option.logo_file.c_str());
+    LOGINFO("---> compose open in w:%u h:%u mode:%d map:%d hdmi:%d out w:%d h:%d crop:%d type:%d jpeg:%d fps:%lf %lf logo:%s", 
+	        option.in_w, 
+	        option.in_h, 
+	        option.mode, 
+	        option.map, 
+	        option.hdmi_display, 
+	        option.width, 
+	        option.height, 
+	        option.crop_flag,
+	        option.offset_type,
+	        option.jpeg,
+	        option.ori_framerate.to_double(),
+	        option.framerate.to_double(),
+	        option.logo_file.c_str());
 
     return INS_OK;
 }
+
+
 
 void video_composer::screen_render_task()
 {
@@ -178,6 +193,15 @@ void video_composer::dec_task(int32_t index)
 }
 
 
+
+
+/***********************************************************************************************
+** 函数名称: enc_task
+** 函数功能: 打开视频合成器(创建一个编码线程,根据是否需要HDMI显示创建渲染线程)
+** 入口参数:
+**		option 	 - 打开参数
+** 返 回 值: 无
+*************************************************************************************************/
 void video_composer::enc_task()
 {
     int32_t ret = 0;
@@ -191,13 +215,25 @@ void video_composer::enc_task()
 
     mtx_.lock();
     render_setup_ = true;
-	
+
+
+	/* 一个video_composer可能含有多个合成规格(composer_option)
+	 * 每个comoser_option包含一个编码器nv_video_enc
+	 * 每个nv_video_enc接收8个nv_video_dec线程的模组编码数据
+	 */
     for (auto& opt : option_) {
+
+		/* 构造一个编码器对象
+		 * - 设置编码器参数: 宽,高
+		 * - 设置编码码率
+		 * - 设置帧率
+		 */
         auto enc = std::make_shared<nv_video_enc>();
         enc->set_resolution(opt.second.width, opt.second.height);
         enc->set_bitrate(opt.second.bitrate * 1000);
         enc->set_framerate(opt.second.framerate);
 
+		/* 为该编码器添加输出流 */
         for (auto it = opt.second.m_sink.begin(); it != opt.second.m_sink.end(); it++) {
             enc->add_output(it->first, it->second);
         }
@@ -214,6 +250,7 @@ void video_composer::enc_task()
         uint32_t interval = std::max(dec_fps_.num*opt.second.framerate.den/dec_fps_.den/opt.second.framerate.num, 1);
         enc_intervals_.insert(std::make_pair(opt.second.index, interval));
 
+#if 0
         if (opt.second.jpeg && !jpeg_enc_) {	/* 只有一路编码jpeg */
             jpeg_index_ = opt.first;
             jpeg_enc_ = std::make_shared<nv_jpeg_enc>();
@@ -225,6 +262,7 @@ void video_composer::enc_task()
                 jpeg_sink_ = nullptr;
             }
         }
+#endif
 
         // LOGINFO("index:%d w:%d h:%d bitrate:%d framerate:%d/%d mode:%d interval:%d", 
         //     opt.second.index, 
@@ -449,13 +487,27 @@ int32_t video_composer::compose(std::vector<NvBuffer*>& v_in_buff, std::map<uint
 
 
 
+
+/***********************************************************************************************
+** 函数名称: add_encoder
+** 函数功能: 添加一路编码
+** 入口参数:
+**		option 	 - 编码参数
+** 返 回 值: 成功返回INS_OK;失败返回错误码
+*************************************************************************************************/
 int32_t video_composer::add_encoder(const compose_option& option)
 {
+	/*
+ 	 * 检查改规格的编码器是否已经存在
+ 	 */
     if (enc_.find(option.index) != enc_.end()) {
         LOGERR("add enc index:%u exist", option.index);
         return INS_ERR;
     }
 
+	/*
+	 * 编码器的路数不能大于2(0,1)
+	 */
     assert(enc_.size() < 2);
 
     std::lock_guard<std::mutex> lock(mtx_);
@@ -465,14 +517,27 @@ int32_t video_composer::add_encoder(const compose_option& option)
         return INS_OK;
     }
 
+	/*
+	 * 构造一个编码器对象(nv_video_enc)
+	 */
     auto enc = std::make_shared<nv_video_enc>();
+
+	/*
+	 * 设置编码器参数
+	 */
     enc->set_resolution(option.width, option.height);
-    enc->set_bitrate(option.bitrate*1000);
+    enc->set_bitrate(option.bitrate * 1000);
     enc->set_framerate(option.framerate);
-    for (auto it = option.m_sink.begin(); it != option.m_sink.end(); it++) {
+
+	/*
+	 * 设置编码后的数据输出到的sink
+	 */
+	for (auto it = option.m_sink.begin(); it != option.m_sink.end(); it++) {
         enc->add_output(it->first, it->second);
     }
-    std::stringstream ss;
+
+	/* 打开编码器 */
+	std::stringstream ss;
     ss << "enc-" << option.index;
     auto ret = enc->open(ss.str(), option.mime);
     RETURN_IF_TRUE(ret != INS_OK, "enc open fail", ret);
@@ -481,22 +546,43 @@ int32_t video_composer::add_encoder(const compose_option& option)
     option_.insert(std::make_pair(option.index, option));
     modes_.insert(std::make_pair(option.index, option.mode));
 
-    /* 编码帧率>解码帧率的时候,不插帧,将编码帧率=解码帧率 */
-    uint32_t interval = std::max(dec_fps_.num*option.framerate.den/dec_fps_.den/option.framerate.num, 1);
+    /* 编码帧率 > 解码帧率的时候, 不插帧, 将编码帧率=解码帧率 */
+    uint32_t interval = std::max(dec_fps_.num * option.framerate.den / dec_fps_.den / option.framerate.num, 1);
     enc_intervals_.insert(std::make_pair(option.index, interval));
 
     return INS_OK;
 }
 
+
+
+
+/***********************************************************************************************
+** 函数名称: delete_encoder
+** 函数功能: 移除指定索引的编码器
+** 入口参数:
+**		index 	 - 编码器索引
+** 返 回 值: 无
+*************************************************************************************************/
 void video_composer::delete_encoder(uint32_t index)
 {
     mtx_.lock();
     auto it = enc_.find(index);
     it->second->send_eos();
-    if (it != enc_.end()) enc_.erase(it);
+    if (it != enc_.end()) 
+		enc_.erase(it);
     mtx_.unlock();
 }
 
+
+
+/***********************************************************************************************
+** 函数名称: encoder_del_output
+** 函数功能: 移除指定编码器的指定输出sink
+** 入口参数:
+**		enc_index 	 - 编码器索引
+**		sink_index	 - 输出的sink索引
+** 返 回 值: 无
+*************************************************************************************************/
 void video_composer::encoder_del_output(uint32_t enc_index, uint32_t sink_index)
 {
     auto it = enc_.find(enc_index);
@@ -505,10 +591,22 @@ void video_composer::encoder_del_output(uint32_t enc_index, uint32_t sink_index)
 }
 
 
+
+/***********************************************************************************************
+** 函数名称: encoder_add_output
+** 函数功能: 在指定的编码器中添加一个指定索引的sink
+** 入口参数:
+**		enc_index 	 - 编码器索引
+**		sink_index	 - 输出的sink索引
+**		sink		 - sink对象
+** 返 回 值: 无
+*************************************************************************************************/
 void video_composer::encoder_add_output(uint32_t enc_index, uint32_t sink_index, std::shared_ptr<sink_interface> sink)
 {
     auto it = enc_.find(enc_index);
-    if (it == enc_.end()) return;
+    if (it == enc_.end()) 
+		return;
+
     it->second->add_output(sink_index, sink);
 }
 
@@ -535,6 +633,7 @@ int32_t video_composer::init_cuda()
 	
     if (init) 
 		return INS_OK;
+	
     init = true;
 
     int32_t width 	= 3840;

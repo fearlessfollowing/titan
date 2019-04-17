@@ -216,7 +216,7 @@ int32_t video_mgr::open_preview(const ins_video_option& option)
 		if (option.origin.framerate > 30) {		/* 大于30帧实时拼接的时候，性能不够出,预览流降为15fps */
 			c_opt.bitrate = INS_PREVIEW_BITRATE/2;
 			framerate = 15;
-		} else {
+		} else {	
 			c_opt.bitrate = INS_PREVIEW_BITRATE;
 			framerate = 30;
 		}
@@ -245,7 +245,7 @@ int32_t video_mgr::open_preview(const ins_video_option& option)
 			prj_file_mgr::add_preview_info(option.path, c_opt.bitrate, framerate);
 		}
 
-		composer_->add_encoder(c_opt);
+		composer_->add_encoder(c_opt);	/* 添加一路编码 */
 	} else {	/* 没有打开composer */
 		ins_video_option opt;
 		opt.type 				= INS_PREVIEW;

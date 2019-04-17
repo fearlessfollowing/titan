@@ -83,6 +83,8 @@ void output_loop()
     LOGINFO("main output loop exit");
 }
 
+
+
 int32_t main(int32_t argc, char* argv[])
 {
     std::string i_file_name;
@@ -90,25 +92,25 @@ int32_t main(int32_t argc, char* argv[])
     int32_t ret = 0;
 
     int32_t ch, opt_cnt = 0;
-    while ((ch = getopt(argc, argv, "i:o:")) != -1)
-    {
-        switch (ch)
-        {
+	
+    while ((ch = getopt(argc, argv, "i:o:")) != -1) {
+        switch (ch) {
             case 'i':
                 i_file_name = optarg;
                 opt_cnt++;
                 break;
+
             case 'o':
                 o_file_name = optarg;
                 opt_cnt++;
                 break;
+
             default:
                 break;
         }
     }
 
-    if (opt_cnt < 2)
-    {
+    if (opt_cnt < 2) {
         printf("option: i:o:\n");
         return 0;
     }
@@ -135,21 +137,18 @@ int32_t main(int32_t argc, char* argv[])
     auto start_time = steady_clock::now(); 
 
     NvBuffer* buff_in = nullptr;
-    while (1)
-    {
+
+    while (1) {
         ret = _dec->dequeue_input_buff(buff_in, 20);
-        if (ret == INS_ERR_TIME_OUT)
-        {
+        if (ret == INS_ERR_TIME_OUT) {
             continue;
-        }
-        else if (ret != INS_OK)
-        {
+        } else if (ret != INS_OK) {
             break;
-        }
-        else
-        {
+        } else {
             ret = read_frame(buff_in);
-            if (ret != INS_OK) buff_in->planes[0].bytesused = 0;
+            if (ret != INS_OK) 
+				buff_in->planes[0].bytesused = 0;
+
             _dec->queue_input_buff(buff_in);
             if (ret != INS_OK) break;
         }
@@ -166,7 +165,7 @@ int32_t main(int32_t argc, char* argv[])
     // }
 
     auto end_time = steady_clock::now(); 
-    auto d = duration_cast<duration<double>>(end_time-start_time);
+    auto d = duration_cast<duration<double>>(end_time - start_time);
 
     LOGINFO("---------frames:%u %u fps:%lf", _frames_r, _frames_w, _frames_r/d.count());
 

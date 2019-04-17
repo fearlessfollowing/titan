@@ -929,6 +929,8 @@ void access_msg_center::start_preview(const char* msg, std::string cmd, int sequ
 
 	sender_->set_ind_msg_sequece(ACCESS_CMD_PREVIEW_FINISH_, sequence);
 	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);	/* 回复预览请求完成响应 */
+
+	LOGINFO("------ successful enter preview cnt: %d", ++enter_preview_cnt_);
 	
 }
 
@@ -1055,6 +1057,7 @@ void access_msg_center::start_record(const char* msg, std::string cmd, int seque
 	}
 }
 
+
 void access_msg_center::stop_record(const char* msg, std::string cmd, int sequence)
 {
 	sender_->set_ind_msg_sequece(ACCESS_CMD_RECORD_FINISH_, sequence);
@@ -1069,6 +1072,8 @@ void access_msg_center::stop_record(const char* msg, std::string cmd, int sequen
 		sender_->send_ind_msg(ACCESS_CMD_RECORD_FINISH_, INS_OK);
 	}
 }
+
+
 
 int access_msg_center::do_stop_record(int ret)
 {
@@ -1092,6 +1097,16 @@ int access_msg_center::do_stop_record(int ret)
 }
 
 
+
+/***********************************************************************************************
+** 函数名称: start_live
+** 函数功能: 启动直播
+** 入口参数:
+**		msg 	 - 消息数据
+**		cmd		 - 拍照命令"camera._takePicture"
+**		sequence - 通信序列值
+** 返 回 值: 成功返回INS_OK;失败返回错误码
+*************************************************************************************************/
 void access_msg_center::start_live(const char* msg, std::string cmd, int sequence)
 {
 	ins_video_option opt;

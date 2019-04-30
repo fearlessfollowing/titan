@@ -62,6 +62,10 @@ void access_msg_center::register_all_msg()
 	INS_REG_ACCESS_MSG(ACCESS_CMD_TAKE_PICTURE, 			&access_msg_center::take_picture)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_SET_OFFSET, 				&access_msg_center::set_offset)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_OFFSET, 				&access_msg_center::get_offset)
+
+	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_FACTORY_OFFSET,		&access_msg_center::get_factory_offset)
+
+
 	INS_REG_ACCESS_MSG(ACCESS_CMD_GET_IMAGE_PARAM, 			&access_msg_center::get_image_param)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_CHANGE_STORAGE_PATH, 		&access_msg_center::change_storage_path)
 	INS_REG_ACCESS_MSG(ACCESS_CMD_QUERY_STORAGE, 			&access_msg_center::query_storage)
@@ -1445,6 +1449,32 @@ void access_msg_center::query_battery_temp(const char* msg, std::string cmd, int
 	}
 }
 
+
+void access_msg_center::get_factory_offset(const char* msg, std::string cmd, int sequence)
+{
+	DECLARE_AND_DO_WHILE_0_BEGIN
+
+	std::string offset_pano_4_3;
+	std::string offset_pano_16_9;
+
+
+	offset_pano_4_3 = xml_config::get_factory_offset();
+	if (offset_pano_4_3 == "") {	
+		LOGERR("no pano 4:3 offset");
+		ret = INS_ERR_CONFIG_FILE;
+	}
+
+	res_obj.set_string(ACCESS_MSG_OPT_OFFSET_PANO_4_3, offset_pano_4_3);
+	
+	DO_WHILE_0_END
+
+	sender_->send_rsp_msg(sequence, ret, cmd, &res_obj);
+
+}
+
+
+
+
 void access_msg_center::get_offset(const char* msg, std::string cmd, int sequence)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -1480,6 +1510,7 @@ void access_msg_center::get_offset(const char* msg, std::string cmd, int sequenc
 
 	res_obj.set_string(ACCESS_MSG_OPT_OFFSET_PANO_4_3, offset_pano_4_3);
 	res_obj.set_string(ACCESS_MSG_OPT_OFFSET_PANO_16_9, offset_pano_16_9);
+	
 	// res_obj.set_string(ACCESS_MSG_OPT_OFFSET_3D_LEFT, offset_3d_left);
 	// res_obj.set_string(ACCESS_MSG_OPT_OFFSET_3D_RIGHT, offset_3d_right);
 
@@ -2411,6 +2442,7 @@ void access_msg_center::test_module_communication(const char* msg, std::string c
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
 
+
 void access_msg_center::test_module_spi(const char* msg, std::string cmd, int sequence)
 {
 	DECLARE_AND_DO_WHILE_0_BEGIN
@@ -2425,6 +2457,8 @@ void access_msg_center::test_module_spi(const char* msg, std::string cmd, int se
 
 	sender_->send_rsp_msg(sequence, ret, cmd);
 }
+
+
 
 void access_msg_center::change_module_usb_mode(const char* msg, std::string cmd, int sequence)
 {

@@ -18,6 +18,7 @@
 #include "all_lens_hdr.h"
 #include "stabilization.h"
 
+#include "ins_disk_sync.h"
 
 image_mgr::~image_mgr()
 {
@@ -83,7 +84,7 @@ void image_mgr::task()
 	while (!quit_) {
 
 		if (cnt_cur >= cnt) 
-			break;	/* 当前完成的组数大于等于需求组数,退出 */
+			break;				/* 当前完成的组数大于等于需求组数,退出 */
 
         if (!future_got) {
             if (std::future_status::ready == future.wait_for(0s)) {
@@ -92,6 +93,7 @@ void image_mgr::task()
                 BREAK_IF_NOT_OK(ret);
             }
         }
+
 
 		/*
 		 * std::map<uint32_t, std::shared_ptr<ins_frame>>
@@ -123,9 +125,17 @@ void image_mgr::task()
     if (!future_got) 
         ret = future.get();
 
-    if (!quit_) 
-        send_pic_finish_msg(ret, option_.path);	/* 发送拍照完成消息(内部消息) */
+    if (!quit_) {	/* 正常退出时,先进行同步操作 */
 
+		auto disk_sync_mgr = disk_sync::create();
+		std::string path;
+		LOGINFO("---->>> startup disk sync");
+		xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_STORAGE, path);
+		disk_sync_mgr->start_disk_sync(DISK_SYNC_ONCE, path);
+		disk_sync_mgr->wait_disk_sync_complete();
+		
+		send_pic_finish_msg(ret, option_.path);	/* 发送拍照完成消息(内部消息) */
+    }
     LOGINFO("image task exit");
 }
 

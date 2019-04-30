@@ -24,6 +24,9 @@ struct access_msg_head {
 #define ACCESS_CMD_QUREY_STATE                   "camera._queryState"
 #define ACCESS_CMD_SET_OFFSET                    "camera._setOffset"
 #define ACCESS_CMD_GET_OFFSET                    "camera._getOffset"
+
+#define ACCESS_CMD_GET_FACTORY_OFFSET			 "camera._getFactoryOffset"
+
 #define ACCESS_CMD_GET_IMAGE_PARAM               "camera._getImageParam"
 #define ACCESS_CMD_CHANGE_STORAGE_PATH           "camera._changeStoragePath"
 #define ACCESS_CMD_QUERY_STORAGE              	 "camera._queryStorage"

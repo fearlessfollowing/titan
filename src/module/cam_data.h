@@ -22,6 +22,9 @@ struct cam_video_param {
 	int32_t 		crop_flag = 0; 				// 0:不裁剪 1:裁两边
 	int32_t 		rec_seq = -1; 				// 录像序号
 
+	bool			b_rts;						/* 是否机内实时拼接 */
+	int32_t			stitch_mode;				/* 2D/3D */
+
 	bool 			hdr = false;
 	bool 			b_usb_stream = true;		/* 传第一路视频流 */ 
 	bool 			b_file_stream = false;

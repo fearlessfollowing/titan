@@ -8,9 +8,10 @@
 #include "camera_info.h"
 
 
-#define ENABLE_SAVE_FILE_SYNC
+//#define ENABLE_SAVE_FILE_SYNC
 
 #define ENABLE_SYNC_DEBUG_TIME
+
 
 
 int32_t jpeg_muxer::create(std::string url, const uint8_t* data, uint32_t size, const jpeg_metadata* metadata)
@@ -33,6 +34,7 @@ int32_t jpeg_muxer::create(std::string url, const uint8_t* data, uint32_t size, 
 #ifdef ENABLE_SAVE_FILE_SYNC
 int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t size)
 {
+
 #ifdef ENABLE_SYNC_DEBUG_TIME
 	struct timeval start_time, end_time;
 	gettimeofday(&start_time, nullptr); 		
@@ -62,6 +64,7 @@ int32_t jpeg_muxer::create_jpeg(std::string url, const uint8_t* data, uint32_t s
 	double cts = (double)(end_time.tv_sec*1000000 + end_time.tv_usec - start_time.tv_sec*1000000 - start_time.tv_usec);
 	LOGINFO("create jpeg file sync used time: [%lf]us", cts);
 #endif	
+
 	return ret;
 }
 
@@ -209,6 +212,7 @@ void jpeg_muxer::set_gps_meta(Exiv2::ExifData& ed, const ins_gps_data& gps)
     ed["Exif.GPSInfo.GPSSpeed"] = Exiv2::URational(gps.speed_accuracy*1000, 1000);
 }
 
+
 std::string jpeg_muxer::position_to_string(double position)
 {
     Arational a, b, c;
@@ -223,6 +227,7 @@ std::string jpeg_muxer::position_to_string(double position)
     ss << a.num << "/" << a.den << " " << b.num << "/" << b.den << " " << c.num << "/" << c.den;
     return ss.str();
 }
+
 
 void jpeg_muxer::set_sperical_meta(Exiv2::XmpData& xmp, uint32_t width, uint32_t height, uint32_t map_type)
 {
@@ -242,4 +247,5 @@ void jpeg_muxer::set_sperical_meta(Exiv2::XmpData& xmp, uint32_t width, uint32_t
     xmp["Xmp.GPano.CroppedAreaLeftPixels"] = 0;
     xmp["Xmp.GPano.CroppedAreaTopPixels"] = 0;
 }
+
 

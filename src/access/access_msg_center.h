@@ -53,7 +53,10 @@ private:
 	void 	take_picture(const char* msg, std::string cmd, int32_t sequence);
 	void 	query_state(const char* msg, std::string cmd, int32_t sequence);
 	void 	set_offset(const char* msg, std::string cmd, int32_t sequence);
+
 	void 	get_offset(const char* msg, std::string cmd, int32_t sequence);
+	void 	get_factory_offset(const char* msg, std::string cmd, int32_t sequence);
+	
 	void 	get_image_param(const char* msg, std::string cmd, int32_t sequence);
 	void 	change_storage_path(const char* msg, std::string cmd, int32_t sequence);
 	void 	calibration(const char* msg, std::string cmd, int32_t sequence);

@@ -47,7 +47,9 @@ public:
 	int32_t 		get_options(int32_t index, std::string property, std::string& value);
 	int32_t 		get_all_options(std::string property, std::vector<std::string>& m_value);
 	int32_t 		format_flash(int32_t index);
+
 	int32_t 		test_spi(int32_t index);
+	
 	int32_t 		master_index() { return master_index_; };
 	int32_t 		get_log_file(std::string file_name);
 	int32_t 		get_module_hw_version(int32_t& hw_version);

@@ -59,6 +59,7 @@
 
 #define USB_CMD_TEST_SPI                         USB_CMD(0x00000100)
 #define USB_CMD_TEST_CONNECTION                  USB_CMD(0x00000101)
+
 #define USB_CMD_GET_LOG_FILE                     USB_CMD(0x00000102)
 #define USB_CMD_CHANGE_USB_MODE                  USB_CMD(0x00000103)
 

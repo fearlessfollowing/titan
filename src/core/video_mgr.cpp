@@ -601,12 +601,30 @@ int32_t video_mgr::open_camera_rec(const ins_video_option& option, bool storage_
 #if 0
 	video_param_.gyro_delay_time = xml_config::get_gyro_delay_time(video_param_.width, video_param_.height, video_param_.framerate, video_param_.hdr);
 #else 
+
+	int stitch_mode = STITCH_MODE_NONE;
+	if (option.b_stiching) {
+		if ((option.stiching.width != 0) && (option.stiching.width == option.stiching.height)) {
+			stitch_mode = STITCH_MODE_3D;
+		} else if ((option.stiching.width != 0) && (option.stiching.width != option.stiching.height)) {
+			stitch_mode = STITCH_MODE_2D;
+		} else {
+			stitch_mode = STITCH_MODE_NONE;
+		}
+	}
+
 	video_param_.gyro_delay_time = xml_config::get_gyro_delay_time(video_param_.width, 
 																	video_param_.height, 
 																	video_param_.framerate, 
 																	video_param_.bitdepth,
+																	option.b_stiching,
+																	stitch_mode,
 																	video_param_.hdr);
-	LOGINFO("r_%dx%d_%d_%d, delay = %d", video_param_.width, video_param_.height, video_param_.framerate, video_param_.bitdepth, video_param_.hdr);
+	LOGINFO("r_%dx%d_%d_%d, delay = %d", video_param_.width, 
+										 video_param_.height, 
+										 video_param_.framerate, 
+										 video_param_.bitdepth, 
+										 video_param_.hdr);
 #endif
 
 	if (local_sink_) {	/* 存陀螺仪数据 */

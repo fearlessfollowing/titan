@@ -452,7 +452,13 @@ std::string xml_config::get_offset(int32_t crop_flag, int32_t type)
 	return offset;
 }
 
-int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, int32_t bit_depth, bool hdr)
+enum {
+	STITCH_MODE_NONE,
+	STITCH_MODE_2D,
+	STITCH_MODE_3D,
+};
+
+int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, int32_t bit_depth, bool rts, int mode, bool hdr)
 {
 	LOGINFO("--- use new get_gyro_delay_time method update by skymixos");
 	
@@ -476,7 +482,13 @@ int xml_config::get_gyro_delay_time(int32_t w, int32_t h, int32_t framerate, int
     ss << "r_" << w << "x" << h << "_" << framerate;
 	
 	if (bit_depth == 10) ss << "_10";
-	
+
+	if (rts)	ss << "_rts";
+	if (mode == STITCH_MODE_2D)	
+		ss << "_2d";
+	else if (mode == STITCH_MODE_3D)
+		ss << "_3d";
+
 	if (hdr) ss << "_hdr";
 
     int32_t delay;

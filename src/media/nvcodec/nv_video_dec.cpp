@@ -58,7 +58,7 @@ static bool conv_outputplane_cb(struct v4l2_buffer *v4l2_buf, NvBuffer *buffer, 
 
 void nv_video_dec::close()
 {
-    NV_DEC_ABORT();
+    //NV_DEC_ABORT();
 
     if (th_.joinable()) th_.join();
 
@@ -130,6 +130,9 @@ int32_t nv_video_dec::open(std::string name, std::string mime)
     ret = dec_->disableDPB();
     RETURN_IF_TRUE(ret < 0, "disableDPB error", INS_ERR);
 
+	/*
+	 * 修改一下mmap的数量(9 -> 6)
+	 */
     ret = dec_->output_plane.setupPlane(V4L2_MEMORY_MMAP, 9, true, false);
     RETURN_IF_TRUE(ret < 0, "output_plane setupPlane error", INS_ERR);
 
@@ -228,14 +231,22 @@ int32_t nv_video_dec::setup_capture_plane()
     // RETURN_IF_TRUE(ret < 0, "conv setYUVRescale error", INS_ERR);
 
 
-    ret = conv_->output_plane.setupPlane(V4L2_MEMORY_DMABUF, dec_->capture_plane.getNumBuffers(), false, false);
+    ret = conv_->output_plane.setupPlane(V4L2_MEMORY_DMABUF, 
+    									dec_->capture_plane.getNumBuffers(), 
+    									false, 
+    									false);
     RETURN_IF_TRUE(ret < 0, "conv output plane setupPlane error", INS_ERR);
-    ret = conv_->capture_plane.setupPlane(V4L2_MEMORY_MMAP, dec_->capture_plane.getNumBuffers(), true, false);
+
+    ret = conv_->capture_plane.setupPlane(V4L2_MEMORY_MMAP, 
+											dec_->capture_plane.getNumBuffers(), 
+											true, 
+											false);
     RETURN_IF_TRUE(ret < 0, "conv capture plane setupPlane error", INS_ERR);
 
 
     ret = conv_->output_plane.setStreamStatus(true);
     RETURN_IF_TRUE(ret < 0, "conv output plane setStreamStatus error", INS_ERR);
+	
     ret = conv_->capture_plane.setStreamStatus(true);
     RETURN_IF_TRUE(ret < 0, "conv capture plane setStreamStatus error", INS_ERR);
 
@@ -327,23 +338,30 @@ void nv_video_dec::capture_plane_loop()
         }
     }
 
-
+	/*
+	 * 没有错误或没有接收到eos信号
+	 */
     while (!(b_error_ || dec_->isInError() || b_eos_)) {
+
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
 	
         memset(&v4l2_buf, 0, sizeof(v4l2_buf));
         memset(planes, 0, sizeof(planes));
         v4l2_buf.m.planes = planes;
-        v4l2_buf.length = 3;
+        v4l2_buf.length = 3;		// demo中没有设置这一项??
         NvBuffer *dec_buffer;
-		
+
+		/*
+		 * 从capture_plane中取出一帧已经解码的数据
+		 */
         ret = dec_->capture_plane.dqBuffer(v4l2_buf, &dec_buffer, nullptr, 0);
         if (ret < 0) {
             if (errno == EAGAIN) {
                 usleep(1000);
                 continue;
             } else {
+				LOGERR("capture_plane_loop: dqBuffer from dec capture_plane failed!\n");
                 NV_DEC_ABORT();
                 break;
             }
@@ -355,7 +373,10 @@ void nv_video_dec::capture_plane_loop()
         v4l2_buf.m.planes = planes;
         v4l2_buf.timestamp = timestamp;
         NvBuffer *conv_buffer = nullptr;
-		
+
+		/*
+		 * 从转换器的输入Buffers队列中取出一个空闲的Buffer
+		 */
         while (!(b_error_ || conv_->isInError() || b_eos_)) {
             if (!conv_outp_queue_.pop(conv_buffer)) {
                 usleep(10*1000);
@@ -368,10 +389,12 @@ void nv_video_dec::capture_plane_loop()
 
         ret = conv_->output_plane.qBuffer(v4l2_buf, dec_buffer);
         if (ret < 0) {
+			LOGERR("capture_plane_loop: dqBuffer buffer to conv's output_plane!\n");			
             NV_DEC_ABORT();
             break;
         }
     }
+
 
     conv_send_eos();
 
@@ -399,7 +422,8 @@ void nv_video_dec::conv_send_eos()
     memset(&planes, 0, sizeof(planes));
     v4l2_buf.m.planes = planes;
 
-	/*
+
+	/* 1.等待conv的
 	 * 这个地方跟Demo的处理方式不一致
 	 */
     int32_t retry = 15;
@@ -466,6 +490,8 @@ bool nv_video_dec::conv_output_plane_done(struct v4l2_buffer *v4l2_buf,NvBuffer 
 **		buff 	 - 空闲NvBuffer引用
 **		timeout_ms - 等待的超时时间
 ** 返 回 值: 无
+** 解码线程接收到模组的编码数据后,调用dequeue_input_buff来从解码器输入队列缓冲池中得到一个空闲
+** 的V4L2 buffer
 *************************************************************************************************/
 int32_t nv_video_dec::dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms)
 {
@@ -482,13 +508,14 @@ int32_t nv_video_dec::dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms)
     memset(planes_, 0, sizeof(planes_));
     v4l2_buf_.m.planes = planes_;
 
-	/* 第一轮没有取完,直接获取空闲的NvBuffer */
+	/** 第一轮没有取完,直接获取空闲的NvBuffer */
     if (out_plane_index_ < dec_->output_plane.getNumBuffers()) {
         v4l2_buf_.index = out_plane_index_;
         buff = dec_->output_plane.getNthBuffer(out_plane_index_);
         out_plane_index_++;
         return INS_OK;
     } else {
+		
 		/* 队列中的NvBuffer都使用过一遍的情况下 */
         auto ret = dec_->output_plane.dqBuffer(v4l2_buf_, &buff, nullptr, timeout_ms);
         if (ret < 0) {
@@ -496,6 +523,7 @@ int32_t nv_video_dec::dequeue_input_buff(NvBuffer* &buff, uint32_t timeout_ms)
 
             if (errno == EAGAIN) 
 				return INS_ERR_TIME_OUT;
+			
             NV_DEC_ABORT();
             return INS_ERR;
         } else {
@@ -536,6 +564,7 @@ void nv_video_dec::queue_input_buff(NvBuffer* buff, int64_t pts)
 
 	/* 如果是最后一帧数据 */
     if (v4l2_buf_.m.planes[0].bytesused == 0) {
+		
         //dequeue all output buffer when eos
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];

@@ -12,6 +12,11 @@
 #include "access_msg_center.h"
 #include "system_properties.h"
 
+#include "ins_disk_sync.h"
+
+#define ENABLE_SYNC_DEBUG_TIME
+
+
 #define MASTER_PID INS_CAM_NUM		/* Master的PID */
 
 int cam_manager::nv_amba_delta_usec_ = 0;
@@ -501,6 +506,28 @@ void cam_manager::timelapse_task(cam_photo_param param, const std::shared_ptr<ca
 		}
 	}
 
+
+	auto disk_sync_mgr = disk_sync::create();
+	std::string path;
+
+#ifdef ENABLE_SYNC_DEBUG_TIME
+	struct timeval start_time, end_time;
+	gettimeofday(&start_time, nullptr); 		
+#endif
+	if (xml_config::get_value(INS_CONFIG_OPTION, INS_CONFIG_STORAGE, path) == 0) {
+		disk_sync_mgr->start_disk_sync(DISK_SYNC_ONCE, path);
+		disk_sync_mgr->wait_disk_sync_complete();
+	}
+
+#ifdef ENABLE_SYNC_DEBUG_TIME
+	gettimeofday(&end_time, nullptr);
+	double cts = (double)(end_time.tv_sec*1000000 + end_time.tv_usec - start_time.tv_sec*1000000 - start_time.tv_usec);
+	LOGINFO("take timelapse sync used time: [%lf]us", cts);
+#endif
+
+
+
+
 	LOGINFO("timelapse task finish");
 }
 
@@ -941,6 +968,7 @@ int cam_manager::format_flash(int index)
 	}
 }
 
+
 int cam_manager::format_one_flash(int index)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
@@ -999,10 +1027,15 @@ int cam_manager::change_all_usb_mode()
 	return INS_OK;
 }
 
+#if 0
+	{"cmd": XXXXXX , "code": 1}
+#endif
+
 int cam_manager::test_spi(int index)
 {
 	std::lock_guard<std::mutex> lock(mtx_);
 
+#ifdef HW_PLATFORM_PRO2
 	auto it = map_cam_.find(index);
 	if (it == map_cam_.end()) return INS_ERR_CAMERA_NOT_OPEN;
 
@@ -1023,7 +1056,14 @@ int cam_manager::test_spi(int index)
 	} else {
 		return INS_OK;
 	}
+#else 
+
+
+#endif
+
 }
+
+
 
 int cam_manager::get_log_file(std::string file_name)
 {

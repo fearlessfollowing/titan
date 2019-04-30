@@ -48,7 +48,9 @@ public:
 	int32_t 	set_options(std::string property,int32_t value);
 	int32_t 	get_options(std::string property, std::string& value);
 	int32_t 	get_version(std::string& version);
+
 	int32_t 	test_spi();
+
 	int32_t 	reboot();
 	int32_t 	format_flash();
 	int32_t 	upgrade(std::string file_name, const std::string& md5);
@@ -92,38 +94,56 @@ private:
 	int32_t 	send_cmd(uint32_t cmd, std::string content = "");
 
 	void 		queue_video(const std::shared_ptr<page_buffer>& buff, uint8_t frametype, int64_t timestamp, uint32_t sequence, uint32_t extra_size);
+	
 	void 		enque_pic(const std::shared_ptr<page_buffer>& buff, int64_t timestamp, uint32_t sequence, uint32_t extra_size);
 	void 		queue_pic_raw(const std::shared_ptr<insbuff>& buff, int32_t sequece, bool b_end, int64_t timestamp);
+	
 	int32_t 	parse_sps_pps(const uint8_t* data, uint32_t data_size);
+	
 	void 		parse_nal_pos(const uint8_t* data, uint32_t data_size, uint8_t nal_type, int32_t& start_pos, int32_t& size);
-	void 		start_data_read_task();
-	int32_t 	stop_data_read_task(bool b_wait = false);
-	int32_t 	read_data_task();
-	int32_t 	read_data_head(amba_frame_info* head);
-	int32_t 	read_data();
+		
 	int32_t 	send_fw(std::string file_name, const std::string& md5);
+
 	void 		parse_sersor_info(const std::string& info, std::string& sensor_id, int32_t* maxvalue);
 	void 		pre_process_timestamp(uint32_t sequence, int64_t timestamp);
 	void 		pasre_exif_info(const uint8_t* data, uint32_t size, jpeg_metadata* metadata);
 	void 		parse_extra_data(const uint8_t* data, uint32_t size, uint32_t seq, jpeg_metadata* metadata = nullptr);
 	int32_t 	process_magmeter_data(std::shared_ptr<insbuff> buff, std::string& res, ins::magneticCalibrate* cal);
+	
 	void 		send_rec_over_msg(int32_t errcode) const;
 	void 		send_pic_origin_over() const;
 	void 		send_timelapse_pic_take(uint32_t sequence) const;
+	
 	void 		send_storage_state(std::string state) const;
 	
 	void 		send_first_frame_ts(int32_t rec_seq, int64_t ts) const;
 
 	void 		send_video_fragment_msg(int32_t frament_index) const;
 	void 		send_vig_min_value_change_msg() const;
+	
 	int32_t 	set_image_property(std::string property,int32_t value);
 	int32_t 	set_param(std::string property, int32_t value);
 	int32_t 	req_retransmit(bool read_pre_data);
 	int32_t 	send_data_by_ep_cmd(uint8_t* data, uint32_t size);
+	
 	void 		print_fps_info();
 	bool 		is_exception_cmd(int32_t cmd);
 
+
+	/**********************************************************************************************************
+	 * 	 工具
+	 ***********************************************************************************************************/
     const char* get_cmd_str(unsigned int uCmd);
+
+	/**********************************************************************************************************
+	 * 	 数据传输接口
+	 ***********************************************************************************************************/
+	void 		start_data_read_task();
+	int32_t 	stop_data_read_task(bool b_wait = false);
+	int32_t 	read_data_task();
+	int32_t 	read_data_head(amba_frame_info* head);
+	int32_t 	read_data();
+
 
 	std::mutex 								mtx_send_; //发送数据锁
 	std::mutex 								mtx_pic_;

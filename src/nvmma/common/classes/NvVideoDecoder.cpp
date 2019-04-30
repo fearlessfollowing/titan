@@ -74,8 +74,7 @@ NvVideoDecoder *
 NvVideoDecoder::createVideoDecoder(const char *name, int flags)
 {
     NvVideoDecoder *dec = new NvVideoDecoder(name, flags);
-    if (dec->isInError())
-    {
+    if (dec->isInError()) {
         delete dec;
         return NULL;
     }
@@ -87,22 +86,19 @@ NvVideoDecoder::~NvVideoDecoder()
 }
 
 
-int
-NvVideoDecoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height)
+int NvVideoDecoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height)
 {
     struct v4l2_format format;
     uint32_t num_bufferplanes;
     NvBuffer::NvBufferPlaneFormat planefmts[MAX_PLANES];
 
-    if (pixfmt != V4L2_PIX_FMT_NV12M)
-    {
+    if (pixfmt != V4L2_PIX_FMT_NV12M) {
         COMP_ERROR_MSG("Only V4L2_PIX_FMT_NV12M is supported");
         return -1;
     }
 
     capture_plane_pixfmt = pixfmt;
-    NvBuffer::fill_buffer_plane_format(&num_bufferplanes, planefmts, width,
-            height, pixfmt);
+    NvBuffer::fill_buffer_plane_format(&num_bufferplanes, planefmts, width, height, pixfmt);
     capture_plane.setBufferPlaneFormat(num_bufferplanes, planefmts);
 
     memset(&format, 0, sizeof(struct v4l2_format));
@@ -115,15 +111,13 @@ NvVideoDecoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t 
     return capture_plane.setFormat(format);
 }
 
-int
-NvVideoDecoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t sizeimage)
+int NvVideoDecoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t sizeimage)
 {
     struct v4l2_format format;
 
     memset(&format, 0, sizeof(struct v4l2_format));
     format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    switch (pixfmt)
-    {
+    switch (pixfmt) {
         case V4L2_PIX_FMT_H264:
         case V4L2_PIX_FMT_H265:
         case V4L2_PIX_FMT_VP9:
@@ -134,6 +128,7 @@ NvVideoDecoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t sizeimage)
                     << pixfmt);
             return -1;
     }
+	
     format.fmt.pix_mp.pixelformat = pixfmt;
     format.fmt.pix_mp.num_planes = 1;
     format.fmt.pix_mp.plane_fmt[0].sizeimage = sizeimage;
@@ -141,8 +136,7 @@ NvVideoDecoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t sizeimage)
     return output_plane.setFormat(format);
 }
 
-int
-NvVideoDecoder::disableDPB()
+int NvVideoDecoder::disableDPB()
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -158,12 +152,10 @@ NvVideoDecoder::disableDPB()
 
     control.id = V4L2_CID_MPEG_VIDEO_DISABLE_DPB;
 
-    CHECK_V4L2_RETURN(setExtControls(ctrls),
-            "Disabling decoder DPB");
+    CHECK_V4L2_RETURN(setExtControls(ctrls), "Disabling decoder DPB");
 }
 
-int
-NvVideoDecoder::disableCompleteFrameInputBuffer()
+int NvVideoDecoder::disableCompleteFrameInputBuffer()
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -178,19 +170,16 @@ NvVideoDecoder::disableCompleteFrameInputBuffer()
 
     control.id = V4L2_CID_MPEG_VIDEO_DISABLE_COMPLETE_FRAME_INPUT;
 
-    CHECK_V4L2_RETURN(setExtControls(ctrls),
-            "Disabling decoder complete frame input buffer");
+    CHECK_V4L2_RETURN(setExtControls(ctrls), "Disabling decoder complete frame input buffer");
 }
 
-int
-NvVideoDecoder::getMinimumCapturePlaneBuffers(int &num)
+int NvVideoDecoder::getMinimumCapturePlaneBuffers(int &num)
 {
     CHECK_V4L2_RETURN(getControl(V4L2_CID_MIN_BUFFERS_FOR_CAPTURE, num),
             "Getting decoder minimum capture plane buffers (" << num << ")");
 }
 
-int
-NvVideoDecoder::setSkipFrames(enum v4l2_skip_frames_type skip_frames)
+int NvVideoDecoder::setSkipFrames(enum v4l2_skip_frames_type skip_frames)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -211,8 +200,7 @@ NvVideoDecoder::setSkipFrames(enum v4l2_skip_frames_type skip_frames)
             "Setting decoder skip frames to " << skip_frames);
 }
 
-int
-NvVideoDecoder::enableMetadataReporting()
+int NvVideoDecoder::enableMetadataReporting()
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -232,9 +220,7 @@ NvVideoDecoder::enableMetadataReporting()
             "Enabling decoder output metadata reporting");
 }
 
-int
-NvVideoDecoder::getMetadata(uint32_t buffer_index,
-        v4l2_ctrl_videodec_outputbuf_metadata &dec_metadata)
+int NvVideoDecoder::getMetadata(uint32_t buffer_index, v4l2_ctrl_videodec_outputbuf_metadata &dec_metadata)
 {
     v4l2_ctrl_video_metadata metadata;
     struct v4l2_ext_control control;
@@ -253,8 +239,7 @@ NvVideoDecoder::getMetadata(uint32_t buffer_index,
             "Getting decoder output metadata for buffer " << buffer_index);
 }
 
-int
-NvVideoDecoder::getInputMetadata(uint32_t buffer_index,
+int NvVideoDecoder::getInputMetadata(uint32_t buffer_index,
         v4l2_ctrl_videodec_inputbuf_metadata &dec_input_metadata)
 {
     v4l2_ctrl_video_metadata metadata;

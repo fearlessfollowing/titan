@@ -131,10 +131,11 @@ int32_t nv_video_dec::open(std::string name, std::string mime)
     RETURN_IF_TRUE(ret < 0, "disableDPB error", INS_ERR);
 
 	/*
-	 * 修改一下mmap的数量(9 -> 6)
+	 * 在内核中创建9个BUF,应用层使用NvBuffer对象来管理它,BUF的空间通过mmap的方式映射到用户空间
 	 */
     ret = dec_->output_plane.setupPlane(V4L2_MEMORY_MMAP, 9, true, false);
     RETURN_IF_TRUE(ret < 0, "output_plane setupPlane error", INS_ERR);
+
 
 	/* 构造转换器 */
     conv_ = NvVideoConverter::createVideoConverter("conv");

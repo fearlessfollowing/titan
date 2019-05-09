@@ -42,15 +42,6 @@
 
 #include "v4l2_nv_extensions.h"
 
-/**
- *
- * @defgroup l4t_mm_nvbuffer_group Buffer API
- *
- * The @c %NvBuffer API provides buffer functionality, including reference
- * count functionality and convenience methods.
- * @ingroup aa_framework_api_group
- * @{
- */
 
 /**
  * Specifies the maximum number of planes a buffer can contain.
@@ -82,8 +73,8 @@
  * memory, allocating or deallocating software memory depending on its
  * format.
  */
-class NvBuffer
-{
+class NvBuffer {
+
 public:
     /**
      * Holds the buffer plane format.
@@ -91,9 +82,7 @@ public:
     typedef struct {
         uint32_t width;             /**< Holds the width of the plane in pixels. */
         uint32_t height;            /**< Holds the height of the plane in pixels. */
-
-        uint32_t bytesperpixel;     /**< Holds the bytes used to represent one
-                                      pixel in the plane. */
+        uint32_t bytesperpixel;     /**< Holds the bytes used to represent one pixel in the plane. */
         uint32_t stride;            /**< Holds the stride of the plane in bytes. */
         uint32_t sizeimage;         /**< Holds the size of the plane in bytes. */
     } NvBufferPlaneFormat;
@@ -101,12 +90,11 @@ public:
     /**
      * Holds the buffer plane parameters.
      */
-    typedef struct
-    {
-        NvBufferPlaneFormat fmt;    /**< Holds the format of the plane. */
+    typedef struct {
+        NvBufferPlaneFormat fmt;    /**< Plane的格式 */
 
-        unsigned char *data;        /**< Holds a pointer to the plane memory. */
-        uint32_t bytesused;         /**< Holds the number of valid bytes in the plane. */
+        unsigned char *data;        /**< Plane 内存Buffer的首地址 */
+        uint32_t bytesused;         /**< Plane 内存Buffer中有效数据大小 */
 
         int fd;                     /**< Holds the file descriptor (FD) of the plane of the
                                       exported buffer, in the case of V4L2 MMAP buffers. */
@@ -114,6 +102,7 @@ public:
                                       from the data pointer. */
         uint32_t length;            /**< Holds the size of the buffer in bytes. */
     } NvBufferPlane;
+
 
     /**
      * Creates a new NvBuffer object.
@@ -155,6 +144,7 @@ public:
      */
     NvBuffer(uint32_t pixfmt, uint32_t width, uint32_t height, uint32_t index);
 
+
     /**
      * Creates a new NvBuffer object for non-raw pixel formats.
      *
@@ -173,6 +163,7 @@ public:
      */
     NvBuffer(uint32_t size, uint32_t index);
 
+
     /**
      * Destroys an NvBuffer object.
      *
@@ -180,6 +171,7 @@ public:
      * planes.
      */
     ~NvBuffer();
+
 
     /**
      * Maps the contents of the buffer to memory.
@@ -190,6 +182,8 @@ public:
      * @return 0 on success, -1 otherwise.
      */
     int map();
+
+
     /**
      * Unmaps the contents of the buffer from memory. (MMAP buffers only.)
      *
@@ -207,6 +201,7 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int allocateMemory();
+
     /**
      * Deallocates buffer memory.
      *
@@ -223,6 +218,7 @@ public:
      * @return Reference count of the buffer after the operation.
      */
     int ref();
+
     /**
      * Decreases the reference count of the buffer.
      *
@@ -233,13 +229,14 @@ public:
      */
     int unref();
 
-    const enum v4l2_buf_type buf_type;  	/**< Type of the buffer. */
-    const enum v4l2_memory memory_type; 	/**< Type of memory associated with the buffer. */
+    const enum v4l2_buf_type    buf_type;  	            /**< Type of the buffer. */
+    const enum v4l2_memory      memory_type; 	        /**< Type of memory associated with the buffer. */
 
-    const uint32_t index;               	/**< Holds the buffer index. */
+    const uint32_t              index;               	/**< Holds the buffer index. */
 
-    uint32_t n_planes;            			/**< Holds the number of planes in the buffer. */
-    NvBufferPlane planes[MAX_PLANES];     	/**< Holds the data pointer, plane file descriptor (FD), plane format, etc. */
+    uint32_t                    n_planes;            	/**< Holds the number of planes in the buffer. */
+    
+    NvBufferPlane               planes[MAX_PLANES];     /**< Holds the data pointer, plane file descriptor (FD), plane format, etc. */
 
     /**
      * Fills the NvBuffer::NvBufferPlaneFormat array.
@@ -260,20 +257,19 @@ public:
      * @return 0 for success, -1 for an unsupported pixel format.
      */
     static int fill_buffer_plane_format(uint32_t *num_planes,
-            NvBuffer::NvBufferPlaneFormat *planefmts,
-            uint32_t width, uint32_t height, uint32_t raw_pixfmt);
+                                        NvBuffer::NvBufferPlaneFormat *planefmts,
+                                        uint32_t width, 
+                                        uint32_t height, 
+                                        uint32_t raw_pixfmt);
 private:
-    uint32_t ref_count;             /**< Holds the reference count of the buffer. */
-    pthread_mutex_t ref_lock;       /**< Mutex to synchronize increment/
-                                         decrement operations of @c ref_count. */
+    uint32_t        ref_count;      /**< Holds the reference count of the buffer. */
+    pthread_mutex_t ref_lock;       /**< Mutex to synchronize increment/decrement operations of @c ref_count. */
 
-    bool mapped;                    /**< Indicates if the buffer is mapped to
-                                         memory. */
-    bool allocated;                 /**< Indicates if the buffer is allocated
-                                         memory. */
-    NvBuffer *shared_buffer; /**< If this is a DMABUF buffer, @c shared_buffer
-                                points to the MMAP @c NvBuffer whose FD was
-                                sent when this buffer was queued. */
+    bool            mapped;         /**< Indicates if the buffer is mapped to memory. */
+    bool            allocated;      /**< Indicates if the buffer is allocated memory. */
+    NvBuffer *      shared_buffer;  /**< If this is a DMABUF buffer, @c shared_buffer
+                                			points to the MMAP @c NvBuffer whose FD was
+                                			sent when this buffer was queued. */
 
     /**
      * Disallows copy constructor.
@@ -287,5 +283,6 @@ private:
 
     friend class NvV4l2ElementPlane;
 };
-/** @} */
+
+
 #endif

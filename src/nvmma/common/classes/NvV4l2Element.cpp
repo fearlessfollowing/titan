@@ -41,12 +41,15 @@ using namespace std;
 /*initialization of mutex for NvV4l2Element*/
 pthread_mutex_t initializer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-NvV4l2Element::NvV4l2Element(const char *comp_name, const char *dev_node, int flags, NvElementProfiler::ProfilerField fields)
-    :NvElement(comp_name, fields),
-      output_plane(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, comp_name,
-                  fd, !(flags & O_NONBLOCK), profiler),
-      capture_plane(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, comp_name,
-                  fd, !(flags & O_NONBLOCK), profiler)
+NvV4l2Element::NvV4l2Element(const char *comp_name, 
+								  const char *dev_node, 
+								  int flags, 
+								  NvElementProfiler::ProfilerField fields)
+    			:NvElement(comp_name, fields),
+			      output_plane(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE, comp_name,
+            			      fd, !(flags & O_NONBLOCK), profiler),
+			      capture_plane(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE, comp_name,
+			                  fd, !(flags & O_NONBLOCK), profiler)
 {
     struct v4l2_capability caps;
     int ret;
@@ -67,7 +70,6 @@ NvV4l2Element::NvV4l2Element(const char *comp_name, const char *dev_node, int fl
     pthread_mutex_unlock(&initializer_mutex);
 
     COMP_DEBUG_MSG("Opened, fd = " << fd);
-
     ret = v4l2_ioctl(fd, VIDIOC_QUERYCAP, &caps);
     if (ret != 0) {
         COMP_SYS_ERROR_MSG("Error in VIDIOC_QUERYCAP");
@@ -81,6 +83,7 @@ NvV4l2Element::NvV4l2Element(const char *comp_name, const char *dev_node, int fl
         return;
     }
 }
+
 
 NvV4l2Element::~NvV4l2Element()
 {
@@ -132,8 +135,7 @@ int NvV4l2Element::setControl(uint32_t id, int32_t value)
     return ret;
 }
 
-int
-NvV4l2Element::getControl(uint32_t id, int32_t &value)
+int NvV4l2Element::getControl(uint32_t id, int32_t &value)
 {
     struct v4l2_control ctl;
     int ret;
@@ -141,50 +143,35 @@ NvV4l2Element::getControl(uint32_t id, int32_t &value)
     ctl.id = id;
 
     ret = v4l2_ioctl(fd, VIDIOC_G_CTRL, &ctl);
-
-    if (ret < 0)
-    {
+    if (ret < 0) {
         COMP_SYS_ERROR_MSG("Error getting value of control " << id);
-    }
-    else
-    {
+    } else {
         COMP_DEBUG_MSG("Got value " << ctl.value << " for control " << id);
         value = ctl.value;
     }
     return ret;
 }
 
-int
-NvV4l2Element::setExtControls(v4l2_ext_controls &ctl)
+int NvV4l2Element::setExtControls(v4l2_ext_controls &ctl)
 {
     int ret;
-
     ret = v4l2_ioctl(fd, VIDIOC_S_EXT_CTRLS, &ctl);
-
-    if (ret < 0)
-    {
+    if (ret < 0) {
         COMP_SYS_ERROR_MSG("Error setting controls");
-    }
-    else
-    {
+    } else {
         COMP_DEBUG_MSG("Set controls");
     }
     return ret;
 }
 
-int
-NvV4l2Element::getExtControls(v4l2_ext_controls &ctl)
+int NvV4l2Element::getExtControls(v4l2_ext_controls &ctl)
 {
     int ret;
 
     ret = v4l2_ioctl(fd, VIDIOC_G_EXT_CTRLS, &ctl);
-
-    if (ret < 0)
-    {
+    if (ret < 0) {
         COMP_SYS_ERROR_MSG("Error getting value of controls");
-    }
-    else
-    {
+    } else {
         COMP_DEBUG_MSG("Got controls");
     }
     return ret;
@@ -246,4 +233,5 @@ void NvV4l2Element::enableProfiling()
     }
     profiler.enableProfiling(true);
 }
+
 

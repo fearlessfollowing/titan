@@ -47,8 +47,9 @@
                                         error = 1; \
                                         goto label; }
 
-#define MICROSECOND_UNIT 1000000
-#define CHUNK_SIZE 4000000
+#define MICROSECOND_UNIT    1000000
+#define CHUNK_SIZE          4000000
+
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
 #define IS_NAL_UNIT_START(buffer_ptr) (!buffer_ptr[0] && !buffer_ptr[1] && \
@@ -268,12 +269,12 @@ static void abort(context_t *ctx)
 #endif
 }
 
+
 #ifndef USE_NVBUF_TRANSFORM_API
-static bool
-conv0_output_dqbuf_thread_callback(struct v4l2_buffer *v4l2_buf,
-                                   NvBuffer * buffer, 
-								   NvBuffer * shared_buffer,
-                                   void *arg)
+static bool conv0_output_dqbuf_thread_callback(struct v4l2_buffer *v4l2_buf,
+                                                NvBuffer * buffer, 
+								                NvBuffer * shared_buffer,
+                                                void *arg)
 {
     context_t *ctx = (context_t *) arg;
     struct v4l2_buffer dec_capture_ret_buffer;
@@ -427,12 +428,15 @@ static void report_metadata(context_t *ctx, v4l2_ctrl_videodec_outputbuf_metadat
     }
 }
 
+
+/*
+ * sendEOStoConverter - 给转换器的输入端发送EOS信号
+ */
 #ifndef USE_NVBUF_TRANSFORM_API
 static int sendEOStoConverter(context_t *ctx)
 {
-    // Check if converter is running
-    if (ctx->conv->output_plane.getStreamStatus()) {
-        
+    /* 检查转换器的输入流是否正常运转 */
+    if (ctx->conv->output_plane.getStreamStatus()) {        
 		NvBuffer *conv_buffer;
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
@@ -441,8 +445,10 @@ static int sendEOStoConverter(context_t *ctx)
         memset(&planes, 0, sizeof(planes));
 
         v4l2_buf.m.planes = planes;
+
         pthread_mutex_lock(&ctx->queue_lock);
 		
+        /* 等待转换器的输入队列不为空 */
         while (ctx->conv_output_plane_buf_queue->empty()) {
             pthread_cond_wait(&ctx->queue_cond, &ctx->queue_lock);
         }
@@ -453,12 +459,14 @@ static int sendEOStoConverter(context_t *ctx)
 
         v4l2_buf.index = conv_buffer->index;
 
-        // Queue EOS buffer on converter output plane
+        /* 往转换器的输入缓冲区队列中发送一个EOS信号 */
         return ctx->conv->output_plane.qBuffer(v4l2_buf, NULL);
     }
     return 0;
 }
 #endif
+
+
 
 static void query_and_set_capture(context_t * ctx)
 {
@@ -472,13 +480,15 @@ static void query_and_set_capture(context_t * ctx)
     uint32_t window_height;
     NvBufferCreateParams input_params = {0};
 
-    // Get capture plane format from the decoder. This may change after
-    // an resolution change event
+    /*
+     * 获取解码器输出格式(分辨率事件到来后,格式可能发生改变)
+     */
     ret = dec->capture_plane.getFormat(format);
-    TEST_ERROR(ret < 0,
-               "Error: Could not get format from decoder capture plane", error);
+    TEST_ERROR(ret < 0, "Error: Could not get format from decoder capture plane", error);
 
-    // Get the display resolution from the decoder
+    /*
+     * 获取解码器输出分辨率
+     */
     ret = dec->capture_plane.getCrop(crop);
     TEST_ERROR(ret < 0, "Error: Could not get crop from decoder capture plane", error);
 
@@ -507,9 +517,7 @@ static void query_and_set_capture(context_t * ctx)
     // decoder event resolution change
     if (ctx->conv) {
         ret = sendEOStoConverter(ctx);
-        TEST_ERROR(ret < 0,
-                   "Error while queueing EOS buffer on converter output",
-                   error);
+        TEST_ERROR(ret < 0, "Error while queueing EOS buffer on converter output", error);
 
         ctx->conv->capture_plane.waitForDQThread(2000);
 
@@ -522,6 +530,7 @@ static void query_and_set_capture(context_t * ctx)
     }
 #endif
 
+#if 0
     if (!ctx->disable_rendering) {
         // Destroy the old instance of renderer as resolution might have changed
         delete ctx->renderer;
@@ -555,6 +564,8 @@ static void query_and_set_capture(context_t * ctx)
 
         ctx->renderer->setFPS(ctx->fps);
     }
+#endif
+
 
     // deinitPlane unmaps the buffers and calls REQBUFS with count 0
     dec->capture_plane.deinitPlane();
@@ -564,15 +575,16 @@ static void query_and_set_capture(context_t * ctx)
     ret = dec->setCapturePlaneFormat(format.fmt.pix_mp.pixelformat,
                                      format.fmt.pix_mp.width,
                                      format.fmt.pix_mp.height);
+
     TEST_ERROR(ret < 0, "Error in setting decoder capture plane format", error);
+
 
     ctx->video_height = format.fmt.pix_mp.height;
     ctx->video_width = format.fmt.pix_mp.width;
+
     // Get the minimum buffers which have to be requested on the capture plane
     ret = dec->getMinimumCapturePlaneBuffers(min_dec_capture_buffers);
-    TEST_ERROR(ret < 0,
-               "Error while getting value of minimum capture plane buffers",
-               error);
+    TEST_ERROR(ret < 0, "Error while getting value of minimum capture plane buffers", error);
 
     // Request (min + 5) buffers, export and map buffers
     ret = dec->capture_plane.setupPlane(V4L2_MEMORY_MMAP,
@@ -580,6 +592,7 @@ static void query_and_set_capture(context_t * ctx)
 									   false,
                                        false);
     TEST_ERROR(ret < 0, "Error in decoder capture plane setup", error);
+
 
 #ifndef USE_NVBUF_TRANSFORM_API
     if (ctx->conv) {
@@ -601,18 +614,17 @@ static void query_and_set_capture(context_t * ctx)
         TEST_ERROR(ret < 0, "Error while setting crop rect", error);
 
         ret = ctx->conv->output_plane.setupPlane(V4L2_MEMORY_DMABUF,
-                                                dec->capture_plane.
-                                                getNumBuffers(), 
+                                                dec->capture_plane.getNumBuffers(), 
 												false, 
 												false);
         TEST_ERROR(ret < 0, "Error in converter output plane setup", error);
 
         ret = ctx->conv->capture_plane.setupPlane(V4L2_MEMORY_MMAP,
-                                                 dec->capture_plane.
-                                                 getNumBuffers(), 
+                                                 dec->capture_plane.getNumBuffers(), 
 												 true, 
 												 false);
         TEST_ERROR(ret < 0, "Error in converter capture plane setup", error);
+
 
         ret = ctx->conv->output_plane.setStreamStatus(true);
         TEST_ERROR(ret < 0, "Error in converter output plane streamon", error);
@@ -637,19 +649,20 @@ static void query_and_set_capture(context_t * ctx)
             ret = ctx->conv->capture_plane.qBuffer(v4l2_buf, NULL);
             TEST_ERROR(ret < 0, "Error Qing buffer at converter capture plane", error);
         }
+
+
         ctx->conv->output_plane.startDQThread(ctx);
         ctx->conv->capture_plane.startDQThread(ctx);
 
     }
 #endif
 
-    // Capture plane STREAMON
+    /** 开启解码器输出流 */
     ret = dec->capture_plane.setStreamStatus(true);
     TEST_ERROR(ret < 0, "Error in decoder capture plane streamon", error);
 
-    // Enqueue all the empty capture plane buffers
-    for (uint32_t i = 0; i < dec->capture_plane.getNumBuffers(); i++)
-    {
+    /** 将所有空闲的buffers入解码器输出队列 */
+    for (uint32_t i = 0; i < dec->capture_plane.getNumBuffers(); i++) {
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
 
@@ -661,6 +674,7 @@ static void query_and_set_capture(context_t * ctx)
         ret = dec->capture_plane.qBuffer(v4l2_buf, NULL);
         TEST_ERROR(ret < 0, "Error Qing buffer at output plane", error);
     }
+
     cout << "Query and set capture successful" << endl;
     return;
 
@@ -671,6 +685,11 @@ error:
     }
 }
 
+
+/*
+ * dec_capture_loop_fn - 解码capture loop线程
+ * 负责从dec capture plane
+ */
 static void * dec_capture_loop_fcn(void *arg)
 {
     context_t *ctx = (context_t *) arg;
@@ -680,9 +699,10 @@ static void * dec_capture_loop_fcn(void *arg)
 
     cout << "Starting decoder capture loop thread" << endl;
 	
-    // Need to wait for the first Resolution change event, so that
-    // the decoder knows the stream resolution and can allocate appropriate
-    // buffers when we call REQBUFS
+    /*
+     * 等待第一个分辨率改变事件的到来,以便解码器知道流的分辨率
+     * 这样在调用REQBUFS时知道申请多大的缓冲区
+     */
     do {
         ret = dec->dqEvent(ev, 50000);
         if (ret < 0) {
@@ -696,16 +716,16 @@ static void * dec_capture_loop_fcn(void *arg)
         }
     } while ((ev.type != V4L2_EVENT_RESOLUTION_CHANGE) && !ctx->got_error);
 
-    // query_and_set_capture acts on the resolution change event
     if (!ctx->got_error)
         query_and_set_capture(ctx);
 
 	
     // Exit on error or EOS which is signalled in main()
     while (!(ctx->got_error || dec->isInError() || ctx->got_eos)) {
+
         NvBuffer *dec_buffer;
 
-        // Check for Resolution change again
+        /* 再次检查分辨率事件 */
         ret = dec->dqEvent(ev, false);
         if (ret == 0) {
             switch (ev.type) {
@@ -716,6 +736,7 @@ static void * dec_capture_loop_fcn(void *arg)
         }
 
         while (1) {
+
             struct v4l2_buffer v4l2_buf;
             struct v4l2_plane planes[MAX_PLANES];
 
@@ -723,7 +744,8 @@ static void * dec_capture_loop_fcn(void *arg)
             memset(planes, 0, sizeof(planes));
             v4l2_buf.m.planes = planes;
 
-            // Dequeue a filled buffer
+
+            /** 从解码器的输出队列中取一个装有解码后数据的Buffer */
             if (dec->capture_plane.dqBuffer(v4l2_buf, &dec_buffer, NULL, 0)) {
                 if (errno == EAGAIN) {
                     usleep(1000);
@@ -734,6 +756,7 @@ static void * dec_capture_loop_fcn(void *arg)
                 break;
             }
 
+#if 0
             if (ctx->enable_metadata) {
                 v4l2_ctrl_videodec_outputbuf_metadata dec_metadata;
                 ret = dec->getMetadata(v4l2_buf.index, dec_metadata);
@@ -743,7 +766,7 @@ static void * dec_capture_loop_fcn(void *arg)
             }
 
             if (ctx->copy_timestamp && ctx->input_nalu && ctx->stats) {
-              cout << "[" << v4l2_buf.index << "]" "dec capture plane dqB timestamp [" <<
+                cout << "[" << v4l2_buf.index << "]" "dec capture plane dqB timestamp [" <<
                   v4l2_buf.timestamp.tv_sec << "s" << v4l2_buf.timestamp.tv_usec << "us]" << endl;
             }
 
@@ -751,10 +774,12 @@ static void * dec_capture_loop_fcn(void *arg)
                 // EglRenderer requires the fd of the 0th plane to render the buffer
                 ctx->renderer->render(dec_buffer->planes[0].fd);
             }
+#endif
 
-            // If we need to write to file or display the buffer,
-            // give the buffer to video converter output plane
-            // instead of returning the buffer back to decoder capture plane
+            /*
+             * 如果该buffer需要写入文件或者显示出来,需要将该buffer丢入到转换器的
+             * 输入plane中而不是重新丢入解码器的输出Plane中
+             */
             if (ctx->out_file || (!ctx->disable_rendering && !ctx->stats)) {
 				
 #ifndef USE_NVBUF_TRANSFORM_API
@@ -767,16 +792,19 @@ static void * dec_capture_loop_fcn(void *arg)
                 conv_output_buffer.m.planes = conv_planes;
 
                 // Get an empty conv output plane buffer from conv_output_plane_buf_queue
+                /* 从转换的输入缓冲区队列中拿一个空闲buffer */
                 pthread_mutex_lock(&ctx->queue_lock);
                 while (ctx->conv_output_plane_buf_queue->empty()) {
                     pthread_cond_wait(&ctx->queue_cond, &ctx->queue_lock);
                 }
+
                 conv_buffer = ctx->conv_output_plane_buf_queue->front();
                 ctx->conv_output_plane_buf_queue->pop();
                 pthread_mutex_unlock(&ctx->queue_lock);
 
                 conv_output_buffer.index = conv_buffer->index;
 
+                /* 将解码后的dec_buffer丢入到转换器的 */
                 if (ctx->conv->output_plane.qBuffer(conv_output_buffer, dec_buffer) < 0) {
                     abort(ctx);
                     cerr << "Error while queueing buffer at converter output plane" << endl;
@@ -832,13 +860,12 @@ static void * dec_capture_loop_fcn(void *arg)
                 }
 #endif
             } else {
-                // Not writing to file
-                // Queue the buffer back once it has been used.
+                /*
+                 * 不写文件, 重新将该buffer丢入到解码器的输出Plane中
+                 */
                 if (dec->capture_plane.qBuffer(v4l2_buf, NULL) < 0) {
                     abort(ctx);
-                    cerr <<
-                        "Error while queueing buffer at decoder capture plane"
-                        << endl;
+                    cerr << "Error while queueing buffer at decoder capture plane" << endl;
                     break;
                 }
             }
@@ -846,8 +873,7 @@ static void * dec_capture_loop_fcn(void *arg)
     }
 	
 #ifndef USE_NVBUF_TRANSFORM_API
-    // Send EOS to converter
-    if (ctx->conv) {
+    if (ctx->conv) {    /* 给解码器发送EOS信号 */
         if (sendEOStoConverter(ctx) < 0) {
             cerr << "Error while queueing EOS buffer on converter output" << endl;
         }
@@ -856,6 +882,7 @@ static void * dec_capture_loop_fcn(void *arg)
     cout << "Exiting decoder capture loop thread" << endl;
     return NULL;
 }
+
 
 static void set_defaults(context_t * ctx)
 {
@@ -910,7 +937,7 @@ int main(int argc, char *argv[])
     ctx.dec = NvVideoDecoder::createVideoDecoder("dec0");
     TEST_ERROR(!ctx.dec, "Could not create decoder", cleanup);
 
-    if (ctx.stats) {
+    if (ctx.stats) {  /* 使能性能分析 */
         profiler.start(NvApplicationProfiler::DefaultSamplingInterval);
         ctx.dec->enableProfiling();
     }
@@ -953,12 +980,13 @@ int main(int argc, char *argv[])
     }
 
     /* 6.Query, Export and Map the output plane buffers so that we can read encoded data into the buffers */
-    if (ctx.memory_type == V4L2_MEMORY_MMAP)
+    if (ctx.memory_type == V4L2_MEMORY_MMAP)    /* 为解码器的输入端分配10个Buffer的内存并映射到用户空间 */
         ret = ctx.dec->output_plane.setupPlane(V4L2_MEMORY_MMAP, 10, true, false);
     else if (ctx.memory_type == V4L2_MEMORY_USERPTR)
         ret = ctx.dec->output_plane.setupPlane(V4L2_MEMORY_USERPTR, 10, false, true);
 
     TEST_ERROR(ret < 0, "Error while setting up output plane", cleanup);
+
 
 	/* 打开输入文件 */
     ctx.in_file = (std::ifstream **)malloc(sizeof(std::ifstream *)*ctx.file_count);
@@ -973,27 +1001,29 @@ int main(int argc, char *argv[])
         TEST_ERROR(!ctx.out_file->is_open(), "Error opening output file", cleanup);
     }
 
+
 #ifndef USE_NVBUF_TRANSFORM_API
     if (ctx.out_file || (!ctx.disable_rendering && !ctx.stats)) {
+
         /* 7. Create converter to convert from BL to PL for writing raw video to file */
         ctx.conv = NvVideoConverter::createVideoConverter("conv0");
         TEST_ERROR(!ctx.conv, "Could not create video converter", cleanup);
+        
         ctx.conv->output_plane.setDQThreadCallback(conv0_output_dqbuf_thread_callback);
         ctx.conv->capture_plane.setDQThreadCallback(conv0_capture_dqbuf_thread_callback);
-
         if (ctx.stats) {
             ctx.conv->enableProfiling();
         }
     }
 #endif
 
-    ret = ctx.dec->output_plane.setStreamStatus(true);
+    ret = ctx.dec->output_plane.setStreamStatus(true);  /* 开启采集流 */
     TEST_ERROR(ret < 0, "Error in output plane stream on", cleanup);
 
+    /* 创建编码输出处理线程 */
     pthread_create(&ctx.dec_capture_loop, NULL, dec_capture_loop_fcn, &ctx);
 
-	
-	
+
     if (ctx.copy_timestamp && ctx.input_nalu) {
 		ctx.timestamp = (ctx.start_ts * MICROSECOND_UNIT);
 		ctx.timestampincr = (MICROSECOND_UNIT * 16) / ((uint32_t) (ctx.dec_fps * 16));
@@ -1004,6 +1034,9 @@ int main(int argc, char *argv[])
 	 */
     i = 0;
 	
+    /*
+     * 依次取出解码器输入队列中的各个Buffer，将其填充编码数据
+     */
     while (!eos && !ctx.got_error && !ctx.dec->isInError() && i < ctx.dec->output_plane.getNumBuffers()) {
         
 		struct v4l2_buffer v4l2_buf;
@@ -1076,10 +1109,13 @@ int main(int argc, char *argv[])
     }
 
 	
-    // Since all the output plane buffers have been queued, we first need to
-    // dequeue a buffer from output plane before we can read new data into it
-    // and queue it again.
+
+    /*
+     * 所有的output plane buffers都已经入队列,再次往解码器队列中装载新的编码数据之前需要
+     * 从解码器的输入缓冲器队列中拿到一个空闲的缓冲区
+     */
     while (!eos && !ctx.got_error && !ctx.dec->isInError()) {
+
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
         NvBuffer *buffer;
@@ -1088,13 +1124,13 @@ int main(int argc, char *argv[])
         memset(planes, 0, sizeof(planes));
 
         v4l2_buf.m.planes = planes;
-
-        ret = ctx.dec->output_plane.dqBuffer(v4l2_buf, &buffer, NULL, -1);
+        ret = ctx.dec->output_plane.dqBuffer(v4l2_buf, &buffer, NULL, -1);  /* 等待缓冲区可用 */
         if (ret < 0) {
             cerr << "Error DQing buffer at output plane" << endl;
             abort(&ctx);
             break;
         }
+
 
         if ((v4l2_buf.flags & V4L2_BUF_FLAG_ERROR) && ctx.enable_input_metadata) {
             v4l2_ctrl_videodec_inputbuf_metadata dec_input_metadata;
@@ -1107,6 +1143,7 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* 拿到缓冲区后,填充编码数据 */
         if ((ctx.decoder_pixfmt == V4L2_PIX_FMT_H264) || (ctx.decoder_pixfmt == V4L2_PIX_FMT_H265)) {
             if (ctx.input_nalu) {
                 read_decoder_input_nalu(ctx.in_file[current_file], buffer, nalu_parse_buffer, CHUNK_SIZE, &ctx);
@@ -1143,6 +1180,7 @@ int main(int argc, char *argv[])
             }
         }
 		
+        /* 将填充好数据的缓冲器再次丢入到解码器的输入队列中 */
         ret = ctx.dec->output_plane.qBuffer(v4l2_buf, NULL);
         if (ret < 0) {
             cerr << "Error Qing buffer at output plane" << endl;
@@ -1157,8 +1195,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    // After sending EOS, all the buffers from output plane should be dequeued.
-    // and after that capture plane loop should be signalled to stop.
+
+    /*
+     * EOS时,解码器输入缓冲器队列的Buffers都应该先出队列
+     * 然后capture plane loop线程应该停止
+     */
     while (ctx.dec->output_plane.getNumQueuedBuffers() > 0 && !ctx.got_error && !ctx.dec->isInError()) {
         struct v4l2_buffer v4l2_buf;
         struct v4l2_plane planes[MAX_PLANES];
@@ -1193,7 +1234,7 @@ int main(int argc, char *argv[])
     ctx.got_eos = true;
 	
 #ifndef USE_NVBUF_TRANSFORM_API
-    if (ctx.conv) {
+    if (ctx.conv) {     /* 等待转换器的输出线程停止 */
         ctx.conv->capture_plane.waitForDQThread(-1);
     }
 #endif

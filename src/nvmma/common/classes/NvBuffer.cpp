@@ -38,12 +38,15 @@
 
 #define MAX(a,b) (a > b ? a : b)
 
-NvBuffer::NvBuffer(enum v4l2_buf_type buf_type, enum v4l2_memory memory_type,
-        uint32_t n_planes, NvBufferPlaneFormat * fmt, uint32_t index)
-        :buf_type(buf_type),
-         memory_type(memory_type),
-         index(index),
-         n_planes(n_planes)
+
+NvBuffer::NvBuffer(enum v4l2_buf_type buf_type, 
+					  enum v4l2_memory memory_type,
+					  uint32_t n_planes, 
+					  NvBufferPlaneFormat * fmt, 
+					  uint32_t index) 	:buf_type(buf_type),
+								         memory_type(memory_type),
+								         index(index),
+								         n_planes(n_planes)
 {
     uint32_t i;
 
@@ -51,8 +54,7 @@ NvBuffer::NvBuffer(enum v4l2_buf_type buf_type, enum v4l2_memory memory_type,
     allocated = false;
 
     memset(planes, 0, sizeof(planes));
-    for (i = 0; i < n_planes; i++)
-    {
+    for (i = 0; i < n_planes; i++) {
         this->planes[i].fd = -1;
         this->planes[i].fmt = fmt[i];
     }
@@ -62,11 +64,12 @@ NvBuffer::NvBuffer(enum v4l2_buf_type buf_type, enum v4l2_memory memory_type,
     shared_buffer = NULL;
 }
 
-NvBuffer::NvBuffer(uint32_t pixfmt, uint32_t width, uint32_t height,
-        uint32_t index)
-        :buf_type(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE),
-         memory_type(V4L2_MEMORY_USERPTR),
-         index(index)
+
+
+NvBuffer::NvBuffer(uint32_t pixfmt, uint32_t width, uint32_t height, uint32_t index)
+				        :buf_type(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE),
+				         memory_type(V4L2_MEMORY_USERPTR),
+				         index(index)
 {
     uint32_t i;
     NvBuffer::NvBufferPlaneFormat fmt[MAX_PLANES];
@@ -76,16 +79,14 @@ NvBuffer::NvBuffer(uint32_t pixfmt, uint32_t width, uint32_t height,
 
     fill_buffer_plane_format(&n_planes, fmt, width, height, pixfmt);
 
-    for (i = 0; i < n_planes; i++)
-    {
+    for (i = 0; i < n_planes; i++) {
         this->planes[i].fd = -1;
         this->planes[i].data = NULL;
         this->planes[i].bytesused = 0;
         this->planes[i].mem_offset = 0;
         this->planes[i].length = 0;
         this->planes[i].fmt = fmt[i];
-        this->planes[i].fmt.sizeimage = fmt[i].width * fmt[i].height *
-                                        fmt[i].bytesperpixel;
+        this->planes[i].fmt.sizeimage = fmt[i].width * fmt[i].height * fmt[i].bytesperpixel;
         this->planes[i].fmt.stride = fmt[i].width * fmt[i].bytesperpixel;
     }
 
@@ -93,6 +94,7 @@ NvBuffer::NvBuffer(uint32_t pixfmt, uint32_t width, uint32_t height,
     pthread_mutex_init(&ref_lock, NULL);
     shared_buffer = NULL;
 }
+
 
 NvBuffer::NvBuffer(uint32_t size, uint32_t index)
         :buf_type(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE),
@@ -105,8 +107,7 @@ NvBuffer::NvBuffer(uint32_t size, uint32_t index)
     allocated = false;
 
     n_planes = 1;
-    for (i = 0; i < n_planes; i++)
-    {
+    for (i = 0; i < n_planes; i++) {
         this->planes[i].fd = -1;
         this->planes[i].data = NULL;
         this->planes[i].bytesused = 0;
@@ -120,41 +121,37 @@ NvBuffer::NvBuffer(uint32_t size, uint32_t index)
     shared_buffer = NULL;
 }
 
+
 NvBuffer::~NvBuffer()
 {
-    if (mapped)
-    {
+    if (mapped) {	/* 取消映射 */
         unmap();
     }
-    if (allocated)
-    {
+	
+    if (allocated) {
         deallocateMemory();
     }
 
     pthread_mutex_destroy(&ref_lock);
 }
 
-int
-NvBuffer::map()
+
+int NvBuffer::map()
 {
     uint32_t j;
 
-    if (memory_type != V4L2_MEMORY_MMAP)
-    {
+    if (memory_type != V4L2_MEMORY_MMAP) {
         CAT_WARN_MSG("Buffer " << index << "already mapped");
         return -1;
     }
 
-    if (mapped)
-    {
+    if (mapped) {
         CAT_WARN_MSG("Buffer " << index << "already mapped");
         return 0;
     }
 
-    for (j = 0; j < n_planes; j++)
-    {
-        if (planes[j].fd == -1)
-        {
+    for (j = 0; j < n_planes; j++) {
+        if (planes[j].fd == -1) {
             return -1;
         }
 
@@ -164,66 +161,54 @@ NvBuffer::map()
                                                 MAP_SHARED,
                                                 planes[j].fd,
                                                 planes[j].mem_offset);
-        if (planes[j].data == MAP_FAILED)
-        {
+        if (planes[j].data == MAP_FAILED) {
             CAT_ERROR_MSG("Could not map buffer " << index << ", plane " << j);
             return -1;
-        }
-        else
-        {
-            CAT_DEBUG_MSG("Mapped buffer " << index << ", plane " << j << " to "
-                    << planes[j].data);
+        } else {
+            CAT_DEBUG_MSG("Mapped buffer " << index << ", plane " << j << " to " << planes[j].data);
         }
     }
     mapped = true;
     return 0;
 }
 
-void
-NvBuffer::unmap()
+
+void NvBuffer::unmap()
 {
-    if (memory_type != V4L2_MEMORY_MMAP || !mapped)
-    {
-        CAT_WARN_MSG("Cannot Unmap Buffer " << index <<
-                ". Only mapped MMAP buffer can be unmapped");
+    if (memory_type != V4L2_MEMORY_MMAP || !mapped) {
+        CAT_WARN_MSG("Cannot Unmap Buffer " << index << ". Only mapped MMAP buffer can be unmapped");
         return;
     }
 
-    for (uint32_t j = 0; j < n_planes; j++)
-    {
-        if (planes[j].data)
-        {
+    for (uint32_t j = 0; j < n_planes; j++) {
+        if (planes[j].data) {
             munmap(planes[j].data, planes[j].length);
         }
         planes[j].data = NULL;
     }
+	
     mapped = false;
     CAT_DEBUG_MSG("Buffer " << index << " unmapped ");
 }
 
-int
-NvBuffer::allocateMemory()
+
+int NvBuffer::allocateMemory()
 {
     uint32_t j;
 
-    if (memory_type != V4L2_MEMORY_USERPTR)
-    {
+    if (memory_type != V4L2_MEMORY_USERPTR) {
         CAT_ERROR_MSG("Only USERPTR buffers can be allocated");
         return -1;
     }
 
-    if (allocated)
-    {
+    if (allocated) {
         CAT_WARN_MSG("Buffer " << index << "already allocated memory");
         return 0;
     }
 
-    for (j = 0; j < n_planes; j++)
-    {
-        if (planes[j].data)
-        {
-            ERROR_MSG("Buffer " << index << ", Plane " << j <<
-                            " already allocated");
+    for (j = 0; j < n_planes; j++) {
+        if (planes[j].data) {
+            ERROR_MSG("Buffer " << index << ", Plane " << j << " already allocated");
             return -1;
         }
 
@@ -231,16 +216,12 @@ NvBuffer::allocateMemory()
                                planes[j].fmt.width *
                                planes[j].fmt.bytesperpixel *
                                planes[j].fmt.height);
+		
         planes[j].data = new unsigned char [planes[j].length];
-
-        if (planes[j].data == MAP_FAILED)
-        {
-            SYS_ERROR_MSG("Error while allocating buffer " << index <<
-                    " plane " << j);
+        if (planes[j].data == MAP_FAILED) {
+            SYS_ERROR_MSG("Error while allocating buffer " << index << " plane " << j);
             return -1;
-        }
-        else
-        {
+        } else {
             DEBUG_MSG("Buffer " << index << ", Plane " << j <<
                     " allocated to " << (void *) planes[j].data);
         }
@@ -249,23 +230,19 @@ NvBuffer::allocateMemory()
     return 0;
 }
 
-void
-NvBuffer::deallocateMemory()
+
+void NvBuffer::deallocateMemory()
 {
     uint32_t j;
 
-    if (memory_type != V4L2_MEMORY_USERPTR || !allocated)
-    {
+    if (memory_type != V4L2_MEMORY_USERPTR || !allocated) {
         ERROR_MSG("Only allocated USERPTR buffers can be deallocated");
         return;
     }
 
-    for (j = 0; j < n_planes; j++)
-    {
-        if (!planes[j].data)
-        {
-            DEBUG_MSG("Buffer " << index << ", Plane " << j <<
-                    " not allocated");
+    for (j = 0; j < n_planes; j++) {
+        if (!planes[j].data) {
+            DEBUG_MSG("Buffer " << index << ", Plane " << j << " not allocated");
             continue;
         }
         delete[] planes[j].data;
@@ -275,25 +252,22 @@ NvBuffer::deallocateMemory()
     DEBUG_MSG("Buffer " << index << " deallocated");
 }
 
-int
-NvBuffer::ref()
+
+int NvBuffer::ref()
 {
     int ref_count;
-
     pthread_mutex_lock(&ref_lock);
     ref_count = ++this->ref_count;
     pthread_mutex_unlock(&ref_lock);
     return ref_count;
 }
 
-int
-NvBuffer::unref()
+int NvBuffer::unref()
 {
     int ref_count;
 
     pthread_mutex_lock(&ref_lock);
-    if (this->ref_count > 0)
-    {
+    if (this->ref_count > 0) {
         --this->ref_count;
     }
     ref_count = this->ref_count;
@@ -301,14 +275,15 @@ NvBuffer::unref()
     return ref_count;
 }
 
-int
-NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
-        NvBuffer::NvBufferPlaneFormat *planefmts,
-        uint32_t width, uint32_t height, uint32_t raw_pixfmt)
+
+int NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
+												NvBuffer::NvBufferPlaneFormat *planefmts,
+												uint32_t width, 
+												uint32_t height, 
+												uint32_t raw_pixfmt)
 {
-    switch (raw_pixfmt)
-    {
-        case V4L2_PIX_FMT_YUV444M:
+    switch (raw_pixfmt) {
+        case V4L2_PIX_FMT_YUV444M: {
             *num_planes = 3;
 
             planefmts[0].width = width;
@@ -323,7 +298,9 @@ NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
             planefmts[1].bytesperpixel = 1;
             planefmts[2].bytesperpixel = 1;
             break;
-        case V4L2_PIX_FMT_YUV422M:
+        }
+			
+        case V4L2_PIX_FMT_YUV422M: {
             *num_planes = 3;
 
             planefmts[0].width = width;
@@ -338,7 +315,9 @@ NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
             planefmts[1].bytesperpixel = 1;
             planefmts[2].bytesperpixel = 1;
             break;
-        case V4L2_PIX_FMT_YUV422RM:
+        }
+			
+        case V4L2_PIX_FMT_YUV422RM: {
             *num_planes = 3;
 
             planefmts[0].width = width;
@@ -353,8 +332,10 @@ NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
             planefmts[1].bytesperpixel = 1;
             planefmts[2].bytesperpixel = 1;
             break;
+        }
+			
         case V4L2_PIX_FMT_YUV420M:
-        case V4L2_PIX_FMT_YVU420M:
+        case V4L2_PIX_FMT_YVU420M: {
             *num_planes = 3;
 
             planefmts[0].width = width;
@@ -369,7 +350,9 @@ NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
             planefmts[1].bytesperpixel = 1;
             planefmts[2].bytesperpixel = 1;
             break;
-        case V4L2_PIX_FMT_NV12M:
+        }
+
+		case V4L2_PIX_FMT_NV12M: {
             *num_planes = 2;
 
             planefmts[0].width = width;
@@ -381,40 +364,44 @@ NvBuffer::fill_buffer_plane_format(uint32_t *num_planes,
             planefmts[0].bytesperpixel = 1;
             planefmts[1].bytesperpixel = 2;
             break;
-        case V4L2_PIX_FMT_GREY:
+		}
+			
+        case V4L2_PIX_FMT_GREY: {
             *num_planes = 1;
-
             planefmts[0].width = width;
-
             planefmts[0].height = height;
-
             planefmts[0].bytesperpixel = 1;
             break;
+        }
+			
         case V4L2_PIX_FMT_YUYV:
         case V4L2_PIX_FMT_YVYU:
         case V4L2_PIX_FMT_UYVY:
-        case V4L2_PIX_FMT_VYUY:
+        case V4L2_PIX_FMT_VYUY: {
             *num_planes = 1;
-
             planefmts[0].width = width;
-
             planefmts[0].height = height;
-
             planefmts[0].bytesperpixel = 2;
             break;
+        }
+			
         case V4L2_PIX_FMT_ABGR32:
-        case V4L2_PIX_FMT_XRGB32:
+        case V4L2_PIX_FMT_XRGB32: {
             *num_planes = 1;
 
             planefmts[0].width = width;
-
             planefmts[0].height = height;
-
             planefmts[0].bytesperpixel = 4;
             break;
-        default:
+        }
+
+        default: {
             ERROR_MSG("Unsupported pixel format " << raw_pixfmt);
             return -1;
+        }
+			
     }
     return 0;
 }
+												
+												

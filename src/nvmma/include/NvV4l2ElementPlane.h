@@ -78,6 +78,7 @@
  */
 #define PLANE_SYS_ERROR_MSG(str) COMP_SYS_ERROR_MSG(plane_name << ":" << str);
 
+
 /**
  * @brief Defines a helper class for operations performed on a V4L2 Element plane.
  *
@@ -101,29 +102,32 @@
  * successful dequeue.
  *
  */
-class NvV4l2ElementPlane
-{
+class NvV4l2ElementPlane {
 
 public:
+    
     /**
-     * Gets the plane format.
-     *
-     * Calls @b VIDIOC_G_FMT \c IOCTL internally.
-     *
+     * 获取Plane的格式
+     * 
+     * 内部调用VIDIOC_G_FMT
+     * 
      * @param[in,out] format A reference to the \c v4l2_format structure to be filled.
      * @return 0 for success, -1 otherwise.
      */
     int getFormat(struct v4l2_format & format);
+    
+
     /**
-     * Sets the plane format.
-     *
-     * Calls @b VIDIOC_S_FMT \c IOCTL internally.
+     * 获取Plane的格式
+     * 
+     * 内部调用VIDIOC_S_FMT
      *
      * @param[in] format A reference to the \c v4l2_format structure to be set on the plane.
      * @return 0 for success, -1 otherwise.
      */
     int setFormat(struct v4l2_format & format);
 
+    
     /**
      * Maps the NvMMBuffer to NvBuffer for V4L2_MEMORY_DMABUF.
      *
@@ -131,7 +135,6 @@ public:
      * @param[in] dmabuff_fd Index to the field that holds NvMMBuffer attributes.
      * @return 0 for success, -1 otherwise.
      */
-
     int mapOutputBuffers(struct v4l2_buffer &v4l2_buf, int dmabuff_fd);
 
     /**
@@ -145,14 +148,15 @@ public:
     int unmapOutputBuffers(int index, int dmabuff_fd);
 
     /**
-     * Gets the cropping rectangle for the plane.
-     *
-     * Calls @b VIDIOC_G_CROP \c IOCTL internally.
-     *
+     * 获取Plane的分辨率
+     * 
+     * 内部调用VIDIOC_G_CROP
+     * 
      * @param[in] crop A reference to the \c v4l2_crop structure to be filled.
      * @return 0 for success, -1 otherwise.
      */
     int getCrop(struct v4l2_crop & crop);
+
 
     /**
      * Sets the selection rectangle for the plane.
@@ -166,19 +170,21 @@ public:
      */
     int setSelection(uint32_t target, uint32_t flags, struct v4l2_rect & rect);
 
+
     /**
-     * Requests for buffers on the plane.
+     * 在Plane中请求若干个Buffers
      *
-     * Calls \c VIDIOC_REQBUFS IOCTL internally. Creates an array of NvBuffer of
-     * length equal to the count returned by the IOCTL.
+     * 内部调用VIDIOC_REQBUFS IOCTL, 创建指定长度的NvBuffer数组
      *
      * @param[in] mem_type Specifies the type of V4L2 memory to be requested.
      * @param[in] num Specifies the number of buffers to request on the plane.
      * @return 0 for success, -1 otherwise.
      */
     int reqbufs(enum v4l2_memory mem_type, uint32_t num);
+	
+
     /**
-     * Queries the status of the buffer at the index.
+     * 查询指定index的Buffers的状态
      *
      * @warning This method works only for \c V4L2_MEMORY_MMAP memory.
      *
@@ -190,6 +196,8 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int queryBuffer(uint32_t buf_index);
+	
+
     /**
      * Exports the buffer as DMABUF FD.
      *
@@ -203,8 +211,9 @@ public:
      */
     int exportBuffer(uint32_t buf_index);
 
+
     /**
-     * Starts or stops streaming on the plane.
+     * 启动/停止该Plane上的流
      *
      * Calls \c VIDIOC_STREAMON/VIDIOC_STREAMOFF IOCTLs internally.
      *
@@ -213,23 +222,26 @@ public:
      */
     int setStreamStatus(bool status);
 
+
     /**
-     * Checks whether the plane is streaming.
+     * 获取该Plane上的流状态
      *
      * @returns true if the plane is streaming, false otherwise.
      */
     bool getStreamStatus();
 
+
     /**
-     * Sets streaming parameters.
+     * 设置流参数
      *
-     * Calls \c VIDIOC_S_PARM IOCTL internally.
+     * 内部调用VIDIOC_S_PARM
      *
      * @param[in] parm A reference to the \c v4l2_streamparm structure to be set on the
      *                 plane.
      * @return 0 for success, -1 otherwise.
      */
     int setStreamParms(struct v4l2_streamparm & parm);
+
 
     /**
      * Helper method that encapsulates all the method calls required to
@@ -250,7 +262,9 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int setupPlane(enum v4l2_memory mem_type, uint32_t num_buffers, bool map, bool allocate);
-    /**
+
+
+	/**
      * Helper method that encapsulates all the method calls required to
      * deinitialize the plane for streaming.
      *
@@ -260,6 +274,7 @@ public:
      * @sa setupPlane
      */
     void deinitPlane();
+
 
     /**
      * Gets the streaming/buffer type of this plane.
@@ -271,12 +286,14 @@ public:
         return buf_type;
     }
 
+
     /**
      * Gets the \c NvBuffer object at index n.
      *
      * @returns \c %NvBuffer object at index n, NULL if n >= number of buffers.
      */
     NvBuffer *getNthBuffer(uint32_t n);
+
 
     /**
      * Dequeues a buffer from the plane.
@@ -298,9 +315,13 @@ public:
      *                        milliseconds to try to dequeue a buffer.
      * @return 0 for success, -1 otherwise.
      */
-    int dqBuffer(struct v4l2_buffer &v4l2_buf, NvBuffer ** buffer,
-                 NvBuffer ** shared_buffer, uint32_t num_retries);
-    /**
+    int dqBuffer(struct v4l2_buffer &v4l2_buf, 
+                    NvBuffer ** buffer,
+                    NvBuffer ** shared_buffer, 
+                    uint32_t num_retries);
+
+
+	/**
      * Queues a buffer on the plane.
      *
      * This method calls \c VIDIOC_QBUF internally. If this plane is sharing a
@@ -311,17 +332,18 @@ public:
      * @param[in] shared_buffer A pointer to the shared \c %NvBuffer object.
      * @return 0 for success, -1 otherwise.
      */
-    int qBuffer(struct v4l2_buffer &v4l2_buf, NvBuffer * shared_buffer);
+    int qBuffer(struct v4l2_buffer &v4l2_buf, NvBuffer* shared_buffer);
+
 
     /**
      * Gets the number of buffers allocated/requested on the plane.
      *
      * @returns Number of buffers.
      */
-    inline uint32_t getNumBuffers()
-    {
+    inline uint32_t getNumBuffers() {
         return num_buffers;
     }
+
 
     /**
      * Gets the number of planes buffers on this plane for the currently
@@ -329,10 +351,10 @@ public:
      *
      * @returns Number of planes.
      */
-    inline uint32_t getNumPlanes()
-    {
+    inline uint32_t getNumPlanes() {
         return n_planes;
     }
+
 
     /**
      * Sets the format of the planes of the buffer that is used with this
@@ -350,61 +372,62 @@ public:
      */
     void setBufferPlaneFormat(int n_planes, NvBuffer::NvBufferPlaneFormat * planefmts);
 
+
     /**
-     * Gets the number of buffers currently queued on the plane.
+     * 该Plane中当前队列中buffers数目
      *
      * @returns Number of buffers currently queued on the plane.
      */
-    inline uint32_t getNumQueuedBuffers()
-    {
+    inline uint32_t getNumQueuedBuffers() {
         return num_queued_buffers;
     }
 
+
     /**
-     * Gets the total number of buffers dequeued from the plane.
+     * 该Plane中总共出队列的Buffers次数
      *
      * @returns Total number of buffers dequeued from the plane.
      */
-    inline uint32_t getTotalDequeuedBuffers()
-    {
+    inline uint32_t getTotalDequeuedBuffers() {
         return total_dequeued_buffers;
     }
 
+
     /**
-     * Gets the total number of buffers queued on the plane.
+     * 该Plane中总共入队列的buffers数目
      *
      * @returns Total number of buffers queued on the plane.
      */
-    inline uint32_t getTotalQueuedBuffers()
-    {
+    inline uint32_t getTotalQueuedBuffers() {
         return total_queued_buffers;
     }
 
-    /**
-     * Waits until all buffers of the plane are queued.
-     *
-     * This is a blocking call that returns when all the buffers are queued
-     * or timeout is reached.
 
-     * @param[in] max_wait_ms Maximum time to wait, in milliseconds.
+    /**
+     * 等待直到所有的buffers入该Plane的队列
+     *
+     * 该方法为阻塞调用, 直到所有的buffers入队列或超时
+
+     * @param[in] max_wait_ms - 最大的等待时间(单位为ms)
      * @return 0 for success, -1 otherwise.
      */
     int waitAllBuffersQueued(uint32_t max_wait_ms);
-    /**
-     * Waits until all buffers of the plane are dequeued.
-     *
-     * This is a blocking call that returns when all the buffers are dequeued
-     * or timeout is reached.
 
-     * @param[in] max_wait_ms Maximum time to wait, in milliseconds
+	
+    /**
+     * 等待Plane中所有的buffers出队列
+     *
+     * 阻塞调用,直到所有的buffers出队列或超时
+
+     * @param[in] max_wait_ms - 等待的最长时间(单位为ms)
      * @return 0 for success, -1 otherwise.
      */
     int waitAllBuffersDequeued(uint32_t max_wait_ms);
 
+
     /**
-     * This is a callback function type method that is called by the DQ Thread when
-     * it successfully dequeues a buffer from the plane. Applications must implement
-     * this and set the callback using #setDQThreadCallback.
+     * 回调函数: 当DQ线程成功的从Plane中DQ一个buffer时被调用,应用程序必须实现该回调并通过
+     * #setDQThreadCallback设置
      *
      * Setting the stream to off automatically stops this thread.
      *
@@ -420,27 +443,28 @@ public:
      *          the DQThread is stopped; else, the DQ Thread continues running.
      */
     typedef bool(*dqThreadCallback) (struct v4l2_buffer * v4l2_buf,
-            NvBuffer * buffer, NvBuffer * shared_buffer,
-            void *data);
+                                        NvBuffer * buffer, 
+                                        NvBuffer * shared_buffer,
+                                        void *data);
+
 
     /**
-     * Sets the DQ Thread callback method.
+     * 设置DQ线程的回调函数
      *
-     * The callback method is called from the DQ Thread once a buffer is
-     * successfully dequeued.
-
+     * 该回调函数在DQ线程成功DQ一个buffer时被调用
+     * 
      * @param[in] callback Method to be called upon succesful dequeue.
      * @returns TRUE for success, FALSE for failure.
      */
     bool setDQThreadCallback(dqThreadCallback callback);
+
+	
     /**
-     * Starts DQ Thread.
+     * 启动DQ线程
      *
-     * This method starts a thread internally. On successful dequeue of a
-     * buffer from the plane, the #dqThreadCallback method set using
-     * #setDQThreadCallback is called.
+     * 该方法将在内部启动一个线程,一旦成功成Plane中DQ一个buffer时会调用回调
      *
-     * Setting the stream to off automatically stops the thread.
+     * 设置流OFF时会自动的停止DQ线程
      *
      * @sa stopDQThread, waitForDQThread
      *
@@ -449,73 +473,66 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int startDQThread(void *data);
+
+	
     /**
-     * Force stops the DQ Thread if it is running.
+     * 强制停止DQ线程
      *
-     * Does not work when the device is opened in blocking mode.
+     * 设备以阻塞模式打开时将无效
      *
      * @sa startDQThread, waitForDQThread
      *
      * @return 0 for success, -1 otherwise.
      */
     int stopDQThread();
+
+	
     /**
-     * Waits for the DQ Thread to stop.
+     * 等待DQ线程停止
      *
-     * This method waits until the DQ Thread stops or timeout is reached.
+     * 等待DQ线程停止或直到超时
      *
      * @sa startDQThread, stopDQThread
      *
-     * @param[in] max_wait_ms Maximum wait time, in milliseconds.
+     * @param[in] max_wait_ms - 最大的等待时间(单位为ms)
      * @return 0 for success, -1 otherwise.
      */
     int waitForDQThread(uint32_t max_wait_ms);
 
-    pthread_mutex_t plane_lock; /**< Mutex lock used along with #plane_cond. */
-    pthread_cond_t plane_cond; /**< Plane condition that application can wait on
-                                    to receive notifications from
-                                    #qBuffer/#dqBuffer. */
+
+    pthread_mutex_t plane_lock; 	/**< Mutex lock used along with #plane_cond. */
+    pthread_cond_t  plane_cond;     /**< Plane condition that application can wait on
+                                    		to receive notifications from #qBuffer/#dqBuffer. */
 
 private:
-    int &fd;     /**< A reference to the FD of the V4l2 Element the plane is associated with. */
+    int &fd;     					/**< A reference to the FD of the V4l2 Element the plane is associated with. */
 
-    const char *plane_name; /**< A pointer to the name of the plane. Could be "Output Plane" or
-                                 "Capture Plane". Used only for debug logs. */
-    enum v4l2_buf_type buf_type; /**< Speciifes the type of the stream. */
+    const char *plane_name; 		/**< 该NvV4l2ElementPlane的名称 */
+    enum v4l2_buf_type buf_type; 	/**< Speciifes the type of the stream. */
 
-    bool blocking;  /**< Specifies whether the V4l2 element is opened with
-                         blocking mode. */
+    bool blocking;  				/**< Specifies whether the V4l2 element is opened with blocking mode. */
 
-    uint32_t num_buffers;   /**< Holds the number of buffers returned by \c VIDIOC_REQBUFS
-                                 IOCTL. */
-    NvBuffer **buffers;     /**< A pointer to an array of NvBuffer object pointers. This array is
-                                 allocated and initialized in #reqbufs. */
+    uint32_t num_buffers;   		/**< 含有所少个Buffer(VIDIOC_REQBUFS_IOCTL的返回值) */
+    NvBuffer **buffers;     		/**< NvBuffer指针数组 */
 
-    uint8_t n_planes;       /**< Specifies the number of planes in the buffers. */
+    uint8_t n_planes;       		/**< 一个NvBuffer中含有多少个Plane */
+
     NvBuffer::NvBufferPlaneFormat planefmts[MAX_PLANES];
-                            /**< Format of the buffer planes. This must be
-                                 initialized before calling #reqbufs since this
-                                 is required by the \c %NvBuffer constructor. */
+                            		/**< Format of the buffer planes. This must be initialized before calling #reqbufs since this is required by the \c %NvBuffer constructor. */
 
-    enum v4l2_memory memory_type; /**< Specifies the V4l2 memory type of the buffers. */
+    enum v4l2_memory    memory_type; 	/**< Buffer使用的V4L2内存类型 */
 
-    uint32_t num_queued_buffers;  /**< Holds the number of buffers currently queued on the
-                                       plane. */
-    uint32_t total_queued_buffers;  /**< Holds the total number of buffers queued on the
-                                         plane. */
-    uint32_t total_dequeued_buffers;  /**< Holds the total number of buffers dequeued from
-                                           the plane. */
+    uint32_t            num_queued_buffers;  	/**< Holds the number of buffers currently queued on the plane. */
+    uint32_t            total_queued_buffers;   /**< Holds the total number of buffers queued on the plane. */
+    uint32_t            total_dequeued_buffers; /**< Holds the total number of buffers dequeued from the plane. */
 
-    bool streamon;  				/**< Specifies whether the plane is streaming. */
+    bool                streamon;  			/**< 该Plane的流是否开启标志 */
+    bool                dqthread_running;  	/**< DQ线程是否正在运行的标志 */
+    bool                stop_dqthread; 		/**< 通知DQ线程停止的信号值 */
 
-    bool dqthread_running;  		/**< Specifies whether DQ Thread is running. Its value is toggled by the DQ Thread. */
-    bool stop_dqthread; 			/**< Specifies the value used to signal the DQ Thread to stop. */
-
-    pthread_t dq_thread; 			/**< Speciifes the pthread ID of the DQ Thread. */
-
-    dqThreadCallback callback; 		/**< Specifies the callback method used by the DQ Thread. */
-
-    void *dqThread_data;    		/**< Application supplied pointer provided as an argument in #dqThreadCallback. */
+    pthread_t           dq_thread; 			/**< DQ线程的线程ID */
+    dqThreadCallback    callback; 		    /**< DQ线程的回调函数 */
+    void*               dqThread_data;      /**< DQ线程回调函数的参数(由应用程序传递) */
 
     /**
      * The DQ thread method.
@@ -530,6 +547,7 @@ private:
      */
     static void *dqThread(void *v4l2_element_plane);
 
+
     NvElementProfiler &v4l2elem_profiler; /**< A reference to the profiler belonging
                                             to the plane's parent element. */
 
@@ -543,6 +561,7 @@ private:
     {
         return is_in_error;
     }
+
 
     /**
      * Creates a new V4l2Element plane.
@@ -573,10 +592,10 @@ private:
      */
      ~NvV4l2ElementPlane();
 
-    int is_in_error;        /**< Indicates if an error was encountered during the operation of the element. */
-    const char *comp_name;  /**< Specifies the name of the component, for debugging. */
+    int             is_in_error;        /**< Indicates if an error was encountered during the operation of the element. */
+    const char *    comp_name;  /**< Specifies the name of the component, for debugging. */
 
-    friend class NvV4l2Element;
+    friend class    NvV4l2Element;
 };
-/** @} */
+
 #endif

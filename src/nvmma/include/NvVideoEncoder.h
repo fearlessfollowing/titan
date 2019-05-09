@@ -56,9 +56,9 @@
  * Refer to [V4L2 Video Encoder](group__V4L2Enc.html) for more information on the encoder.
  */
 
-class NvVideoEncoder:public NvV4l2Element
-{
+class NvVideoEncoder:public NvV4l2Element {
 public:
+	
     /**
      * Creates a new V4L2 Video Encoder object named \a name.
      *
@@ -70,8 +70,7 @@ public:
      * The device is opened in blocking mode, which can be modified by passing
      * the @a O_NONBLOCK flag to this method.
      *
-     * @returns Reference to the newly created encoder object, else NULL in
-     *          case of failure during initialization.
+     * @returns Reference to the newly created encoder object, else NULL in case of failure during initialization.
      */
     static NvVideoEncoder *createVideoEncoder(const char *name, int flags = 0);
 
@@ -90,6 +89,8 @@ public:
      * @return 0 for success, -1 otherwise.
      */
     int setOutputPlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height);
+
+	
     /**
      * Sets the format on the converter capture plane.
      *
@@ -98,12 +99,11 @@ public:
      * @param[in] pixfmt One of the coded V4L2 pixel formats.
      * @param[in] width Width of the input buffers in pixels.
      * @param[in] height Height of the input buffers in pixels.
-     * @param[in] sizeimage Maximum size of the encoded buffers on the capture.
-     *                      plane in bytes
+     * @param[in] sizeimage Maximum size of the encoded buffers on the capture. plane in bytes
      * @return 0 for success, -1 otherwise.
      */
-    int setCapturePlaneFormat(uint32_t pixfmt, uint32_t width,
-                              uint32_t height, uint32_t sizeimage);
+    int setCapturePlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height, uint32_t sizeimage);
+
 
     /**
      * Sets the encode framerate.

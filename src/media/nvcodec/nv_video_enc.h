@@ -44,6 +44,24 @@ public:
         m_sink_.erase(it);
     }
 
+	/*
+	 * Add by skymixos 	2019年5月7日
+	 */
+	void enableProfiling() {
+		if (enc_) {
+			enc_->enableProfiling();
+		}
+	}
+
+
+	void printProfilingStats() {
+		if (enc_) {
+			enc_->printProfilingStats();
+		}
+	}
+
+
+
 private:
     void close();
     void output_frame(NvBuffer* buffer, int64_t pts, bool b_keyframe);
@@ -65,6 +83,7 @@ private:
     std::map<uint32_t, std::shared_ptr<sink_interface>> m_sink_;
     std::mutex 					mtx_;
     std::shared_ptr<obj_pool<ins_frame>> pool_;
+	
     //FILE* fp_ = nullptr;
 };
 

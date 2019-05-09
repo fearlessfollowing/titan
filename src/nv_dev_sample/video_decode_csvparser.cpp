@@ -124,8 +124,7 @@ parse_csv_args(context_t * ctx, int argc, char *argv[])
     char **argp = argv;
     char *arg = *(++argp);
 
-    if (argc == 1 || (arg && (!strcmp(arg, "-h") || !strcmp(arg, "--help"))))
-    {
+    if (argc == 1 || (arg && (!strcmp(arg, "-h") || !strcmp(arg, "--help")))) {
         print_help();
         exit(EXIT_SUCCESS);
     }
@@ -133,88 +132,59 @@ parse_csv_args(context_t * ctx, int argc, char *argv[])
     CSV_PARSE_CHECK_ERROR(argc < 3, "Insufficient arguments");
 
     ctx->decoder_pixfmt = get_decoder_type(*(argp));
-    CSV_PARSE_CHECK_ERROR(ctx->decoder_pixfmt == 0,
-                          "Incorrect input format");
+    CSV_PARSE_CHECK_ERROR(ctx->decoder_pixfmt == 0, "Incorrect input format");
 
-    while ((arg = *(++argp)))
-    {
-        if (!strcmp(arg, "-o"))
-        {
+    while ((arg = *(++argp))) {
+        if (!strcmp(arg, "-o")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->out_file_path = strdup(*argp);
             CSV_PARSE_CHECK_ERROR(!ctx->out_file_path,
                                   "Output file not specified");
-        }
-        else if (!strcmp(arg, "-f"))
-        {
+        } else if (!strcmp(arg, "-f")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->out_pixfmt = atoi(*argp);
             CSV_PARSE_CHECK_ERROR((ctx->out_pixfmt < 1 || ctx->out_pixfmt > 2),
                                     "format shoud be 1(NV12), 2(I420)");
-        }
-        else if (!strcmp(arg, "--stats"))
-        {
+        } else if (!strcmp(arg, "--stats")) {
             ctx->stats = true;
-        }
-        else if (!strcmp(arg, "--disable-rendering"))
-        {
+        } else if (!strcmp(arg, "--disable-rendering")) {
             ctx->disable_rendering = true;
-        }
-        else if (!strcmp(arg, "--disable-dpb"))
-        {
+        } else if (!strcmp(arg, "--disable-dpb")) {
             ctx->disable_dpb = true;
-        }
-        else if (!strcmp(arg, "--fullscreen"))
-        {
+        } else if (!strcmp(arg, "--fullscreen")) {
             ctx->fullscreen = true;
-        }
-        else if (!strcmp(arg, "-wh"))
-        {
+        } else if (!strcmp(arg, "-wh")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->window_height = atoi(*argp);
             CSV_PARSE_CHECK_ERROR(ctx->window_height == 0,
                                   "Window height should be > 0");
-        }
-        else if (!strcmp(arg, "-ww"))
-        {
+        } else if (!strcmp(arg, "-ww")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->window_width = atoi(*argp);
             CSV_PARSE_CHECK_ERROR(ctx->window_width == 0,
                                   "Window width should be > 0");
-        }
-        else if (!strcmp(arg, "-wx"))
-        {
+        } else if (!strcmp(arg, "-wx")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->window_x = atoi(*argp);
-        }
-        else if (!strcmp(arg, "-wy"))
-        {
+        } else if (!strcmp(arg, "-wy")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->window_y = atoi(*argp);
-        }
-        else if (!strcmp(arg, "-fps"))
-        {
+        } else if (!strcmp(arg, "-fps")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->fps = atof(*argp);
             CSV_PARSE_CHECK_ERROR(ctx->fps == 0, "FPS should be > 0");
-        }
-        else if (!strcmp(arg, "--input-nalu"))
-        {
+        } else if (!strcmp(arg, "--input-nalu")) {
             ctx->input_nalu = true;
-        }
-        else if (!strcmp(arg, "--input-chunks"))
-        {
+        } else if (!strcmp(arg, "--input-chunks")) {
             ctx->input_nalu = false;
-        }
-        else if (!strcmp(arg, "--copy-timestamp"))
-        {
+        } else if (!strcmp(arg, "--copy-timestamp")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->start_ts = atoi(*argp);
@@ -224,17 +194,11 @@ parse_csv_args(context_t * ctx, int argc, char *argv[])
             ctx->dec_fps = atof(*argp);
             CSV_PARSE_CHECK_ERROR(ctx->dec_fps <= 0, "decode fps should be > 0");
             ctx->copy_timestamp = true;
-        }
-        else if (!strcmp(arg, "--report-metadata"))
-        {
+        } else if (!strcmp(arg, "--report-metadata")) {
             ctx->enable_metadata = true;
-        }
-        else if (!strcmp(arg, "--report-input-metadata"))
-        {
+        } else if (!strcmp(arg, "--report-input-metadata")) {
             ctx->enable_input_metadata = true;
-        }
-        else if(!strcmp(arg, "-v4l2-memory"))
-        {
+        } else if(!strcmp(arg, "-v4l2-memory")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->memory_type = (enum v4l2_memory) atoi(*argp);
@@ -242,9 +206,7 @@ parse_csv_args(context_t * ctx, int argc, char *argv[])
                     (ctx->memory_type > V4L2_MEMORY_USERPTR ||
                      ctx->memory_type < V4L2_MEMORY_MMAP),
                     "Unsupported v4l2 memory type: " << *argp);
-        }
-        else if (!strcmp(arg, "-sf"))
-        {
+        } else if (!strcmp(arg, "-sf")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             ctx->skip_frames = (enum v4l2_skip_frames_type) atoi(*argp);
@@ -252,57 +214,43 @@ parse_csv_args(context_t * ctx, int argc, char *argv[])
                     (ctx->skip_frames > V4L2_SKIP_FRAMES_TYPE_DECODE_IDR_ONLY ||
                      ctx->skip_frames < V4L2_SKIP_FRAMES_TYPE_NONE),
                     "Unsupported values for skip frames: " << *argp);
-        }
-        else if (!strcmp(arg, "--dbg-level"))
-        {
+        } else if (!strcmp(arg, "--dbg-level")) {
             argp++;
             CHECK_OPTION_VALUE(argp);
             log_level = get_dbg_level(*argp);
-        }
-        else if (!strcmp(arg, "-h") || !strcmp(arg, "--help"))
-        {
+        } else if (!strcmp(arg, "-h") || !strcmp(arg, "--help")) {
             print_help();
             exit(EXIT_SUCCESS);
-        }
-        else if (!strcmp(arg, "-loop"))
-        {
+        } else if (!strcmp(arg, "-loop")) {
             ctx->bLoop = true;
-        }
-        else if (!strcmp(arg, "-queue"))
-        {
+        } else if (!strcmp(arg, "-queue")) {
             ctx->bQueue = true;
             break;
-        }
-        else
-        {
+        } else {
             CSV_PARSE_CHECK_ERROR(ctx->in_file_path, "Unknown option " << arg);
         }
     }
 
-    if(ctx->bQueue)
-    {
+    if (ctx->bQueue) {
         ctx->file_count=0;
 
-        while((arg = *(++argp)))
-        {
+        while ((arg = *(++argp))) {
             ctx->file_count++;
         }
+
         int i = ctx->file_count+1;
-        while(i--)
-        {
+        while (i--) {
             --argp;
         }
 
         ctx->in_file_path = (char **)malloc(sizeof(char *)*ctx->file_count);
         i=0;
-        while((arg = *(++argp)))
-        {
+
+        while ((arg = *(++argp))) {
             ctx->in_file_path[i++] = strdup(*argp);
             CSV_PARSE_CHECK_ERROR(!ctx->in_file_path, "Input file not specified");
         }
-    }
-    else
-    {
+    } else {
         ctx->in_file_path = (char **)malloc(sizeof(char *)*1);
         ctx->in_file_path[0] = strdup(*--argp);
         CSV_PARSE_CHECK_ERROR(!ctx->in_file_path, "Input file not specified");

@@ -71,17 +71,15 @@
 
 using namespace std;
 
-NvVideoEncoder::NvVideoEncoder(const char *name, int flags)
-    :NvV4l2Element(name, ENCODER_DEV, flags, valid_fields)
+NvVideoEncoder::NvVideoEncoder(const char *name, int flags):NvV4l2Element(name, ENCODER_DEV, flags, valid_fields)
 {
 }
 
-NvVideoEncoder *
-NvVideoEncoder::createVideoEncoder(const char *name, int flags)
+
+NvVideoEncoder * NvVideoEncoder::createVideoEncoder(const char *name, int flags)
 {
     NvVideoEncoder *enc = new NvVideoEncoder(name, flags);
-    if (enc->isInError())
-    {
+    if (enc->isInError()) {
         delete enc;
         return NULL;
     }
@@ -92,23 +90,20 @@ NvVideoEncoder::~NvVideoEncoder()
 {
 }
 
-int
-NvVideoEncoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t width,
-        uint32_t height)
+
+int NvVideoEncoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height)
 {
     struct v4l2_format format;
     uint32_t num_bufferplanes;
     NvBuffer::NvBufferPlaneFormat planefmts[MAX_PLANES];
 
-    if (pixfmt != V4L2_PIX_FMT_YUV420M)
-    {
+    if (pixfmt != V4L2_PIX_FMT_YUV420M) {
         COMP_ERROR_MSG("Only V4L2_PIX_FMT_YUV420M is supported");
         return -1;
     }
 
     output_plane_pixfmt = pixfmt;
-    NvBuffer::fill_buffer_plane_format(&num_bufferplanes, planefmts, width,
-            height, pixfmt);
+    NvBuffer::fill_buffer_plane_format(&num_bufferplanes, planefmts, width, height, pixfmt);
     output_plane.setBufferPlaneFormat(num_bufferplanes, planefmts);
 
     memset(&format, 0, sizeof(struct v4l2_format));
@@ -121,20 +116,18 @@ NvVideoEncoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t width,
     return output_plane.setFormat(format);
 }
 
-int
-NvVideoEncoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width,
-        uint32_t height, uint32_t sizeimage)
+int NvVideoEncoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height, uint32_t sizeimage)
 {
     struct v4l2_format format;
 
     memset(&format, 0, sizeof(struct v4l2_format));
     format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    switch (pixfmt)
-    {
+    switch (pixfmt) {
         case V4L2_PIX_FMT_H264:
         case V4L2_PIX_FMT_H265:
             capture_plane_pixfmt = pixfmt;
             break;
+		
         default:
             ERROR_MSG("Unknown supported pixel format for encoder " << pixfmt);
             return -1;
@@ -149,8 +142,7 @@ NvVideoEncoder::setCapturePlaneFormat(uint32_t pixfmt, uint32_t width,
     return capture_plane.setFormat(format);
 }
 
-int
-NvVideoEncoder::setFrameRate(uint32_t framerate_num, uint32_t framerate_den)
+int NvVideoEncoder::setFrameRate(uint32_t framerate_num, uint32_t framerate_den)
 {
     struct v4l2_streamparm parms;
 
@@ -164,8 +156,7 @@ NvVideoEncoder::setFrameRate(uint32_t framerate_num, uint32_t framerate_den)
             "Setting framerate to " << framerate_num << "/" << framerate_den);
 }
 
-int
-NvVideoEncoder::setBitrate(uint32_t bitrate)
+int NvVideoEncoder::setBitrate(uint32_t bitrate)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -188,10 +179,9 @@ NvVideoEncoder::setBitrate(uint32_t bitrate)
             "Setting encoder bitrate to " << bitrate);
 }
 
-int
-NvVideoEncoder::setEncoderCommand(int cmd, int flags)
+int NvVideoEncoder::setEncoderCommand(int cmd, int flags)
 {
-   int ret=0;
+   int ret = 0;
    struct v4l2_encoder_cmd v4l2_enc_cmd;
    v4l2_enc_cmd.cmd = cmd;
    v4l2_enc_cmd.flags = flags;
@@ -203,8 +193,7 @@ NvVideoEncoder::setEncoderCommand(int cmd, int flags)
   return ret;
 }
 
-int
-NvVideoEncoder::setPeakBitrate(uint32_t peak_bitrate)
+int NvVideoEncoder::setPeakBitrate(uint32_t peak_bitrate)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -227,8 +216,7 @@ NvVideoEncoder::setPeakBitrate(uint32_t peak_bitrate)
             "Setting encoder peak bitrate to " << peak_bitrate);
 }
 
-int
-NvVideoEncoder::setProfile(uint32_t profile)
+int NvVideoEncoder::setProfile(uint32_t profile)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -243,26 +231,25 @@ NvVideoEncoder::setProfile(uint32_t profile)
     ctrls.controls = &control;
     ctrls.ctrl_class = V4L2_CTRL_CLASS_MPEG;
 
-    switch (capture_plane_pixfmt)
-    {
+    switch (capture_plane_pixfmt) {
         case V4L2_PIX_FMT_H264:
             control.id = V4L2_CID_MPEG_VIDEO_H264_PROFILE;
             break;
+		
         case V4L2_PIX_FMT_H265:
             control.id = V4L2_CID_MPEG_VIDEO_H265_PROFILE;
             break;
+		
         default:
             COMP_ERROR_MSG("Unsupported encoder type");
             return -1;
     }
     control.value = profile;
 
-    CHECK_V4L2_RETURN(setExtControls(ctrls),
-            "Setting encoder profile to " << profile);
+    CHECK_V4L2_RETURN(setExtControls(ctrls), "Setting encoder profile to " << profile);
 }
 
-int
-NvVideoEncoder::setLevel(enum v4l2_mpeg_video_h264_level level)
+int NvVideoEncoder::setLevel(enum v4l2_mpeg_video_h264_level level)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -270,8 +257,7 @@ NvVideoEncoder::setLevel(enum v4l2_mpeg_video_h264_level level)
     RETURN_ERROR_IF_FORMATS_NOT_SET();
     RETURN_ERROR_IF_BUFFERS_REQUESTED();
 
-    if (capture_plane_pixfmt != V4L2_PIX_FMT_H264)
-    {
+    if (capture_plane_pixfmt != V4L2_PIX_FMT_H264) {
         COMP_WARN_MSG("Currently only supported for H.264");
         return 0;
     }
@@ -286,12 +272,10 @@ NvVideoEncoder::setLevel(enum v4l2_mpeg_video_h264_level level)
     control.id = V4L2_CID_MPEG_VIDEO_H264_LEVEL;
     control.value = level;
 
-    CHECK_V4L2_RETURN(setExtControls(ctrls),
-            "Setting encoder level to " << level);
+    CHECK_V4L2_RETURN(setExtControls(ctrls), "Setting encoder level to " << level);
 }
 
-int
-NvVideoEncoder::setConstantQp(int qp_value)
+int NvVideoEncoder::setConstantQp(int qp_value)
 {
     struct v4l2_ext_control control[3];
     struct v4l2_ext_controls ctrls;
@@ -318,8 +302,7 @@ NvVideoEncoder::setConstantQp(int qp_value)
             "Setting encoder constant qp to " << qp_value);
 }
 
-int
-NvVideoEncoder::setRateControlMode(enum v4l2_mpeg_video_bitrate_mode mode)
+int NvVideoEncoder::setRateControlMode(enum v4l2_mpeg_video_bitrate_mode mode)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -341,8 +324,7 @@ NvVideoEncoder::setRateControlMode(enum v4l2_mpeg_video_bitrate_mode mode)
             "Setting encoder rate control mode to " << mode);
 }
 
-int
-NvVideoEncoder::setIFrameInterval(uint32_t interval)
+int NvVideoEncoder::setIFrameInterval(uint32_t interval)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -364,8 +346,7 @@ NvVideoEncoder::setIFrameInterval(uint32_t interval)
             "Setting encoder I-frame interval to " << interval);
 }
 
-int
-NvVideoEncoder::setIDRInterval(uint32_t interval)
+int NvVideoEncoder::setIDRInterval(uint32_t interval)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -387,8 +368,7 @@ NvVideoEncoder::setIDRInterval(uint32_t interval)
             "Setting encoder IDR interval to " << interval);
 }
 
-int
-NvVideoEncoder::forceIDR()
+int NvVideoEncoder::forceIDR()
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -408,8 +388,7 @@ NvVideoEncoder::forceIDR()
             "Forcing IDR");
 }
 
-int
-NvVideoEncoder::setTemporalTradeoff(v4l2_enc_temporal_tradeoff_level_type level)
+int NvVideoEncoder::setTemporalTradeoff(v4l2_enc_temporal_tradeoff_level_type level)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -431,8 +410,7 @@ NvVideoEncoder::setTemporalTradeoff(v4l2_enc_temporal_tradeoff_level_type level)
             "Setting encoder temporal tradeoff level to " << level);
 }
 
-int
-NvVideoEncoder::setSliceLength(v4l2_enc_slice_length_type type, uint32_t length)
+int NvVideoEncoder::setSliceLength(v4l2_enc_slice_length_type type, uint32_t length)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -456,8 +434,7 @@ NvVideoEncoder::setSliceLength(v4l2_enc_slice_length_type type, uint32_t length)
             length);
 }
 
-int
-NvVideoEncoder::setHWPresetType(v4l2_enc_hw_preset_type type)
+int NvVideoEncoder::setHWPresetType(v4l2_enc_hw_preset_type type)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;
@@ -479,9 +456,7 @@ NvVideoEncoder::setHWPresetType(v4l2_enc_hw_preset_type type)
             "Setting encoder HW Preset type to " << type);
 }
 
-int
-NvVideoEncoder::setROIParams(uint32_t buffer_index,
-        v4l2_enc_frame_ROI_params &params)
+int NvVideoEncoder::setROIParams(uint32_t buffer_index, v4l2_enc_frame_ROI_params &params)
 {
     struct v4l2_ext_control control;
     struct v4l2_ext_controls ctrls;

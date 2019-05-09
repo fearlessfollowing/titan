@@ -13,28 +13,24 @@ uint32_t csp_transform::transform_scaling(EGLImageKHR in_img, std::vector<EGLIma
 
     CUgraphicsResource in_resource = nullptr;
     status = cuGraphicsEGLRegisterImage(&in_resource, in_img, CU_GRAPHICS_MAP_RESOURCE_FLAGS_NONE);
-    if (status != CUDA_SUCCESS)
-    {
+    if (status != CUDA_SUCCESS) {
         LOGERR("in cuGraphicsEGLRegisterImage failed: %d",status);
         return INS_ERR;
     }
 
     CUeglFrame in_eglFrame;
     status = cuGraphicsResourceGetMappedEglFrame(&in_eglFrame, in_resource, 0, 0);
-    if (status != CUDA_SUCCESS) 
-    {
+    if (status != CUDA_SUCCESS) {
         LOGERR("in cuGraphicsSubResourceGetMappedArray failed:%d", status);
         return INS_ERR;
     }
 
     std::vector<CUgraphicsResource> v_out_resource;
     std::vector<CUeglFrame> v_out_eglframe;
-    for (uint32_t i = 0; i < v_out_img.size(); i++)
-    {
+    for (uint32_t i = 0; i < v_out_img.size(); i++) {
         CUgraphicsResource out_resource = nullptr;
         status = cuGraphicsEGLRegisterImage(&out_resource, v_out_img[i], CU_GRAPHICS_MAP_RESOURCE_FLAGS_NONE);
-        if (status != CUDA_SUCCESS)
-        {
+        if (status != CUDA_SUCCESS) {
             LOGERR("out cuGraphicsEGLRegisterImage failed: %d",status);
             return INS_ERR;
         }
@@ -42,8 +38,7 @@ uint32_t csp_transform::transform_scaling(EGLImageKHR in_img, std::vector<EGLIma
 
         CUeglFrame out_eglFrame;
         status = cuGraphicsResourceGetMappedEglFrame(&out_eglFrame, out_resource, 0, 0);
-        if (status != CUDA_SUCCESS)
-        {
+        if (status != CUDA_SUCCESS) {
             LOGERR("out cuGraphicsSubResourceGetMappedArray failed:%d", status);
             return INS_ERR;
         }
@@ -51,8 +46,7 @@ uint32_t csp_transform::transform_scaling(EGLImageKHR in_img, std::vector<EGLIma
     }
 
     status = cuCtxSynchronize();
-    if (status != CUDA_SUCCESS)
-    {
+    if (status != CUDA_SUCCESS) {
         LOGERR("cuCtxSynchronize failed:%d", status); 
         return INS_ERR;
     }
@@ -68,23 +62,19 @@ uint32_t csp_transform::transform_scaling(EGLImageKHR in_img, std::vector<EGLIma
     transform_scaling_cu(in_eglFrame, v_out_eglframe, v_half); 
 
     status = cuCtxSynchronize();  
-    if (status != CUDA_SUCCESS)
-    { 
+    if (status != CUDA_SUCCESS) { 
         LOGERR("cuCtxSynchronize failed");
         return INS_ERR;
     }
 
     status = cuGraphicsUnregisterResource(in_resource);
-    if (status != CUDA_SUCCESS)
-    {
+    if (status != CUDA_SUCCESS) {
         LOGERR("in cuGraphicsEGLUnRegisterResource failed: %d", status);
     }
 
-    for (uint32_t i = 0; i < v_out_resource.size(); i++)
-    {
+    for (uint32_t i = 0; i < v_out_resource.size(); i++) {
         status = cuGraphicsUnregisterResource(v_out_resource[i]);
-        if (status != CUDA_SUCCESS)
-        {
+        if (status != CUDA_SUCCESS){
             LOGERR("out cuGraphicsEGLUnRegisterResource failed: %d", status);
         }
     }

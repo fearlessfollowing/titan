@@ -8,7 +8,7 @@
 #define CAM_VIDEO_MAX_SIZE 60
 
 all_cam_video_queue::all_cam_video_queue(std::vector<unsigned int>& index, bool b_just_keyframe)
-	: b_just_keyframe_(b_just_keyframe)
+												: b_just_keyframe_(b_just_keyframe)
 {
 	LOGINFO("need just key frame:%d", b_just_keyframe_);
  	for (unsigned int i = 0; i < index.size(); i++) {

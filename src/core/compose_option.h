@@ -25,7 +25,8 @@ struct compose_option {
     std::string 		logo_file;
     bool 				hdmi_display = false;
     bool 				jpeg = false;
-    std::map<uint32_t, std::shared_ptr<stream_sink>> m_sink;
+
+    std::map<uint32_t, std::shared_ptr<stream_sink>> m_sink;    /* 合成后的输出流 */
 };
 
 #endif

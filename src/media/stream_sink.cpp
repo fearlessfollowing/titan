@@ -23,8 +23,10 @@
 stream_sink::~stream_sink()
 {
 	b_release_ = true;
-	INS_THREAD_JOIN(th_);
+	INS_THREAD_JOIN(th_);		/* 停止stream_sink线程 */
 
+
+	/* 如果只需要存储最后一个关键帧(老化模式) */
 	if (b_just_last_frame_) 
 		key_frame_to_jpeg(last_key_frame_);
 
@@ -32,6 +34,8 @@ stream_sink::~stream_sink()
 
 	LOGINFO("stream sink close url:%s", url_.c_str());
 }
+
+
 
 stream_sink::stream_sink(std::string url) : url_(url)
 {
@@ -53,10 +57,12 @@ void stream_sink::set_fragment(bool frag, bool manu)
 	} 
 }
 
+
 void stream_sink::start(int64_t start_pts)
 {
 	LOGINFO("%s start, pts:%lld", url_.c_str(), start_pts);
 	start_pts_ = start_pts;
+
 	if (!b_video_ && !b_audio_ && (camm_tracks())) {	/* 只有camm通道的时候，这里启动 */
 		th_ = std::thread(&stream_sink::task, this);
 	}
@@ -873,6 +879,9 @@ int stream_sink::key_frame_to_jpeg(const std::shared_ptr<ins_frame>& frame)
 	if (video_param_ == nullptr) 
 		return INS_ERR;
 
+	/*
+	 * 1.获取保存的sps, pps数据
+	 */
 	unsigned char* p = video_param_->config->data();
 	unsigned int i = 0;
 	for (i = 4; i < video_param_->config->size(); i++) {
@@ -892,6 +901,9 @@ int stream_sink::key_frame_to_jpeg(const std::shared_ptr<ins_frame>& frame)
 	dec_param.pps = video_param_->config->data()+i;
 	dec_param.pps_len = video_param_->config->size() - i;
 
+	/*
+	 * 2.解码最后一个关键帧
+	 */
 	ffh264dec dec;
 	auto ret = dec.open(dec_param);
 	RETURN_IF_NOT_OK(ret);
@@ -901,6 +913,9 @@ int stream_sink::key_frame_to_jpeg(const std::shared_ptr<ins_frame>& frame)
 	}
 	RETURN_IF_TRUE(RGBA_frame == nullptr, "h264 key frame dec fail", INS_ERR);
 
+	/*
+	 * 3.解码后的数据jpeg编码
+	 */
 	tjpeg_enc enc;
 	ret = enc.open();
 	RETURN_IF_NOT_OK(ret);
@@ -910,12 +925,13 @@ int stream_sink::key_frame_to_jpeg(const std::shared_ptr<ins_frame>& frame)
 	RETURN_IF_NOT_OK(ret);
 
 	std::string url = url_;
-	auto pos = url.find(".mp4",0);
+	auto pos = url.find(".mp4", 0);
 	if (pos == std::string::npos) {
 		LOGERR("url:%s not mp4", url.c_str());
 		return INS_ERR;
 	}
 	
+	/* 4.存成文件 */
 	url.replace(pos, 4, ".jpg");
 	std::ofstream file(url.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 	if (!file.is_open()) {

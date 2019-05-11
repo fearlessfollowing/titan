@@ -39,7 +39,7 @@ video_composer::~video_composer()
 
     LOGINFO("++++++ video_composer all dec task exit suc. ++++++");
 
-    INS_THREAD_JOIN(th_enc_);	/* 退出编码器 */
+    INS_THREAD_JOIN(th_enc_);	            /* 退出编码器 */
 
     LOGINFO("video_composer 2");
 
@@ -47,7 +47,7 @@ video_composer::~video_composer()
 
     enc_.clear();
 
-    INS_THREAD_JOIN(th_screen_render_);
+    INS_THREAD_JOIN(th_screen_render_);     /* 屏幕渲染线程退出 */
 
     LOGINFO("++++++ video composer destroy +++++++");
 }
@@ -71,8 +71,8 @@ int32_t video_composer::open(const compose_option& option)
     }
  
     render_ 		= std::make_shared<render>();
-    dec_fps_ 		= option.ori_framerate; 	//解码的帧率，解码后流进行编码前可以通过丢帧变化帧率
-    rend_mode_ 		= option.mode;    			//渲染出来帧的模式
+    dec_fps_ 		= option.ori_framerate; 	/* 解码的帧率，解码后流进行编码前可以通过丢帧变化帧率 */
+    rend_mode_ 		= option.mode;    			/* 渲染出来帧的模式 */
 
 	render_->set_mode(option.mode);
 	render_->set_map_type(option.map);
@@ -134,11 +134,13 @@ void video_composer::screen_render_task()
             if (ret != INS_OK) break;
             hdmi_change_ = false;
             std::lock_guard<std::mutex> lock(mtx_rend_img_);
+
             while (!full_rend_img_queue_.empty()) {
                 auto img = full_rend_img_queue_.front();
                 free_rend_img_queue_.push(img);
                 full_rend_img_queue_.pop();
             }
+            
             LOGINFO("-----render restart over");
         }
 
